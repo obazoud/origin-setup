@@ -109,18 +109,40 @@ module OpenShift
     end
 
     desc "create", "Create a new image from an existing configured instance"
-    method_option :instance, :type => :string, :required => true
-    method_option :name, :type => :string, :required => true
     method_option :description, :type => :string, :default => ""
-    def create
+    method_option :wait, :type => :boolean, :default => false
+    def create(instance, name)
       handle = login
 
+      # if the instance is a string, get the instance from AWS
+      if instance.class == String and instance.match(/^i-/)
+        instance_id = instance
+      else
+        instance_id = instance.id
+      end
+
       newimage = handle.images.create(
-        :instance_id => options[:instance],
-        :name => options[:name],
+        :instance_id => instance_id,
+        :name => name,
         :description => options[:description]
         )
-        
+
+      #puts "image_id: #{newimage.id}" if options[:verbose]
+      if options[:wait]
+        maxtries = 10
+        poll_interval = 30
+        (1..maxtries).each do |trynum|
+          break if newimage.state === :available
+          puts "  #{trynum}: sleeping #{poll_interval} seconds: #{newimage.state}" if options[:verbose]
+          sleep poll_interval
+        end
+        if not newimage.state === :available
+          raise Exception.new("image #{image.id} is not ready after " +
+            "#{maxtries * poll_interval} seconds: #{newimage.state}.")
+        end
+      end # wait
+      puts "image_id: #{newimage.id}"
+      newimage
     end
 
     desc "delete", "Delete an existing instance"

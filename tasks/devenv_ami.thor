@@ -173,10 +173,31 @@ module OpenShift
         puts "cleaning up instance for cloning"
       end
 
-      desc("create_new_image INSTANCEID", 
+      desc("create_new_image INSTANCE NAME", 
         "create and register a new AMI from a running instance")
-      def create_new_image
-        puts "creating a new image with OpenShift installed and configured"
+      def create_new_image(instance, name)
+        puts "task: devenv:ami:create_new_image"
+
+        # if instance is an instance id string, retrieve the instance
+        if a.class === String and a.match(/^i-/)
+          handle = login
+          instance_id = instance
+          begin 
+            instances = handle.instances.filter('id', instance_id)
+            instance = instances[0]
+          rescue NoMethodError => e
+            raise ArgumentError.new("Invalid instance ID #{instance_id}")
+          end          
+        end
+
+        # reset the hostname
+        
+        # reset the network
+        invoke("remote:reset_eth0_config", [hostname])
+
+        # now create a new image
+        invoke("ec2:image:create", :instance => instance, :name => name,
+          :description => description)
       end
       
 
