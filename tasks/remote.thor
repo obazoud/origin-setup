@@ -770,7 +770,7 @@ class Remote < Thor
       hostname, username, key_file, cmd, options[:verbose])
   end
   
-  desc "reset_eth0_config HOSTNAME", "reset the network configuration to simple DHCP"
+  desc "reset_net_config HOSTNAME", "reset the network configuration to simple DHCP"
   def reset_net_config(hostname, device="eth0")
     puts "task remote:reset_net_config #{hostname} #{device}" unless options[:quiet]
 

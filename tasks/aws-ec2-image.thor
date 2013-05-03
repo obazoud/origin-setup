@@ -112,6 +112,7 @@ module OpenShift
     method_option :description, :type => :string, :default => ""
     method_option :wait, :type => :boolean, :default => false
     def create(instance, name)
+
       handle = login
 
       # if the instance is a string, get the instance from AWS
@@ -121,27 +122,29 @@ module OpenShift
         instance_id = instance.id
       end
 
+      puts "task: ec2:image create #{instance_id} #{name}"
+
       newimage = handle.images.create(
         :instance_id => instance_id,
         :name => name,
         :description => options[:description]
         )
 
-      #puts "image_id: #{newimage.id}" if options[:verbose]
+      puts "  new image_id: #{newimage.id}" if options[:verbose]
       if options[:wait]
         maxtries = 10
         poll_interval = 30
         (1..maxtries).each do |trynum|
-          break if newimage.state === :available
-          puts "  #{trynum}: sleeping #{poll_interval} seconds: #{newimage.state}" if options[:verbose]
+          break if newimage.state == :available
+          puts "  #{trynum}) #{newimage.state}: sleeping #{poll_interval} seconds" if options[:verbose]
           sleep poll_interval
         end
-        if not newimage.state === :available
+        if not newimage.state == :available
           raise Exception.new("image #{image.id} is not ready after " +
             "#{maxtries * poll_interval} seconds: #{newimage.state}.")
         end
       end # wait
-      puts "image_id: #{newimage.id}"
+      puts "image_id: #{newimage.id} #{newimage.name} #{newimage.state}"
       newimage
     end
 

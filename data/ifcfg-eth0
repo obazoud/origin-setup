@@ -1,0 +1,5 @@
+# Minimal network interface configuration
+# Created by devenv build
+DEVICE=eth0
+BOOTPROTO=dhcp
+ONBOOT=yes

@@ -169,35 +169,49 @@ module OpenShift
 
       desc("clean_for_new_image HOSTNAME",
         "clean up in preparation to copy this instance to a new image")
+      method_option :wait, :type => :boolean, :default => false
       def clean_for_new_image
         puts "cleaning up instance for cloning"
       end
 
       desc("create_new_image INSTANCE NAME", 
         "create and register a new AMI from a running instance")
+      method_option :wait, :type => :boolean, :default => false
       def create_new_image(instance, name)
-        puts "task: devenv:ami:create_new_image"
+        puts "task: devenv:ami:create_new_image #{instance} #{name}"
 
         # if instance is an instance id string, retrieve the instance
-        if a.class === String and a.match(/^i-/)
-          handle = login
+        if instance.class == String and instance.match(/^i-/)
+          handle = awslogin
           instance_id = instance
           begin 
-            instances = handle.instances.filter('id', instance_id)
-            instance = instances[0]
+            instance = handle.instances[instance_id]
           rescue NoMethodError => e
             raise ArgumentError.new("Invalid instance ID #{instance_id}")
           end          
         end
 
+        # make sure the instance is running
+        instance.start if not instance.status == :running
+        (1..10).each do |trynum|
+          break if instance.status == :running
+          puts "waiting for instance #{instance.id} to be running: current = #{instance.status}" if options[:verbose]
+          sleep 10
+        end
+        raise Exception.new("cannot start instance") if not instance.status == :running
+        hostname = instance.dns_name
+        puts "current hostname: #{hostname}" if options[:verbose]
         # reset the hostname
         
         # reset the network
-        invoke("remote:reset_eth0_config", [hostname])
+        invoke("remote:reset_net_config", [hostname, 'eth0'])
 
         # now create a new image
-        invoke("ec2:image:create", :instance => instance, :name => name,
-          :description => description)
+        description = "testdesc"
+        invoke("ec2:image:create", [instance, name], 
+          :description => description, 
+          :wait => options[:wait],
+          :verbose => options[:verbose])
       end
       
 
