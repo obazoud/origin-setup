@@ -53,6 +53,37 @@ module OpenShift
         # TODO: get and process return values
       end
 
+      desc "yum_repo_nightly HOSTNAME DISTRO VERSION ARCH", "enable the openshift extras repo"
+      def yum_repo_nightly(hostname, distro, version, arch)
+
+        puts "task: devenv:build:yum_repo_nightly #{hostname} #{distro} #{version} #{arch}" unless options[:quiet]
+
+        username = options[:username] || Remote.ssh_username
+        ssh_key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        filename = "origin-nightly.repo"
+        # centos is rhel for this
+        repo_os = distro === 'centos' ? 'rhel' : distro
+        # we only want the major number
+        major_number = version.split('.')[0]
+
+        repo_file = File.dirname(File.dirname(__FILE__)) + "/data/" + filename
+        raise Errno::ENOENT.new(repo_file) if not File.exists? repo_file
+        #puts "#{repo_file} not found" if not File.exists? repo_file
+
+        Remote::File.scp_put(hostname, username, ssh_key_file, repo_file, '.')
+
+        # replace string on remote
+        cmd = "sed -i -e 's/BASEOS/#{repo_os}/ ; s/VERSION/#{major_number}/' #{filename}"
+        Remote.remote_command(hostname, username, ssh_key_file, cmd,
+          options[:verbose])
+
+        cmd = "sudo mv #{filename} /etc/yum.repos.d"
+        Remote.remote_command(hostname, username, ssh_key_file, cmd,
+          options[:verbose])
+
+      end
+
       desc "yum_repo_extras HOSTNAME DISTRO VERSION ARCH", "enable the openshift extras repo"
       def yum_repo_extras(hostname, distro, version, arch)
 
@@ -61,7 +92,7 @@ module OpenShift
         username = options[:username] || Remote.ssh_username
         ssh_key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-        filename = "openshift-extras.repo"
+        filename = "origin-extras.repo"
         # centos is rhel for this
         repo_os = distro === 'centos' ? 'rhel' : distro
         # we only want the major number

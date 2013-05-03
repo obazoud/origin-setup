@@ -46,7 +46,7 @@ module OpenShift
     method_option :extra_rpm_dir, :required => false, :dessc => "Directory containing extra rpms to be installed"
     method_option :disable_selinux, :required => false, :default => false, :type => :boolean, :dessc => "Directory containing extra rpms to be installed"
 
-    def build_old(name, build_num)
+    def build(name, build_num)
 
       #
       # Create a connection to the AWS service
@@ -147,8 +147,12 @@ module OpenShift
       if real_os === 'fedora'
         invoke("devenv:build:install_wget", [hostname])
       end
+      invoke "devenv:build:install_puppet", [hostname]
+      invoke "devenv:build:init_puppet", [hostname]
+
       # install git
-      invoke "devenv:build:install_git", [hostname]
+      #invoke "devenv:build:install_git", [hostname]
+      
 
 
       # Any errors and we can terminate the instance
@@ -190,22 +194,24 @@ module OpenShift
         invoke "devenv:build:prepare_builds", [hostname]
 
         # add puppetlabs repo release RPM
-        invoke "devenv:build:yum_repo_puppetlabs", [hostname]
+        if not base_os === "fedora"
+          invoke "devenv:build:yum_repo_puppetlabs", [hostname]
+        end
 
         # clone all of the repos into /data
         # if local source, sync them from host
-        if options[:install_from_local_source]
-          invoke("devenv:build:clone_local_sources", [hostname])
-        else
+        #if options[:install_from_local_source]
+        #  invoke("devenv:build:clone_local_sources", [hostname])
+        #else
           # otherwise clone the 'bare' repos into /data and checkout a branch
           # clear /data and then clone all the repos in one
-          invoke("devenv:build:clone_sources", 
-            [hostname, defaults['sourcerepos']],
-            :destdir => "/data",
-            :bare => true,
-            :verbose => options[:verbose],
-            )
-        end
+        #  invoke("devenv:build:clone_sources", 
+        #    [hostname, defaults['sourcerepos']],
+        #    :destdir => "/data",
+        #    :bare => true,
+        #    :verbose => options[:verbose],
+        #    )
+        #end
 
         # create build extras directory in origin-server
         # copy all of the extra RPMs over so they're avallable
@@ -216,20 +222,20 @@ module OpenShift
 
         # install build tools
         #if ['rhel', 'centos'].member? base_os
-        invoke("devenv:build:install_tools", [hostname], 
-          :base_os => base_os,
-          :tooldir => '/data/origin-dev-tools', 
-          :verbose => options[:verbose])
+        #invoke("devenv:build:install_tools", [hostname], 
+        #  :base_os => base_os,
+        #  :tooldir => '/data/origin-dev-tools', 
+        #  :verbose => options[:verbose])
         #end
 
         #  - if on RHEL or CentOS 6, enable scl ruby193
 
         # install package build requirements
         #invoke devenv:build:install_deps, [hostname, defaults['sourcerepos']]
-        invoke("devenv:build:install_deps", [hostname],
-          :base_os => base_os,
-          :tooldir => '/data/origin-dev-tools',
-          :verbose => options[:verbose])
+        #invoke("devenv:build:install_deps", [hostname],
+        #  :base_os => base_os,
+        #  :tooldir => '/data/origin-dev-tools',
+        #  :verbose => options[:verbose])
 
         # build packages
         # invoke devenv:build:rpms, [hostname, defaults['sourcerepos']]
@@ -285,7 +291,22 @@ module OpenShift
 
       end
     end
-    
+
+    desc "rpm_manifest HOSTNAME", "get a truncated list of openshift packages"
+    def rpm_manifest(hostname)
+      puts "task: devenv:rpm_manifest #{hostname}" unless options[:quiet]
+      packages = invoke("remote:yum:list", [hostname])
+
+      packages.keys.select { |pkgname| 
+        puts "checking #{pkgname}"
+        pkgname.match("systemd|rpm")
+      }.each { |ospkg|
+        puts "MATCH: #{ospkg}"
+      }
+    end
+
+
+
     # =======================
     # Non task helper methods
     # =======================
@@ -326,6 +347,7 @@ module OpenShift
           return "rhel"
         end
       end
+
     end # no_tasks
   end # class
 end # module

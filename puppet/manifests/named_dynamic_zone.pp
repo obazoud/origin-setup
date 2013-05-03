@@ -1,40 +1,37 @@
-# == Class: named:dynamic_zone
-#
-# Create a named zone which allows dynamic updates
+# == Create a DNS dynamic zone for a BIND server
 #
 # === Parameters
+#    zone
+#    key_string
+#    nameserver (?)
 #
-# String: zone
+#    create config file
+#    create initial zone file
+#    add entry to master config file
 #
-# === Examples
-#
-# puppet apply named_dynamic_zone.pp --zone = app.example.com
-#
-# === Copyright
-#
-# Copyright 2013 Mojo Lingo LLC.
-# Copyright 2013 Red Hat, Inc.
-#
-# === License
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-class named::dynamic_zone($zone) {
 
-  notify {"dynamic zone: ${zone}":}
-  # require packages 
+class named::dynamic_zone {
+
+  # dynamic configuration file
+  file { 'dynamic configuration':
+    path => "/var/named/${zone}.conf",
+    content => template('named/dynamic_zone.conf.erb'),
+    owner => 'named',
+    group => 'named',
+    mode => '0660',
+  }
+  
+  # initial zone file
+  file { 'dynamic zone':
+    path => "/var/named/dynamic/${zone}.db",
+    content => template('named/dynamic_zone.db.erb'),
+    owner => 'named',
+    group => 'named',
+    mode => '0660',
+    require => File['/var/named/dynamic'],
+  }
+
+  
 }
 
-class {'named::dynamic_zone':
-  zone => 'example.com',
-}
+class {"named::dynamic_zone":}

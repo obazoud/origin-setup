@@ -1,0 +1,12 @@
+;; 
+
+key <%= scope.lookupvar('zone') %> {
+    algorithm HMAC-MD5 ;
+    secret "<%= scope.lookupvar('keystring') =>" ;
+} ;
+
+zone "<%= scope.lookupvar('zone') %>" IN {
+     type master ;
+     file "dynamic/<%= scope.lookupvar('zone') %>.db" ;
+     allow-update { key <%= scope.lookupvar('zone') %> ; } ;
+}; 

@@ -481,7 +481,6 @@ class Remote < Thor
         pkgs[pkgname] = {:arch => arch, :version => version, :repository => repo}
       end
       pkgs
-      puts pkgs
     end
 
   end
