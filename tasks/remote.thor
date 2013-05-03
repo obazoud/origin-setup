@@ -462,8 +462,8 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      # | cat indicates "throw away the terminal formatting"
-      cmd = "sudo yum --quiet list #{options[:filter]} | cat"
+      # | cat causes the shell to throw away the terminal formatting
+      cmd = "sudo yum --quiet --color=no list #{options[:filter]}"
 
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
@@ -481,6 +481,7 @@ class Remote < Thor
         pkgs[pkgname] = {:arch => arch, :version => version, :repository => repo}
       end
       pkgs
+      puts pkgs
     end
 
   end
