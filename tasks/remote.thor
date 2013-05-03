@@ -454,6 +454,35 @@ class Remote < Thor
 
     end
 
+    desc "list HOSTNAME", "update RPMs on the remote system"
+    method_option :filter, :default => "installed"
+    def list(hostname)
+      puts "task: remote:yum:list #{hostname} #{options[:filter]}" unless options[:quiet]
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      # | cat indicates "throw away the terminal formatting"
+      cmd = "sudo yum --quiet list #{options[:filter]} | cat"
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      if not exit_code == 0
+        raise Exception.new("error getting packages: #{exit_code}")
+      end
+      stdout = stdout[stdout.index("Installed Packages")+1..-1]
+      #puts stdout.join("\n")
+
+      pkgs = {}
+      stdout.map do |line|
+        pkgspec, version, repo = line.split
+        pkgname, arch = pkgspec.split(".")
+        pkgs[pkgname] = {:arch => arch, :version => version, :repository => repo}
+      end
+      pkgs
+    end
+
   end
 
 
