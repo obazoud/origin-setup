@@ -143,6 +143,15 @@ module OpenShift
       # Prepare the instance for installation
       # ===============================================
 
+      # select stock, nightly, private or local
+      invoke("devenv:build:yum_repo_nightly", [hostname, real_os, releasever, real_arch])
+      invoke("devenv:build:yum_repo_extras", [hostname, real_os, releasever, real_arch])
+
+      # add puppetlabs repo release RPM
+      if not base_os === "fedora"
+        invoke "devenv:build:yum_repo_puppetlabs", [hostname]
+      end
+
       # wget is not in the fedora base
       if real_os === 'fedora'
         invoke("devenv:build:install_wget", [hostname])
@@ -163,7 +172,6 @@ module OpenShift
           # install tools needed to build and test the openshift software
           # -
 
-          #invoke("devenv:build:yum_repo_extras", [hostname, real_os, releasever, real_arch])
 
           # update all packages
           packages = invoke "remote:yum:update", [hostname], :verbose => options[:verbose]
@@ -193,10 +201,6 @@ module OpenShift
         # create /data and give ownership to the user
         invoke "devenv:build:prepare_builds", [hostname]
 
-        # add puppetlabs repo release RPM
-        if not base_os === "fedora"
-          invoke "devenv:build:yum_repo_puppetlabs", [hostname]
-        end
 
         # clone all of the repos into /data
         # if local source, sync them from host
@@ -276,6 +280,16 @@ module OpenShift
         # named, network, cgconfig, cgred, openshift-cgroups, mcollective sshd
         # stop proxy then restart
         # invoke "devenv:build:restartservices"
+        
+        if options[:register]
+          image_description = invoke('devenv:rpm_manifest', [hostname])
+          image_id = invoke('devenv:ami:create_new_image', 
+            [instance, name],
+            :description => image_description,
+            :verbose => options[:verbose])
+          puts "registered new image: #{image_id} #{image_name}"
+        end
+        
       ensure
 
         # No matter what, terminate if requested
@@ -299,13 +313,13 @@ module OpenShift
 
       packages.keys.select { |pkgname| 
         puts "checking #{pkgname}"
-        pkgname.match("systemd|rpm")
-      }.each { |ospkg|
-        puts "MATCH: #{ospkg}"
-      }
+        pkgname.match("openshift|rhc")
+      }.map { |ospkgname|
+        # disassemble each name and compose the manifest string
+        ospkgname.gsub!('(rubygem|openshift)-', '')
+        ospkgname.gsub!('mcollective-', 'mco-')
+      }.join(' ')[0..254]
     end
-
-
 
     # =======================
     # Non task helper methods
