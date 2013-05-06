@@ -287,7 +287,7 @@ module OpenShift
             [instance, name],
             :description => image_description,
             :verbose => options[:verbose])
-          puts "registered new image: #{image_id} #{image_name}"
+          puts "registered new image: #{image_id} #{name}"
         end
         
       ensure

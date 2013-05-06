@@ -115,7 +115,7 @@ class Remote < Thor
 
   desc "available HOSTNAME", "determine if a remote host is accessible"
   method_option(:wait, :default => false)
-  method_option(:tries, :type => :numeric, :default => 10)
+  method_option(:tries, :type => :numeric, :default => 15)
   method_option(:pollrate, :type => :numeric, :default => 10)
   def available(hostname)
     puts "task: remote:available #{hostname}" unless options[:quiet]
