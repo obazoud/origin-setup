@@ -1,0 +1,10 @@
+key <%= $zone %> {
+  algorithm HMAC-MD5 ;;
+  secret "<%= $zone %>" ;
+} ;
+
+zone "<%= $zone %>" IN {
+	type master ;
+	file "dynamic/<%= $zone %>.db" ;
+        allow-update { key <%= $secret %> ; } ;
+} ;
