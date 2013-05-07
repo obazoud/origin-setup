@@ -230,6 +230,22 @@ module OpenShift
         # TODO: get and process return values
       end
 
+      desc "install_augeas HOSTNAME", "Install augeas file management and deps"
+      def install_puppet(hostname)
+
+        puts "task: devenv:build:install_augeas #{hostname}" unless options[:quiet]
+        username = options[:username] || Remote.ssh_username
+        ssh_key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        cmd = "sudo yum -y -q install augeas augeas-libs"
+        
+        # Remote comes from remote.thor magically
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, ssh_key_file, cmd, options[:verbose])
+
+        # TODO: get and process return values
+      end
+
       desc("init_puppet HOSTNAME",
         "initialize puppet configuration on a remote host")
       def init_puppet(hostname)

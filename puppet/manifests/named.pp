@@ -4,12 +4,10 @@
 #
 # === Parameters
 #
-# None
+# String: zones
 #
 # === Examples
-#
-#  include openshift_origin::named
-#
+#  
 # === Copyright
 #
 # Copyright 2013 Mojo Lingo LLC.

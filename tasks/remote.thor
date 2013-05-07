@@ -284,7 +284,7 @@ class Remote < Thor
     method_option(:destpath, :type => :string)
     method_option(:recursive, :type => :boolean, :default => false)
     def get(hostname, filepath)
-      puts "task: remote:file:get #{hostname} {#filepath}" unless options[:quiet]
+      puts "task: remote:file:get #{hostname} #{filepath}" unless options[:quiet]
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
       puts "using key file #{key_file}" if options[:verbose]
@@ -483,6 +483,20 @@ class Remote < Thor
       pkgs
     end
 
+    desc("exclude HOSTNAME REPO PATTERN",
+      "exclude a package pattern from the specified repository")
+    def exclude(hostname, repo, pattern)
+      puts "task: remote:yum:exclude #{hostname} #{repo} #{pattern}" unless options[:quiet]
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "sudo augtool -b set /files/etc/yum.repos.d/#{repo}.repo/#{repo}/exclude '#{pattern}'"
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+    end
   end
 
 

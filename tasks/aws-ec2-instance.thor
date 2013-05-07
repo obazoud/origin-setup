@@ -48,7 +48,7 @@ module OpenShift
       :desc => "an EC2 image id")
     method_option(:key, :type => :string,
       :desc => "an access key pair name")
-    # m1.small or t1.micro
+    # m.1small or t1.micro
     method_option(:type, :type => :string, :default => "t1.micro",
       :desc => "an EC2 image type")
     method_option(:secgroup, :type => :string, :default => "default",
@@ -69,7 +69,7 @@ module OpenShift
         :image_id => options[:image],
         :instance_type => options[:type],
         :key_name => options[:key],
-        :security_groups => [options[:secgroup]],
+        :security_groups => [(options[:secgroup]||'default')],
         :block_device_mappings => {'/dev/sdb' => 'ephemeral0'}
         )
             

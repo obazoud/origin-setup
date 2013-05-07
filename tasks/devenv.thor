@@ -159,6 +159,9 @@ module OpenShift
       invoke "devenv:build:install_puppet", [hostname]
       invoke "devenv:build:init_puppet", [hostname]
 
+      # required for file updates
+      invoke "devenv:build:install_augeas", [hostname]
+
       # install git
       #invoke "devenv:build:install_git", [hostname]
       
