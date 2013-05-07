@@ -48,8 +48,11 @@ module OpenShift
       :desc => "an EC2 image id")
     method_option(:key, :type => :string,
       :desc => "an access key pair name")
-    method_option(:type, :type => :string, :default => "m1.small",
+    # m1.small or t1.micro
+    method_option(:type, :type => :string, :default => "t1.micro",
       :desc => "an EC2 image type")
+    method_option(:secgroup, :type => :string, :default => "default",
+      :desk => "the security group to apply to this instance")
     method_option(:wait, :type => :boolean, :default => false)
     def create
       puts "task: ec2:instance:create " +
@@ -66,6 +69,7 @@ module OpenShift
         :image_id => options[:image],
         :instance_type => options[:type],
         :key_name => options[:key],
+        :security_groups => [options[:secgroup]],
         :block_device_mappings => {'/dev/sdb' => 'ephemeral0'}
         )
             
