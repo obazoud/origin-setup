@@ -52,8 +52,8 @@ class activemq::params {
 class activemq::config (
   $brokername,
   # Messaging admin
-  $broker_admin_username,
-  $broker_admin_password,
+  $admin_username,
+  $admin_password,
   # message queue and access user
   $msg_queue,
   $msg_username,
@@ -76,7 +76,7 @@ class activemq::config (
 
   file { "/etc/activemq/jetty.xml":
     ensure => present,
-    content => template("jetty.xml.erb"),
+    content => template("activemq/jetty.xml.erb"),
     owner => 'root',
     group => 'root',
     mode => 0644,
@@ -86,7 +86,7 @@ class activemq::config (
 
   file { "/etc/activemq/jetty-realm.properties":
     ensure => present,
-    content => template("jetty-realm.properties.erb"),
+    content => template("activemq/jetty-realm.properties.erb"),
     owner => 'root',
     group => 'root',
     mode => 0644,
@@ -101,7 +101,7 @@ class activemq::service {
       hasstatus => true,
       hasrestart => true,
       enable => true,
-      require => Class["ssh::config"],
+      require => Class["activemq::config"],
     }
 }
 
