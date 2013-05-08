@@ -50,14 +50,17 @@ class activemq::params {
 }
 
 class activemq::config (
-  $hostname,
-  $console_admin_username = 'admin',
-  $console_admin_password,
-  $broker_admin_username = 'admin',
+  $brokername,
+  # Messaging admin
+  $broker_admin_username,
   $broker_admin_password,
-  $msg_queue = 'openshift',
-  $msg_username = 'openshift',
+  # message queue and access user
+  $msg_queue,
+  $msg_username,
   $msg_password,
+  # jetty access user
+  $ctrl_username,
+  $ctrl_password,
   ) {
 
   file { "/etc/activemq/activemq.xml":
@@ -105,3 +108,4 @@ class activemq::service {
 class activemq {
   include activemq::install, activemq::config, activemq::service
 }
+
