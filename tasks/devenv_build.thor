@@ -231,7 +231,7 @@ module OpenShift
       end
 
       desc "install_augeas HOSTNAME", "Install augeas file management and deps"
-      def install_puppet(hostname)
+      def install_augeas(hostname)
 
         puts "task: devenv:build:install_augeas #{hostname}" unless options[:quiet]
         username = options[:username] || Remote.ssh_username
