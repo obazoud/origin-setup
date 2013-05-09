@@ -257,6 +257,36 @@ module OpenShift
       end
     end
 
+    desc "private_ipaddress", "print the internal ip address of an identified instance"
+    method_option :id, :type => :string
+    method_option :name, :type => :string, :default => "*"
+    def private_ipaddress
+      puts "task: ec2:instance:internal_ipaddress"
+      # Open a connection to the AWS service
+      handle = login
+      instance = find_instance(handle, options)
+      raise ArgumentError.new("no instance matches") if not instance
+
+      puts instance.private_ip_address
+      instance.private_ip_address
+    end
+
+    desc "private_hostname", "print the internal hostname of an identified instance"
+    method_option :id, :type => :string
+    method_option :name, :type => :string, :default => "*"
+    def private_hostname
+      puts "task: ec2:instance:internal_ipaddress"
+      # Open a connection to the AWS service
+      handle = login
+      instance = find_instance(handle, options)
+      raise ArgumentError.new("no instance matches") if not instance
+
+      puts instance.private_dns_name
+      instance.private_dns_name
+      
+    end
+
+
     desc "wait", "wait until an instance reaches the desired status"
     method_option :id, :type => :string
     method_option :name, :type => :string, :default => "*"

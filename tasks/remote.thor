@@ -197,6 +197,35 @@ class Remote < Thor
   end
 
 
+  desc("ipaddress HOSTNAME INTERFACE",
+    "get the IP address of the indicated interface on the host")
+  method_option :cidrmask, :type => :boolean, :default => false
+  def ipaddress(hostname, interface)
+    puts "task: remote:ipaddress #{hostname} #{interface}" unless options[:quiet]
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+    puts "using key file #{key_file}" if options[:verbose]
+
+    puts "username: #{username}" if options[:verbose]
+    puts "key_file: #{key_file}" if options[:verbose]
+
+    # match just the IP address unless the caller asks for the cidr mask too
+    terminator = options[:cidrmask] ? ' ' : '/'
+
+    cmd = "/usr/sbin/ip address show dev #{interface} | " + 
+      "sed -n -e 's/\s*inet \\([^#{terminator}]*\\).*/\\1/p'"
+
+    puts "cmd = #{cmd}" if options[:verbose]
+
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
+
+    puts stdout
+    # return the first line returned
+    stdout[0]
+  end
+
   class File < Thor
 
     namespace "remote:file"
