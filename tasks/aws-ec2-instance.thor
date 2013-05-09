@@ -187,9 +187,12 @@ module OpenShift
         image = handle.images[instance.image_id]
         puts "EC2 Instance: #{instance.id} (#{instance.tags['Name']})"
         puts "  DNS Name: #{instance.dns_name}"
+        puts "  IP Address: #{instance.ip_address}"
         puts "  Status: #{instance.status}"
         puts "  Image: #{instance.image_id}"
         puts "  Platform: #{image.platform}"
+        puts "  Private IP: #{instance.private_ip_address}"
+        puts "  Private Hostname: #{instance.private_dns_name}"
       else
         puts "#{instance.id} #{instance.tags['Name']}, #{instance.status} " + 
           ([:running, :pending].member?(instance.status) ? instance.dns_name : "")

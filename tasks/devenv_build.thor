@@ -198,6 +198,26 @@ module OpenShift
         # TODO: get and process return values
       end
 
+      desc "install_postfix HOSTNAME", "install postfix (and remove sendmail)"
+      def install_postfix(hostname)
+
+        puts "task: devenv:build:install_postfix #{hostname}" unless options[:quiet]
+
+        username = options[:username] || Remote.ssh_username
+        ssh_key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        cmd = "sudo yum -y -q install postfix"        
+        # Remote comes from remote.thor magically
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, ssh_key_file, cmd, options[:verbose])
+
+        cmd = "sudo yum -y -q remove sendmail"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, ssh_key_file, cmd, options[:verbose])
+
+        # TODO: get and process return values
+      end
+
       desc "install_cucumber HOSTNAME", "Install Cucumber BDD testing and deps"
       def install_cucumber(hostname)
 

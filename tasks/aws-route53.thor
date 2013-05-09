@@ -197,7 +197,7 @@ module OpenShift
         # TODO:check for success/fail
 
         # result.data[:change_info] contains the change request id and status
-        puts "response = #{response.data}"
+        puts "response = #{response.data}" if options[:verbose]
 
         if options[:wait] and 
             not response.data[:change_info][:status] == "INSYNC"

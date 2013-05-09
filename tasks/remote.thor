@@ -448,7 +448,7 @@ class Remote < Thor
 
     desc "remove HOSTNAME RPMNAME", "remove an RPM on the remote system"
     def remove(hostname, rpmname)
-      puts "task: remote:yum:remove #{hostname} #{rpm}" unless options[:quiet]
+      puts "task: remote:yum:remove #{hostname} #{rpmname}" unless options[:quiet]
       puts "removing #{rpmname} on #{hostname}" if options[:verbose]
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file

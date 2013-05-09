@@ -162,9 +162,13 @@ module OpenShift
       # required for file updates
       invoke "devenv:build:install_augeas", [hostname]
 
+      # disable and remove sendmail, add postfix but do not (yet) enable
+      invoke "devenv:build:install_postfix", [hostname]
+
       # install git
       #invoke "devenv:build:install_git", [hostname]
       
+      # set firewall rules?
 
 
       # Any errors and we can terminate the instance
