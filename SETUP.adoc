@@ -1,0 +1,49 @@
+= Origin Service Configuration and Setup
+Mark Lamourine <markllama@gmail.com>
+
+* puppetmaster
+
+* backend services
+
+** datastore
+*** database: mongodb
+*** db host
+*** db port
+*** db admin username
+*** db admin password
+*** openshift db name
+*** openshift db username
+*** openshift db password
+
+** authentication
+*** method: Apache Basic Auth
+*** plugin: auth-remote-user
+
+** messaging (mcollective)
+*** security: psk
+*** password: mcsecret
+*** service: activemq
+**** admin username: admin
+**** admin password: msgadminsecret
+
+**** puppet topic: mcollective
+**** puppet username: mcollective
+**** puppet password: puppetsecret
+**** openshift topic: openshift
+**** openshift username: openshift
+**** openshift password: rpcsecret
+
+** dns
+*** service: route53
+**** awskeyname
+**** awssecretkey
+**** infra zone: infra.example.com
+**** infra zone id: 
+**** app zone: app.example.com
+**** app zone id:
+
+* broker
+
+** app zone: app.example.com
+
+* node
