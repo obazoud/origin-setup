@@ -1,7 +1,8 @@
 = OpenShift Service on AWS EC2
-Mark Lamourine
+Mark Lamourine <markllama@gmail.com>
 
-{toc}
+:toc:
+
 == Introduction
 
 This document describes a fairly complete deployment of the OpenShift
@@ -172,4 +173,14 @@ Again, the part you download is *private*, treat it that way.
 == Origin Setup
 
 This Git Repository contains a set of Thor task scripts and Puppet
-module definitions which will be useful
+module definitions which will be useful for working both with EC2 and
+with remote instances via SSH.  Small tasks are coded so that they can
+either be called directly from the command line or can be composed
+into more complex tasks (like creating the initial puppetmaster).
+
+The puppet modules are specific to OpenShift.  I didn't find that many
+of the available modules were both sufficiently comprehensive and
+flexable for re-use and the needs of OpenShift in each case were
+fairly simple.
+
+
