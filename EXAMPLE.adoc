@@ -50,7 +50,8 @@ broker::
 
 nodes::
   The nodes are where the applications live.  Developer code
-  management and end-user application work happen here.
+  management and end-user application work happen here. There will
+  generally be more than one node attached to an OpenShift service.
 
 In addition to the public face of OpenShift, there are also a set of
 _back-end services_ which provide needed functions such as
@@ -110,3 +111,20 @@ broker1::
    The primary control host for service users
 node1::
    The initial host which will contain user applications
+
+.Deployment Components
+[options="header"]
+|====================
+| Name | Function
+| puppetmaster | the anchor host, contains configs, controls remaining deployment and
+   configuration
+|data1 | The (initial) MongoDB database host.
+|msg1  | The (initial) ActiveMQ message broker host
+|console | The web interface for developer interactions
+|broker1 | The primary control host for service users
+|node1 | The initial host which will contain user applications
+|====================
+
+
+== Toolbox
+
