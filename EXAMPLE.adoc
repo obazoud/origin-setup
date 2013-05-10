@@ -170,7 +170,7 @@ home directory and use that key (id) to log into your instances.
 Again, the part you download is *private*, treat it that way.  
 
 
-== Origin Setup
+== Origin Setup (this repository)
 
 This Git Repository contains a set of Thor task scripts and Puppet
 module definitions which will be useful for working both with EC2 and
