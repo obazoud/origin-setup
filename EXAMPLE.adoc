@@ -17,8 +17,8 @@ minimal. However, it is also designed to allow growth.
 The entire deployment will reside on EC2 _t1.micro_ instances, but
 will be controlled, at least initially from a linux desktop.
 
-The service hosts will be registered in the _infra.example.com_
-domain. Applications will be registered in the _app.example.com_
+The service hosts will be registered in the +infra.example.com+
+domain. Applications will be registered in the +app.example.com+
 domain as they are created.
 
 These are the host instances which will be created:
