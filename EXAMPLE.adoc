@@ -1,6 +1,7 @@
 = OpenShift Service on AWS EC2
 Mark Lamourine
 
+{toc}
 == Introduction
 
 This document describes a fairly complete deployment of the OpenShift
