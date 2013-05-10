@@ -1,0 +1,11 @@
+= OpenShift Service on AWS EC2
+Mark Lamourine
+
+== Deployment
+
+In addition to the OpenShift broker and nodes, the OpenShift service
+depends on several back-end services.  The DNS service will use the
+AWS Route53 service. In a small installation such as this it is
+possible to run the MongoDB data store and the ActiveMQ messaging on
+the same host, but I'll resist the temptation to better illustrate the
+distinctions between the services.
