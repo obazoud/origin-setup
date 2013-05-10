@@ -130,5 +130,45 @@ they've been created.
 * Thor (task programming, rubygem)
 
 
+== AWS Setup
+
+AWS is a commercial service of amazon.com. To use AWS you need to
+register, establish a payment method.  Then you need to create a set
+of access credentials so that you can interact with the AWS services
+using the REST protocols (using the AWS-API rubygem).  You will also
+need to generate an SSH key pair so that AWS can give you login access
+to your host instances.
+
+See the AWS documentation for https://aws.amazon.com/[registration]
+and creating
+https://portal.aws.amazon.com/gp/aws/securityCredentials[security
+credentials].  Create one set of AWS access keys and one Amazon EC2
+key pair.
+
+=== AWS Access Key
+
+The access key has two parts: _AccessKeyId_ and
+_SecretAccessKey_. Generate an access key and make a note of both (you
+can see them again whenever you want using the AWS console).
+
+Remember, these are your *keys* so keep them secure, in files only you
+can read or write. Don't email them or paste them into IM systems.
+
+These two values are used to authenticate interactions using the
+AWS-API.
+
+=== Amazon EC2 Key Pair (SSH)
+
+The EC2 key pair is really an SSH key pair. When you create an EC2
+instance, the EC2 service places a copy of your public key in a user
+account on the instance (_root_ for RHEL6, _ec2-user_ for Fedora
+18+). You place the private key in the +.ssh+ subdirectory of your
+home directory and use that key (id) to log into your instances.
+
+Again, the part you download is *private*, treat it that way.  
 
 
+== Origin Setup
+
+This Git Repository contains a set of Thor task scripts and Puppet
+module definitions which will be useful
