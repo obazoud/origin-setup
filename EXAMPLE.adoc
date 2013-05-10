@@ -1,7 +1,47 @@
-= OpenShift Service on AWS EC2
-Mark Lamourine
+OpenShift Service on AWS EC2
+================================
 
-== Deployment
+This document describes a fairly complete deployment of the OpenShift
+Origin service on Amazon Web Services (AWS) EC2.  It is intended to
+illustrate the concepts and components involved in a real
+deployment. It is not meant as a "cut-n-paste" installation
+document. Any real deployment will require a proper design based on
+the requirements and constraints of the intended operations and users.
+
+Introduction
+--------------
+
+Components
+------------
+
+The design here is idealized. While complete, it is also
+minimal. However, it is also designed to allow growth.
+
+The entire deployment will reside on EC2 _t1.micro_ instances, but
+will be controlled, at least initially from a linux desktop.
+
+The service hosts will be registered in the _infra.example.com_
+domain. Applications will be registered in the _app.example.com_
+domain as they are created.
+
+These are the host instances which will be created:
+
+- puppetmaster
+  the anchor host, contains configs, controls remaining deployment and
+  configuration
+- data1
+  The (initial) MongoDB database host.
+- msg1
+  The (initial) ActiveMQ message broker host
+- broker1
+  The primary control host for service users
+- node1
+  The initial host which will contain user applications
+
+ 
+
+Deployment
+-----------
 
 In addition to the OpenShift broker and nodes, the OpenShift service
 depends on several back-end services.  The DNS service will use the
