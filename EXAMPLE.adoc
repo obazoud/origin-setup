@@ -1,6 +1,5 @@
 OpenShift Service on AWS EC2
 ================================
-
 This document describes a fairly complete deployment of the OpenShift
 Origin service on Amazon Web Services (AWS) EC2.  It is intended to
 illustrate the concepts and components involved in a real
@@ -9,11 +8,10 @@ document. Any real deployment will require a proper design based on
 the requirements and constraints of the intended operations and users.
 
 Introduction
---------------
+
 
 Components
-------------
-
+----------
 The design here is idealized. While complete, it is also
 minimal. However, it is also designed to allow growth.
 
@@ -25,7 +23,6 @@ domain. Applications will be registered in the _app.example.com_
 domain as they are created.
 
 These are the host instances which will be created:
-
 puppetmaster::
   the anchor host, contains configs, controls remaining deployment and
   configuration
@@ -39,10 +36,8 @@ node1::
   The initial host which will contain user applications
 
  
-
 Deployment
------------
-
+----------
 In addition to the OpenShift broker and nodes, the OpenShift service
 depends on several back-end services.  The DNS service will use the
 AWS Route53 service. In a small installation such as this it is
