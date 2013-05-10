@@ -22,16 +22,16 @@ domain. Applications will be registered in the _app.example.com_
 domain as they are created.
 
 These are the host instances which will be created:
-* puppetmaster::
+* puppetmaster
    the anchor host, contains configs, controls remaining deployment and
    configuration
-* data1::
+* data1
    The (initial) MongoDB database host.
-* msg1::
+* msg1
    The (initial) ActiveMQ message broker host
-* broker1::
+* broker1
    The primary control host for service users
-* node1::
+* node1
    The initial host which will contain user applications
 
  
