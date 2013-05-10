@@ -1,4 +1,7 @@
 = OpenShift Service on AWS EC2
+Mark Lamourine
+
+== Introduction
 
 This document describes a fairly complete deployment of the OpenShift
 Origin service on Amazon Web Services (AWS) EC2.  It is intended to
@@ -7,10 +10,76 @@ deployment. It is not meant as a "cut-n-paste" installation
 document. Any real deployment will require a proper design based on
 the requirements and constraints of the intended operations and users.
 
-Introduction
+== Users
 
+OpenShift is a service to help offer services.  This means that the
+term _user_ has different meanings to different people.  To avoid
+confusion this document will use these terms to refer to different
+users based on the type of interaction they will have with the
+service.
+
+implementer::
+  This is a person who is creating the OpenShift Origin service. Her
+  "users" are the operators and app developers.
+
+operator::
+  This is a person running the OpenShift service. This person monitors
+  and manages the OpenShift service for the developers.
+
+developer::
+  Or _app developer_.  App developers create custom applications which
+  run in OpenShift.  These are the services which are available to
+  _users_.
+
+user::
+  The application end user. He doesn't actually come into this process much.
 
 == Components
+
+There are three public (visible) parts to an OpenShift Origin service:
+
+console::
+  This is the public face of the OpenShift service. This is a web
+  interface which allows developers to manage and monitor their application
+  instances.
+
+broker::
+  This is the control center of the service.  When developers interact with
+  their services either by the console or with the command line tool,
+  the broker accepts and executes the requests.
+
+nodes::
+  The nodes are where the applications live.  Developer code
+  management and end-user application work happen here.
+
+In addition to the public face of OpenShift, there are also a set of
+_back-end services_ which provide needed functions such as
+authentication, messaging, data mangement and publication.
+
+datastore::
+  This is the brain and memory of the service.  Currently implimented
+  using MongoDB and MongOID.
+
+message broker::
+  These hosts pass control information between the OpenShift broker
+  and nodes.  Be careful of the overloading of the term _broker_. They
+  are two different things.
+
+authentication::
+  This is a service which provides user identification and access
+  management. It may be as simple as an Apache Basic Auth +.htpasswd+
+  file.  It may also be a full fledged LDAP, or Kerberos service (such
+  as IPA or Active Directory).
+
+publication::
+  aka DNS. This is the only truely external component. You can't
+  publish applications in private, it makes no sense.  This example
+  will use AWS Route53 dynamic DNS, but it could be any commercial DNS
+  service or an business internal service which accepts DNS TSIG or
+  GSS-TSIG updates. (Commerical services may require a custom plugin).
+
+== Deployment
+
 The design here is idealized. While complete, it is also
 minimal. However, it is also designed to allow growth.
 
@@ -20,6 +89,13 @@ will be controlled, at least initially from a linux desktop.
 The service hosts will be registered in the +infra.example.com+
 domain. Applications will be registered in the +app.example.com+
 domain as they are created.
+
+In addition to the OpenShift broker and nodes, the OpenShift service
+depends on several back-end services.  The DNS service will use the
+AWS Route53 service. In a small installation such as this it is
+possible to run the MongoDB data store and the ActiveMQ messaging on
+the same host, but I'll resist the temptation to better illustrate the
+distinctions between the services.
 
 These are the host instances which will be created:
 
@@ -34,13 +110,3 @@ broker1::
    The primary control host for service users
 node1::
    The initial host which will contain user applications
-
- 
-== Deployment
-
-In addition to the OpenShift broker and nodes, the OpenShift service
-depends on several back-end services.  The DNS service will use the
-AWS Route53 service. In a small installation such as this it is
-possible to run the MongoDB data store and the ActiveMQ messaging on
-the same host, but I'll resist the temptation to better illustrate the
-distinctions between the services.
