@@ -131,7 +131,7 @@ module OpenShift
     method_option :name, :type => :string, :default => "*"
     method_option :newname, :type => :string, :required => true
     def rename
-      puts "task: ec2:instance:delete #{options[:id]} " +
+      puts "task: ec2:instance:rename #{options[:id]} " +
         "#{options[:name]} => #{options[:newname]}" unless options[:quiet]
       handle = login
       instance = find_instance(handle, options)
