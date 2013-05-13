@@ -6,6 +6,7 @@ require 'rubygems'
 require 'parseconfig'
 require 'aws'
 require 'thor'
+require 'resolv'
 
 # create a puppetmaster host
 
@@ -92,12 +93,13 @@ class Origin < Thor
 
     # check archecture
     arch = invoke("remote:arch", [hostname])
-    puts "new instance is #{os}-#{releasever} #{arch}" if options[:verbose]
+    puts "instance is #{os}-#{releasever} #{arch}" if options[:verbose]
 
     # ===============================================
     # Prepare the instance for installation
     # ===============================================
 
+    # NOTE: do these with puppet later ML 201305
     # select stock, nightly, private or local
     #invoke("origin:yum:repo:nightly", [hostname, os, releasever, arch])
     #invoke("origin:yum:repo:extras", [hostname, os, releasever, arch])
@@ -106,37 +108,45 @@ class Origin < Thor
     #if not os === "fedora"
     #  invoke "origin:yum:repo:puppetlabs", [hostname, os, releasever, arch]
     #end
+    
+    ipaddr = Resolv.new.getaddress hostname
+    invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
+      :verbose => options[:verbose])
 
     # packages for configuration management
     pkglist = ['puppet', 'facter', 'augeas']
     invoke "remote:yum:install", [hostname, [pkglist]]
 
+
     #invoke "remote:puppet:init", [hostname, puppetcfg]
   end
+
 
   desc "puppetmaster NAME", "create a puppetmaster instance"
   method_option :instance, :type => :string
   method_option :hostname, :type => :string
   
-  def puppetmaster(name)
+  def puppetmaster(hostname)
 
-    puts "origin:puppetmaster #{name}" unless options[:quiet]
+    puts "origin:puppetmaster #{hostname}" unless options[:quiet]
 
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
+    manifestdir='${HOME}/manifests'
+
     # create an instance (if not provided)
-    if not options[:instance]
-      instance = invoke "origin:baseinstance", [name]
-    else
+    #if not options[:instance]
+    #  instance = invoke "origin:baseinstance", [name]
+    #else
       # name the instance (if provided)
       
-      instance = invoke "ec2:instance:info", [], :id => options[:instance]
-      invoke("ec2:instance:rename", [], :id => options[:instnace],
-        :newname => name)
-    end
+    #  instance = invoke "ec2:instance:info", [], :id => options[:instance]
+    #  invoke("ec2:instance:rename", [], :id => options[:instnace],
+    #    :newname => name)
+    #end
 
-    hostname = instance.dns_name
+    #hostname = instance.dns_name
     invoke "origin:prepare", [hostname]
 
     # install puppet-server
@@ -144,23 +154,42 @@ class Origin < Thor
       options[:verbose])
 
     # initialize configuration
+    Remote::File.scp_put(hostname, username, key_file, 
+      'data/puppet-master.conf.erb', 'puppet.conf')
 
-    # add certname=<fqdn> to puppet config
+    # set hostname in appropriate places in the config
+    cmd = "sed -i -e 's/<%= hostname %>/#{hostname}/' puppet.conf"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
 
-    # set manifest location
-    # create /var/lib/puppet/manifests
-    # set permissions on /var/lib/puppet/manifests
- 
-    # add manifestdir=/var/lib/puppet/manifests to puppet config
+    # set location of the manifests in the user's home directory
+    cmd = "sed -i -e \"/manifestdir\s*=/s|=\s*.*$|= #{manifestdir}|\" puppet.conf"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
+
+    # set location of the site.pp in the user's home directory
+    cmd = "sed -i -e \"/manifest\s*=/s|=\s*.*$|= #{manifestdir}/site.pp|\" puppet.conf"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
+
+    Remote::File.copy(hostname, username, key_file, 
+      "puppet.conf", "/etc/puppet/puppet.conf", true, false, false, options[:verbose])
+
+
+    Remote::File.mkdir(hostname, username, key_file, "manifests", false, true, 
+      options[:verbose])
 
     # create site.pp (clone config git repo?)
+    cmd = "touch #{manifestdir}/site.pp"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
+
+    # start puppet master daemon
 
     # add local hosts entry?? (external IP == fqdn)
 
     # configure firewall
     # allow port 8140/TCP (in EC2, limit to internal address space)
-
-    # start puppet master daemon
 
     #
 

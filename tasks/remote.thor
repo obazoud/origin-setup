@@ -302,7 +302,25 @@ class Remote < Thor
         cmd += " " + filepath
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
-        
+
+      def self.copy(hostname, username, keyfile, sourcepath, destpath,
+          sudo=false, recursive=false, force=false, verbose=false)
+        cmd = sudo ? "sudo " : ""
+        cmd += "cp"
+        cmd += " -r" if recursive
+        cmd += " -f" if force
+        cmd += " " + sourcepath + " " + destpath
+        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
+      end
+
+      def self.mkdir(hostname, username, keyfile, dirpath,
+          sudo=false, parents=false, verbose=false)
+        cmd = sudo ? "sudo " : ""
+        cmd += "mkdir"
+        cmd += " -p" if parents
+        cmd += " " + dirpath
+        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
+      end
     end # no_tasks
 
     class_option :verbose, :type => :boolean, :default => false
@@ -838,6 +856,7 @@ class Remote < Thor
   end
 
   desc "set_hostname HOSTNAME", "set the remote hostname provided"
+  method_option :ipaddr, :type => :string
   def set_hostname(hostname)
 
     puts "task: remote:hostname #{hostname}" unless options[:quiet]
@@ -854,6 +873,22 @@ class Remote < Thor
     puts "executing #{cmd} on #{hostname}" if options[:verbose]
     exit_code, exit_signal, stdout, stderr = Remote.remote_command(
       hostname, username, key_file, cmd, options[:verbose])
+
+    if options[:ipaddr]
+      # set the hostname/ip address in /etc/hosts if it's not there
+      # This should probably be done with puppet and augeas, but this is simpler for now:
+      # believe it or not, delete after append works.
+      cmd = "sudo sed -i -e '$a#{options[:ipaddr]} #{hostname}' -e '/#{hostname}/d' /etc/hosts"
+      puts "executing #{cmd} on #{hostname}" if options[:verbose]
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      # What I really want to do is:
+      #   if and entry for that hostname exists, set the IP to the one provided
+      #   else add a new line, but that's three commands not one on a clean machine.
+    end
+
+
   end
   
   desc "reset_net_config HOSTNAME", "reset the network configuration to simple DHCP"
