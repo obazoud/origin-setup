@@ -197,6 +197,8 @@ module OpenShift
         puts "#{instance.id} #{instance.tags['Name']}, #{instance.status} " + 
           ([:running, :pending].member?(instance.status) ? instance.dns_name : "")
       end
+
+      instance
     end
 
     desc "tag", "set or retrieve information about a specified image"

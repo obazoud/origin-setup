@@ -48,6 +48,36 @@ module OpenShift
       }
     end
 
+    desc "associate IPADDR INSTANCE", "associate and Elastic IP with an instance"
+    def associate(ipaddr, instanceid)
+      puts "task: ec2:ip:associate #{ipaddr} #{instanceid}" unless options[:quiet]
+      handle = login
+
+      # validate the IP addr and instance id?
+
+      ips = handle.elastic_ips
+      ips.select { |ip|
+        ip.ip_address == ipaddr
+      }.each { |ip|
+        ip.associate :instance => instanceid
+      }
+    end
+
+    desc "associate IPADDR INSTANCE", "associate and Elastic IP with an instance"
+    def disassociate(ipaddr)
+      puts "task: ec2:ip:disassociate #{ipaddr}" unless options[:quiet]
+      handle = login
+
+      # validate the IP addr and instance id?
+
+      ips = handle.elastic_ips
+      ips.select { |ip|
+        ip.ip_address == ipaddr
+      }.each { |ip|
+        ip.disassociate
+      }
+    end
+
     no_tasks do
       
       # Create an EC2 connection

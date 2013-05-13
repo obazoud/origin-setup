@@ -427,9 +427,10 @@ class Remote < Thor
     class_option(:ssh_key_file, :type => :string)
 
     desc "install HOSTNAME RPMNAME", "install an RPM on the remote system"
-    def install(hostname, rpmname)
+    def install(hostname, rpmlist)
 
-      puts "task: remote:yum:install #{hostname} #{rpmname}" unless options[:quiet]
+      rpmlist = rpmlist.join(' ') if rpmlist.class == Array
+      puts "task: remote:yum:install #{hostname} #{rpmlist}" unless options[:quiet]
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
       puts "using key file #{key_file}" if options[:verbose]
@@ -439,10 +440,10 @@ class Remote < Thor
       puts "username: #{username}" if options[:verbose]
       puts "key_file: #{key_file}" if options[:verbose]
 
-      cmd = "sudo yum --debuglevel 1 -y install #{rpmname}"
-
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      #cmd = "sudo yum --debuglevel 1 -y install #{rpmname}"
+      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      #  hostname, username, key_file, cmd, options[:verbose])
+      Yum.install_rpms hostname, username, key_file, rpmlist, options[:verbose]
 
     end
 
@@ -483,7 +484,7 @@ class Remote < Thor
 
     end
 
-    desc "list HOSTNAME", "update RPMs on the remote system"
+    desc "list HOSTNAME", "list RPMs on the remote system"
     method_option :filter, :default => "installed"
     def list(hostname)
       puts "task: remote:yum:list #{hostname} #{options[:filter]}" unless options[:quiet]
@@ -526,6 +527,19 @@ class Remote < Thor
         hostname, username, key_file, cmd, options[:verbose])
 
     end
+
+    no_tasks do
+
+      def self.install_rpms(hostname, username, key_file, packages, verbose=false)
+        packages = packages.join(' ') if packages.class == Array
+        cmd = "sudo yum --debuglevel 1 -y install #{packages}"
+
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, verbose)
+
+      end
+    end
+
   end
 
 
