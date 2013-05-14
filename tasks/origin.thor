@@ -209,6 +209,20 @@ class Origin < Thor
 
   end
 
+  desc "puppetmaster NAME", "create a puppetmaster instance"
+  method_option :instance, :type => :string
+  method_option :hostname, :type => :string
+  
+  def puppetclient(hostname, puppetmaster)
+
+    puts "origin:puppetclient #{hostname}, #{puppetmaster}" unless options[:quiet]
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+    
+  end
+
   no_tasks do
 
       # Create an EC2 connection
