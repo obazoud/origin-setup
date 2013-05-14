@@ -113,10 +113,12 @@ class Origin < Thor
     invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
       :verbose => options[:verbose])
 
+    # packages for firewall management
+    pkglist = ["system-config-firewall-base"]
+    
     # packages for configuration management
-    pkglist = ['puppet', 'facter', 'augeas']
+    pkglist << ['puppet', 'facter', 'augeas']
     invoke "remote:yum:install", [hostname, [pkglist]]
-
 
     #invoke "remote:puppet:init", [hostname, puppetcfg]
   end
@@ -133,7 +135,7 @@ class Origin < Thor
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-    manifestdir='${HOME}/manifests'
+    manifestdir='/var/lib/puppet/manifests'
 
     # create an instance (if not provided)
     #if not options[:instance]
@@ -175,23 +177,35 @@ class Origin < Thor
     Remote::File.copy(hostname, username, key_file, 
       "puppet.conf", "/etc/puppet/puppet.conf", true, false, false, options[:verbose])
 
-
-    Remote::File.mkdir(hostname, username, key_file, "manifests", false, true, 
+    Remote::File.mkdir(hostname, username, key_file, manifestdir, true, true, 
       options[:verbose])
 
-    # create site.pp (clone config git repo?)
-    cmd = "touch #{manifestdir}/site.pp"
+    cmd = "sudo chown puppet:puppet #{manifestdir}"
     exit_code, exit_signal, stdout, stderr = Remote.remote_command(
       hostname, username, key_file, cmd, options[:verbose])
 
+    # create site.pp (clone config git repo?)
+    cmd = "sudo -u puppet touch #{manifestdir}/site.pp"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
+
+    systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
+
     # start puppet master daemon
+    invoke("remote:service:enable", [hostname, "puppetmaster"],
+      :systemd => systemd, :verbose => options[:verbose])
+    invoke("remote:service:start", [hostname, "puppetmaster"], 
+      :systemd => systemd, :verbose => options[:verbose])
 
-    # add local hosts entry?? (external IP == fqdn)
+    #cmd = "sudo firewall-cmd --zone public --add-service ssh"
+    cmd = "sudo lokkit --service=ssh"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
 
-    # configure firewall
-    # allow port 8140/TCP (in EC2, limit to internal address space)
-
-    #
+    cmd = "sudo lokkit --port 8140:tcp"
+    #cmd = "sudo firewall-cmd --zone public --add-port 8140/tcp"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
 
   end
 
