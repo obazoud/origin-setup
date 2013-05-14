@@ -2,11 +2,7 @@
 #
 require 'rubygems'
 require 'thor'
-require 'aws'
-require 'parseconfig'
-
-#require 'openshift/aws'
-
+require 'openshift/aws'
 module OpenShift
   # Manage Amazon Web Services EC2 instances and images
 
@@ -15,14 +11,12 @@ module OpenShift
 
     class_option :verbose, :type => :boolean, :default => false
 
-    AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
-
     desc "list", "list the available images for new instances"
     method_option(:name, :type => :string, :default => "*")
     method_option(:location, :type => :string, :default => "*")
     method_option(:owner, :default => :self)
     def list
-      handle = login
+      handle = AWS::EC2.new
       images = handle.images.with_owner(options[:owner]).
         filter('state', 'available').
         filter('name', options[:name])
@@ -48,7 +42,7 @@ module OpenShift
         return
       end
 
-      handle = login
+      handle = AWS::EC2.new
       image = find_image(login, options)
 
       if not image
@@ -89,7 +83,7 @@ module OpenShift
         return
       end
 
-      handle = login
+      handle = AWS::EC2.new
       image = find_image(login, options)
 
       if not image
@@ -112,7 +106,7 @@ module OpenShift
     method_option :wait, :type => :boolean, :default => false
     def create(instance, name)
 
-      handle = login
+      handle = AWS::EC2.new
 
       # if the instance is a string, get the instance from AWS
       if instance.class == String and instance.match(/^i-/)
@@ -151,7 +145,7 @@ module OpenShift
     method_option :id, :type => :string, :default => nil
     method_option :name, :type => :string
     def delete
-      handle = login
+      handle = AWS::EC2.new
       
       # find one image that matches either the image or name
       if options[:id] then
@@ -176,7 +170,7 @@ module OpenShift
     desc "find TAGNAME", "find the id of images with a given tag"
     method_option(:tagvalue)
     def find(tagname)
-      handle = login
+      handle = AWS::EC2.new
 
       if options[:tagvalue]
         images = handle.images.with_owner(:self).
@@ -196,26 +190,6 @@ module OpenShift
     private
 
     no_tasks do
-      # Create an EC2 connection
-      def login(access_key_id=nil, secret_access_key=nil, credentials_file=nil, 
-          region=nil)
-        # explicit credentials take precedence over a file
-        if not (access_key_id and secret_access_key) then
-          credentials_file ||= AWS_CREDENTIALS_FILE
-          config = ParseConfig.new File.expand_path(credentials_file)
-          access_key_id = config.params['AWSAccessKeyId']
-          secret_key = config.params['AWSSecretKey']
-
-          # check them
-        end
-
-        connection = AWS::EC2.new(
-          :access_key_id => access_key_id,
-          :secret_access_key => secret_key
-          )
-        region ? connection.regions[region] : connection
-      end
-
       # Find a single instance given an ID or name
       def find_image(connection, options)
       

@@ -3,26 +3,23 @@
 #
 require 'rubygems'
 require 'thor'
-require 'aws'
-require 'parseconfig'
+require 'openshift/aws'
 
-#require 'openshift/aws'
+# Initialize AWS credentials
+::OpenShift::AWS.awscred
 
-
-  # Manage Amazon Web Services EC2 instances and images
+# Manage Amazon Web Services EC2 instances and images
 module OpenShift
   class Instance < Thor
 
     namespace "ec2:instance"
 
     class_option :verbose, :type => :boolean, :default => false
-
-    AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
-
     desc "list", "list the set of running instances"
     method_option(:name, :desc => "filter for instance names")
     def list
-      handle = login
+      handle = AWS::EC2.new
+
 #      handle.instances.filter('tag-key', "Name").filter('tag-value', options[:name]).each do |i|
 
       instances = handle.instances
@@ -58,7 +55,7 @@ module OpenShift
       puts "task: ec2:instance:create " +
         "#{options[:image]} #{options[:name]}" unless options[:quiet]
 
-      handle = login
+      handle = AWS::EC2.new
 
       # use configured value if not provided
       key = options[:key] || Remote.ssh_key_file
@@ -103,7 +100,7 @@ module OpenShift
     def delete
       puts "task: ec2:instance:delete " +
         "#{options[:id]} #{options[:name]}" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       
       if not options[:force] then
@@ -133,7 +130,7 @@ module OpenShift
     def rename
       puts "task: ec2:instance:rename #{options[:id]} " +
         "#{options[:name]} => #{options[:newname]}" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       puts "renaming instance #{instance.id} (#{instance.tags['Name']}) to #{options[:newname]}"
       instance.tags['Name'] = options[:newname]
@@ -146,7 +143,7 @@ module OpenShift
     def start
       puts "task: ec2:instance:start #{options[:id]} " +
         "#{options[:name]}" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       instance.start
 
@@ -164,7 +161,7 @@ module OpenShift
     def stop
       puts "task: ec2:instance:stop #{options[:id]} " +
         "#{options[:name]}" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       puts "Stopping instance #{instance.id}" if options[:verbose]
       instance.stop
@@ -180,7 +177,7 @@ module OpenShift
     method_option :name, :type => :string, :default => "*"
     def info
       # Open a connection to the AWS service
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
       if options[:verbose] then
@@ -217,7 +214,7 @@ module OpenShift
         return
       end
 
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(login, options)
 
       if not instance
@@ -242,7 +239,7 @@ module OpenShift
     method_option :name, :type => :string, :default => "*"
     def hostname
       # Open a connection to the AWS service
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
       puts instance.dns_name
@@ -253,7 +250,7 @@ module OpenShift
     method_option :name, :type => :string, :default => "*"
     def status
       # Open a connection to the AWS service
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       if options[:verbose] then
         puts "Status: #{instance.status}"
@@ -268,7 +265,7 @@ module OpenShift
     def private_ipaddress
       puts "task: ec2:instance:internal_ipaddress"
       # Open a connection to the AWS service
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
 
@@ -282,7 +279,7 @@ module OpenShift
     def private_hostname
       puts "task: ec2:instance:internal_ipaddress"
       # Open a connection to the AWS service
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
 
@@ -299,7 +296,7 @@ module OpenShift
     method_option :pollrate, :type => :numeric, :default => 5
     method_option :maxtries, :type => :numeric, :default => 12
     def wait
-      handle = login
+      handle = AWS::EC2.new
       instance = find_instance(handle, options)
       
       target_status = options[:state].to_sym
@@ -315,27 +312,6 @@ module OpenShift
 
     private
     no_tasks do
-
-      # Create an EC2 connection
-      def login(access_key_id=nil, secret_access_key=nil, credentials_file=nil, 
-          region=nil)
-        # explicit credentials take precedence over a file
-        if not (access_key_id and secret_access_key) then
-          credentials_file ||= AWS_CREDENTIALS_FILE
-          config = ParseConfig.new File.expand_path(credentials_file)
-          
-          access_key_id = config.params['AWSAccessKeyId']
-          secret_key = config.params['AWSSecretKey']
-
-          # check them
-        end
-
-        connection = AWS::EC2.new(
-          :access_key_id => access_key_id,
-          :secret_access_key => secret_key
-          )
-        region ? connection.regions[region] : connection
-      end
 
       # Find a single instance given an ID or name
       def find_instance(connection, options)
