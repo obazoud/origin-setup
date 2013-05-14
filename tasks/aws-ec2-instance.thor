@@ -51,7 +51,7 @@ module OpenShift
     # m.1small or t1.micro
     method_option(:type, :type => :string, :default => "t1.micro",
       :desc => "an EC2 image type")
-    method_option(:secgroup, :type => :string, :default => "default",
+    method_option(:securitygroup, :type => :string, :default => "default",
       :desk => "the security group to apply to this instance")
     method_option(:wait, :type => :boolean, :default => false)
     def create
@@ -69,7 +69,7 @@ module OpenShift
         :image_id => options[:image],
         :instance_type => options[:type],
         :key_name => options[:key],
-        :security_groups => [(options[:secgroup]||'default')],
+        :security_groups => [(options[:securitygroup]||'default')],
         :block_device_mappings => {'/dev/sdb' => 'ephemeral0'}
         )
             

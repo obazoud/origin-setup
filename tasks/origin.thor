@@ -19,6 +19,7 @@ class Origin < Thor
   desc "baseinstance NAME", "create a base instance for customization"
   method_option :baseos, :type => :string
   method_option :image, :type => :string
+  method_option :securitygroup, :type => :string, :default => "default"
   def baseinstance(name)
     puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
@@ -47,7 +48,7 @@ class Origin < Thor
     #
     instance = invoke('ec2:instance:create', [], 
       :image => image_id, :name => name, :key => @config['AWSKeyPairName'],
-      :type => @config['AWSEC2Type']
+      :type => @config['AWSEC2Type'], :securitygroup => options[:securitygroup]
       )
 
     puts "instance #{instance.id} starting" if options[:verbose]
