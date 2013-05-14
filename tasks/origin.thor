@@ -13,6 +13,8 @@ require 'openshift/aws'
 module OpenShift
   class Origin < Thor
 
+    namespace "origin"
+
     class_option :verbose, :type => :boolean, :default => false
     class_option :debug, :type => :boolean, :default => false
     class_option :quiet, :type => :boolean, :default => false
@@ -211,7 +213,7 @@ module OpenShift
 
     end
 
-    desc "puppetmaster NAME", "create a puppetmaster instance"
+    desc "puppetclient NAME", "create a puppet client instance"
     method_option :instance, :type => :string
     method_option :hostname, :type => :string
     
