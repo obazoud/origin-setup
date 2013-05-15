@@ -240,7 +240,30 @@ module OpenShift
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      
+      invoke "origin:prepare", [hostname]
+
+      #invoke "remote:puppet:client:set_master", [hostname, puppetmaster]
+
+      Remote::File.copy(hostname, username, key_file,
+        '/etc/puppet/puppet.conf', 'puppet.conf', 
+        false, false, false, options[:verbose])
+
+      cmd = "sed -i -e  '/\[main]/a    server=#{puppetmaster}' puppet.conf"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      Remote::File.copy(hostname, username, key_file,
+        'puppet.conf', '/etc/puppet/puppet.conf',
+        true, false, false, options[:verbose])
+
+      # start puppet master daemon
+      invoke("remote:service:enable", [hostname, "puppet"],
+        :systemd => systemd, :verbose => options[:verbose])
+      invoke("remote:service:start", [hostname, "puppet"], 
+        :systemd => systemd, :verbose => options[:verbose])
+
+      # invoke "remote:puppet:master:cert:sign", [puppetmaster, hostname]
+
     end
 
     no_tasks do
