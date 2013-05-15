@@ -195,21 +195,37 @@ module OpenShift
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
+
+      cmd = "sudo service iptables stop"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      
+      # lokkit seems to block when run via rubygem-ssh
+      #cmd = "sudo firewall-cmd --zone public --add-service ssh"
+      cmd = "sudo lokkit --nostart --service=ssh"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      #cmd = "sudo firewall-cmd --zone public --add-port 8140/tcp"
+      cmd = "sudo lokkit --nostart --port=8140:tcp"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      # NOTE: lokkit seems to hang when run by rubygem-ssh
+      #cmd = "sudo lokkit --enabled &"
+      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      #  hostname, username, key_file, cmd, options[:verbose])
+
+      cmd = "sudo service iptables start"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
       # start puppet master daemon
       invoke("remote:service:enable", [hostname, "puppetmaster"],
         :systemd => systemd, :verbose => options[:verbose])
       invoke("remote:service:start", [hostname, "puppetmaster"], 
         :systemd => systemd, :verbose => options[:verbose])
-
-      #cmd = "sudo firewall-cmd --zone public --add-service ssh"
-      cmd = "sudo lokkit --service=ssh"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      cmd = "sudo lokkit --port 8140:tcp"
-      #cmd = "sudo firewall-cmd --zone public --add-port 8140/tcp"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
 
     end
 

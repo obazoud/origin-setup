@@ -29,10 +29,10 @@ module OpenShift
 
     desc "delete VOLUME", "delete the volume"
     def delete(volume_id)
-      
+      puts "task ec2:volume:delete #{volume_id}" unless options[:quiet]
       handle = AWS::EC2.new
       volumes = handle.volumes
-      volumes.with_owner(:self).select { |volume|
+      volumes.select { |volume|
         volume.id == volume_id
       }.each {|volume|
         volume.delete

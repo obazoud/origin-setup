@@ -1,6 +1,11 @@
 = Origin Service Configuration and Setup
 Mark Lamourine <markllama@gmail.com>
 
+* AWS preparation
+** ElasticIP addresses
+** DNS A records
+** SecurityGroups
+
 * puppetmaster
 
 * backend services
