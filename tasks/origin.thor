@@ -26,8 +26,7 @@ module OpenShift
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
-      @config = get_config if not @config
-
+      config = ::OpenShift::AWS.config
       #----------------
       # Select an image
       #----------------
@@ -40,7 +39,7 @@ module OpenShift
         # TODO: validate baseos
         puts "- baseos: #{baseos}" unless options[:quiet]
 
-        image_id  = @config[baseos]['BaseOSImage']
+        image_id  = config[baseos]['BaseOSImage']
       end
       # TODO: valudate image_id
       puts "- image id: #{image_id}" unless options[:quiet]
@@ -50,8 +49,8 @@ module OpenShift
       # ------------------------------
       #
       instance = invoke('ec2:instance:create', [], 
-        :image => image_id, :name => name, :key => @config['AWSKeyPairName'],
-        :type => @config['AWSEC2Type'], :securitygroup => options[:securitygroup]
+        :image => image_id, :name => name, :key => config['AWSKeyPairName'],
+        :type => config['AWSEC2Type'], :securitygroup => options[:securitygroup]
         )
 
       puts "instance #{instance.id} starting" if options[:verbose]
@@ -160,6 +159,7 @@ module OpenShift
         options[:verbose])
 
       # initialize configuration
+      # TODO: determine location of data dir
       Remote::File.scp_put(hostname, username, key_file, 
         'data/puppet-master.conf.erb', 'puppet.conf')
 
@@ -228,31 +228,6 @@ module OpenShift
     end
 
     no_tasks do
-
-      # Create an EC2 connection
-      def login(access_key_id=nil, secret_access_key=nil, credentials_file=nil, 
-          region=nil)
-        # explicit credentials take precedence over a file
-        if not (access_key_id and secret_access_key) then
-          credentials_file ||= AWS_CREDENTIALS_FILE
-          config = ParseConfig.new File.expand_path(credentials_file)
-          access_key_id = config.params['AWSAccessKeyId']
-          secret_key = config.params['AWSSecretKey']
-
-          # check them
-        end
-
-        connection = AWS::EC2.new(
-          :access_key_id => access_key_id,
-          :secret_access_key => secret_key
-          )
-        region ? connection.regions[region] : connection
-      end
-
-      def get_config
-        filename = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
-        ParseConfig.new(File.expand_path(filename)).params
-      end
 
       # determine which distribution family we're running on
       def guess_os

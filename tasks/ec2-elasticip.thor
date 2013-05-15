@@ -3,8 +3,7 @@
 #
 require 'rubygems'
 require 'thor'
-require 'aws'
-require 'parseconfig'
+require 'openshift/aws'
 
 module OpenShift
 
@@ -17,7 +16,7 @@ module OpenShift
     desc "list", "list the defined elastic IPs"
     def list
       puts "task: ec2:ip:list" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
       ips = handle.elastic_ips
 
       ips.each { |ip|
@@ -28,7 +27,7 @@ module OpenShift
     desc "create", "create a new elastic IP"
     def create
       puts "task: ec2:ip:create" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
       ips = handle.elastic_ips
       ip = ips.create
       puts ip
@@ -39,7 +38,7 @@ module OpenShift
     desc "delete IPADDR", "delete an elastic IP"
     def delete(ipaddr)
       puts "task: ec2:ip:delete #{ipaddr}" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
       ips = handle.elastic_ips
       ips.select { |ip|
         ip.ip_address == ipaddr
@@ -51,7 +50,7 @@ module OpenShift
     desc "associate IPADDR INSTANCE", "associate and Elastic IP with an instance"
     def associate(ipaddr, instanceid)
       puts "task: ec2:ip:associate #{ipaddr} #{instanceid}" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
 
       # validate the IP addr and instance id?
 
@@ -66,7 +65,7 @@ module OpenShift
     desc "associate IPADDR INSTANCE", "associate and Elastic IP with an instance"
     def disassociate(ipaddr)
       puts "task: ec2:ip:disassociate #{ipaddr}" unless options[:quiet]
-      handle = login
+      handle = AWS::EC2.new
 
       # validate the IP addr and instance id?
 
@@ -78,30 +77,6 @@ module OpenShift
       }
     end
 
-    no_tasks do
-      
-      # Create an EC2 connection
-      def login(access_key_id=nil, secret_access_key=nil, credentials_file=nil, 
-          region=nil)
-        # explicit credentials take precedence over a file
-        if not (access_key_id and secret_access_key) then
-          credentials_file ||= AWS_CREDENTIALS_FILE
-          config = ParseConfig.new File.expand_path(credentials_file)
-          
-          access_key_id = config.params['AWSAccessKeyId']
-          secret_key = config.params['AWSSecretKey']
-
-          # check them
-        end
-
-        connection = AWS::EC2.new(
-          :access_key_id => access_key_id,
-          :secret_access_key => secret_key
-          )
-        region ? connection.regions[region] : connection
-      end
-      
-    end
   end
 
 end

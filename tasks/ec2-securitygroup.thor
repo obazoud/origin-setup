@@ -19,76 +19,124 @@ module Openshift
 
     desc "list", "list the available snapshots"
     def list
-      handle = login
+      handle = AWS::EC2.new
       
       securitygroups = handle.security_groups
       securitygroups.each { |securitygroup|
         puts "#{securitygroup.id}: #{securitygroup.name}, #{securitygroup.description}"
-      }
+        if options[:verbose]
+          securitygroup.ingress_ip_permissions.each { |perm|
+            puts "  in rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+          }
 
-    end
-
-    desc "delete SECURITYGROUP", "delete the securitygroup"
-    def delete(securitygroup_id)
-      handle = login
-      
-      securitygroups = handle.security_groups
-      securitygroups.with_owner(:self).select { |securitygroup|
-        securitygroup.id == securitygroup_id
-      }.each {|securitygroup|
-        securitygroup.delete
+          securitygroup.egress_ip_permissions.each { |perm|
+            puts " out rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+          }
+        end
       }
     end
 
-    private
+    desc "create NAME", "create a new securitygroup"
+    method_option :description, :type => :string # required?
+    def create(name)
+      handle = AWS::EC2.new
+      sgroups = handle.security_groups
+      sgroup = sgroups.create(name, :description => options[:description])
+      puts sgroup.id
+      sgroup
+    end
+
+    desc "delete", "delete the securitygroup"
+    method_option :id, :type => :string
+    method_option :name, :type => :string
+    def delete(group_id)
+      puts "task: ec2:securitygroup:delete #{group_id}" unless options[:quiet]
+
+      sgroup = Securitygroup.get(options[:id], options[:name])
+      sgroup.delete
+    end
+
+
+    desc "info", "retrieve and report on a securitygroup"
+    method_option :id, :type => :string
+    method_option :name, :type => :string
+    def info
+      puts "task: ec2:securitygroup:info" unless options[:quiet]
+
+      sgroup = Securitygroup.get(options[:id], options[:name])
+
+      puts "#{sgroup.id}: #{sgroup.name}, #{sgroup.description}"
+        if options[:verbose]
+          sgroup.ingress_ip_permissions.each { |perm|
+            puts "  in rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+          }
+
+          sgroup.egress_ip_permissions.each { |perm|
+            puts " out rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+          }
+        end
+      sgroup
+    end
+
     no_tasks do
-
-      # Create an EC2 connection
-      def login(access_key_id=nil, secret_access_key=nil, credentials_file=nil, 
-          region=nil)
-        # explicit credentials take precedence over a file
-        if not (access_key_id and secret_access_key) then
-          credentials_file ||= AWS_CREDENTIALS_FILE
-          config = ParseConfig.new File.expand_path(credentials_file)
-          
-          access_key_id = config.params['AWSAccessKeyId']
-          secret_key = config.params['AWSSecretKey']
-
-          # check them
+      
+      # retrieve a single securitygroup by name or id
+      def self.get(id=nil, name=nil)
+        handle = AWS::EC2.new      
+        securitygroups = handle.security_groups
+        # ask?
+        if id
+          sgroup = securitygroups[id]
+        elsif name
+          sgroup_list = securitygroups.select {|sg|
+            sg.name.match name
+          }
+          if sgroup_list.count != 1
+            raise ArgumentError.new(
+              "no matching security group '#{name}'")
+          end
+          sgroup = sgroup_list[0]
+        else
+          raise ArgumentError.new "either id or name is required"
         end
-
-        connection = AWS::EC2.new(
-          :access_key_id => access_key_id,
-          :secret_access_key => secret_key
-          )
-        region ? connection.regions[region] : connection
+        sgroup
       end
 
-      # Find a single instance given an ID or name
-      def find_instance(connection, options)
+    end
 
-        if options[:id] then
-          instance = connection.instances[options[:id]]
-          raise ArgumentError.new("id #{options[:id]}: no matches") if not instance
-          return instance
+    class Rule < Thor
+      namespace "ec2:securitygroup:rule"
+
+      desc("add PROTOCOL PORTS [SOURCES]",
+        "add a permission rule to a security group")
+      method_option :id, :type => :string
+      method_option :name, :type => :string
+      method_option :egress, :type => :boolean, :default => false
+      def add(protocol, ports, *sources)
+        puts "task: ec2:securitygroup:rule:add #{protocol} #{ports} #{sources.join(' ')}"
+
+        # get the sgroup with the given ID
+        sgroup = Securitygroup.get(options[:id], options[:name])
+
+        # check that the protocol is valid
+        proto_sym = protocol.downcase.to_sym
+        if not [:tcp, :udp, :icmp].member? proto_sym
+          raise ArgumentError.new "invalid protocol: #{protocol}"
         end
 
-        instances = connection.instances.
-          filter('tag-key', 'Name').
-          filter('tag-value', options[:name])
+        # validate the ports
+        port_list = ports.split('..')
+        # check for split out of range
+        portrange = port_list[0].to_i if port_list.count == 1
+        portrange = Range.new(*port_list.map{|s|s.to_i}) if port_list.count == 2
+        
+        # validate the sources
 
-        if instances.count === 0 then
-          raise ArgumentError.new(
-            "name #{options[:name]}: no matches")
-        elsif
-          instances.count > 1 then
-          raise ArgumentError.new(
-          "name #{options[:name]} matches #{instances.count} instances")
-        end
+        # add the rule to the sgroup
+        sgroup.authorize_ingress proto_sym, portrange, *sources
 
-        # get the first element of an iterator
-        instances.to_a[0]
       end
+
     end
   end
 end

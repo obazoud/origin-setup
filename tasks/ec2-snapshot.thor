@@ -3,9 +3,8 @@
 # Set up an OpenShift Origin service on AWS EC2
 #
 require 'rubygems'
-require 'parseconfig'
-require 'aws'
 require 'thor'
+require 'openshift/aws'
 
 module Openshift
 
@@ -15,11 +14,9 @@ module Openshift
 
     class_option :verbose, :type => :boolean, :default => false
 
-    AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
-
     desc "list", "list the available snapshots"
     def list
-      handle = login
+      handle = AWS::EC2.new
       
       snapshots = handle.snapshots
       snapshots.with_owner(:self).each { |snapshot|
@@ -30,7 +27,7 @@ module Openshift
 
     desc "delete SNAPSHOT", "delete the snapshot"
     def delete(snapshot_id)
-      handle = login
+      handle = AWS::EC2.new
       
       snapshots = handle.snapshots
       snapshots.with_owner(:self).select { |snapshot|
