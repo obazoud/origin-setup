@@ -89,7 +89,11 @@ module OpenShift
     desc "prepare HOSTNAME", "add yum repositories and install and config puppet"
     method_option :username, :type => :string
     method_option :ssh_id, :type => :string
+    method_option :packages, :type => :array, :default => []
+
     def prepare(hostname)
+
+      puts "task: origin:prepare #{hostname}" unless options[:quiet]
 
       # check release and version
       os, releasever = invoke("remote:distribution", [hostname])
@@ -117,10 +121,11 @@ module OpenShift
         :verbose => options[:verbose])
 
       # packages for firewall management
-      pkglist = ["system-config-firewall-base"]
+      pkglist = options[:packages] + ["system-config-firewall-base"]
       
       # packages for configuration management
       pkglist << ['puppet', 'facter', 'augeas']
+
       invoke "remote:yum:install", [hostname, [pkglist]]
 
       # get ssh access
@@ -148,6 +153,7 @@ module OpenShift
     desc "puppetmaster NAME", "create a puppetmaster instance"
     method_option :instance, :type => :string
     method_option :hostname, :type => :string
+    method_option :siterepo, :type => :string
     
     def puppetmaster(hostname)
 
@@ -156,7 +162,11 @@ module OpenShift
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      manifestdir='/var/lib/puppet/manifests'
+      # where will the site specs be?
+      manifestdir='${HOME}/origin-setup/puppet/manifests'
+
+      # manifest git repo:
+      # 
 
       # create an instance (if not provided)
       #if not options[:instance]
@@ -170,11 +180,18 @@ module OpenShift
       #end
 
       #hostname = instance.dns_name
-      invoke "origin:prepare", [hostname]
+      invoke("origin:prepare", [hostname],
+        :packages => ['puppet-server', 'git'],
+        :verbose => options[:verbose])
 
-      # install puppet-server
-      Remote::Yum.install_rpms(hostname, username, key_file, 'puppet-server',
-        options[:verbose])
+      #invoke "remote:yum:install", [hostname, ['puppet-server', 'git']]
+
+      ## install puppet-server
+      #Remote::Yum.install_rpms(hostname, username, key_file, 'puppet-server',
+      #  options[:verbose])
+
+      invoke "remote:git:clone", [hostname, options[:siterepo]] if options[:siterepo]
+
 
       # initialize configuration
       # TODO: determine location of data dir

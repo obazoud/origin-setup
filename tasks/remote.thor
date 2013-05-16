@@ -471,7 +471,7 @@ class Remote < Thor
     class_option(:ssh_key_file, :type => :string)
 
     desc "install HOSTNAME RPMNAME", "install an RPM on the remote system"
-    def install(hostname, rpmlist)
+    def install(hostname, *rpmlist)
 
       rpmlist = rpmlist.join(' ') if rpmlist.class == Array
       puts "task: remote:yum:install #{hostname} #{rpmlist}" unless options[:quiet]
