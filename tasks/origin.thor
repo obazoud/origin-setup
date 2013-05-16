@@ -123,7 +123,25 @@ module OpenShift
       pkglist << ['puppet', 'facter', 'augeas']
       invoke "remote:yum:install", [hostname, [pkglist]]
 
-      #invoke "remote:puppet:init", [hostname, puppetcfg]
+      # get ssh access
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      # log puppet to its own file
+      Remote::File.scp_put(hostname, username, key_file,
+        "data/rsyslog-puppet.conf", "rsyslog-puppet.conf",
+        options[:verbose])
+
+      Remote::File.copy(hostname, username, key_file,
+        "rsyslog-puppet.conf", "/etc/rsyslog.d/puppet.conf",
+        true, false, false, options[:verbose])
+
+      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
+
+      invoke("remote:service:restart", [hostname, "rsyslog"],
+        :systemd => systemd, :verbose => options[:verbose])
+
+      #invoke "puppet:master:init", [hostname, puppetcfg]
     end
 
 
@@ -195,7 +213,6 @@ module OpenShift
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
-
       cmd = "sudo service iptables stop"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
@@ -229,7 +246,7 @@ module OpenShift
 
     end
 
-    desc "puppetclient NAME", "create a puppet client instance"
+    desc "puppetclient HOSTNAME MASTER", "create a puppet client instance"
     method_option :instance, :type => :string
     method_option :hostname, :type => :string
     
@@ -240,29 +257,19 @@ module OpenShift
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
+      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
+
       invoke "origin:prepare", [hostname]
 
-      #invoke "remote:puppet:client:set_master", [hostname, puppetmaster]
+      invoke "puppet:agent:set_server", [hostname, puppetmaster]
 
-      Remote::File.copy(hostname, username, key_file,
-        '/etc/puppet/puppet.conf', 'puppet.conf', 
-        false, false, false, options[:verbose])
-
-      cmd = "sed -i -e  '/\[main]/a    server=#{puppetmaster}' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      Remote::File.copy(hostname, username, key_file,
-        'puppet.conf', '/etc/puppet/puppet.conf',
-        true, false, false, options[:verbose])
-
-      # start puppet master daemon
+      # start puppet daemon
       invoke("remote:service:enable", [hostname, "puppet"],
         :systemd => systemd, :verbose => options[:verbose])
       invoke("remote:service:start", [hostname, "puppet"], 
         :systemd => systemd, :verbose => options[:verbose])
 
-      # invoke "remote:puppet:master:cert:sign", [puppetmaster, hostname]
+      invoke "puppet:cert:sign", [puppetmaster, hostname]
 
     end
 

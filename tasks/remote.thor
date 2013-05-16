@@ -874,6 +874,25 @@ class Remote < Thor
     end
 
     # restart
+    # start
+    desc "restart SERVICE [SERVICE...]", "start a service on a remote host"
+    def restart(hostname, *services)
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      if options[:systemd]
+        service_cmd = :systemd_cmd
+      else
+        service_cmd = :upstart_cmd
+      end
+
+      services.each { |service|
+        cmd = "sudo " + send(service_cmd, service, "restart")
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose])
+      }
+    end
 
     # status
 
@@ -919,13 +938,6 @@ class Remote < Thor
 
   end
 
-  class Puppet < Thor
-
-    class_option(:verbose, :type => :boolean, :default => false)
-    class_option(:username, :type => :string)
-    class_option(:ssh_key_file, :type => :string)
-  
-  end
 
   desc "arch HOSTNAME", "get the base architcture of the host"
   def arch(hostname)
