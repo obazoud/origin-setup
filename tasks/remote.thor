@@ -460,6 +460,20 @@ class Remote < Thor
     end
 
 
+    desc "permissions HOSTNAME FILEPATH MODE", "change the permissions on a remote file or directory"
+    def permissions(hostname, path, mode)
+      username = options[:username] || Remote.ssh_username
+      keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+    end
+
+    desc "group HOSTNAME FILEPATH GROUP", "change the group on a remote file or directory"
+    def group(hostname, path, group)
+      username = options[:username] || Remote.ssh_username
+      keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+    end
+
   end
 
   class Yum < Thor
