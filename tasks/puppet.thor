@@ -25,12 +25,34 @@ module OpenShift
         master, username, key_file, cmd, options[:verbose])
 
       end
+
+
+      desc "generate MASTER HOSTNAME", "sign an agent certificate"
+      def generate(master, hostname)
+        puts "task puppet:cert:generate #{master} #{hostname}" unless options[:quiet]
+
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        cmd = "sudo puppet cert sign #{hostname}"
+
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        master, username, key_file, cmd, options[:verbose])
+
+      end
+
     end
 
     class Master < Thor
 
       namespace "puppet:master"
 
+      desc "set_moduledir HOSTNAME MODULEDIR", "set the moduledir for the master configuration"
+      def set_moduledir(hostname, moduledir)
+        puts "task: puppet:module:set_moduledir #{hostname} #{moduledir}" unless options[:quiet]
+
+
+      end
 
     end
 

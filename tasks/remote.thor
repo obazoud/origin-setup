@@ -347,6 +347,16 @@ class Remote < Thor
         cmd += " " + dirpath
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
+
+      def self.permission(hostname, username, keyfile, path, mode,
+          sudo=false, recursive=false, verbose=false)
+        cmd = sudo ? "sudo " : ""
+        cmd += "chmod"
+        cmd += " -R" if recursive
+        cmd += " " + mode + " " + path
+        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
+      end
+
     end # no_tasks
 
     class_option :verbose, :type => :boolean, :default => false
@@ -460,11 +470,17 @@ class Remote < Thor
     end
 
 
-    desc "permissions HOSTNAME FILEPATH MODE", "change the permissions on a remote file or directory"
-    def permissions(hostname, path, mode)
+    desc "permission HOSTNAME FILEPATH MODE", "change the permissions on a remote file or directory"
+    method_option :recursive, :type => :boolean, :default => false
+    def permission(hostname, path, mode)
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
+      puts "task: remote:file:permissions #{hostname} #{path} {#mode}"
+
+       exit_code, exit_signal, stdout, stderr = File.permission(
+        hostname, username, keyfile, path, mode,
+        options[:sudo], options[:recursive], options[:verbose])
     end
 
     desc "group HOSTNAME FILEPATH GROUP", "change the group on a remote file or directory"

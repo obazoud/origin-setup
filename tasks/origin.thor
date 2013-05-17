@@ -141,6 +141,14 @@ module OpenShift
         "rsyslog-puppet.conf", "/etc/rsyslog.d/puppet.conf",
         true, false, false, options[:verbose])
 
+      cmd = "sudo touch /var/log/puppet.log"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      cmd = "sudo touch /var/log/puppet-master.log"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
       invoke("remote:service:restart", [hostname, "rsyslog"],
@@ -162,36 +170,24 @@ module OpenShift
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
+      # check DNS resolution for hostname?
+
       # where will the site specs be?
       manifestdir='${HOME}/origin-setup/puppet/manifests'
 
-      # manifest git repo:
-      # 
-
-      # create an instance (if not provided)
-      #if not options[:instance]
-      #  instance = invoke "origin:baseinstance", [name]
-      #else
-      # name the instance (if provided)
-      
-      #  instance = invoke "ec2:instance:info", [], :id => options[:instance]
-      #  invoke("ec2:instance:rename", [], :id => options[:instnace],
-      #    :newname => name)
-      #end
 
       #hostname = instance.dns_name
       invoke("origin:prepare", [hostname],
         :packages => ['puppet-server', 'git'],
         :verbose => options[:verbose])
 
-      #invoke "remote:yum:install", [hostname, ['puppet-server', 'git']]
 
-      ## install puppet-server
-      #Remote::Yum.install_rpms(hostname, username, key_file, 'puppet-server',
-      #  options[:verbose])
+      # Allow specifically the puppet user to read the default user's home
+      # directory (will allow puppetmaster to read manfests from git workspace)
+      Remote::File.permission(hostname, username, key_file, '${HOME}', "755",
+        false, false, options[:verbose])
 
       invoke "remote:git:clone", [hostname, options[:siterepo]] if options[:siterepo]
-
 
       # initialize configuration
       # TODO: determine location of data dir
@@ -255,6 +251,8 @@ module OpenShift
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
 
+      invoke("puppet:cert:generate", [hostname, hostname])
+
       # start puppet master daemon
       invoke("remote:service:enable", [hostname, "puppetmaster"],
         :systemd => systemd, :verbose => options[:verbose])
@@ -264,9 +262,7 @@ module OpenShift
     end
 
     desc "puppetclient HOSTNAME MASTER", "create a puppet client instance"
-    method_option :instance, :type => :string
-    method_option :hostname, :type => :string
-    
+    method_option :instance, :type => :string    
     def puppetclient(hostname, puppetmaster)
 
       puts "origin:puppetclient #{hostname}, #{puppetmaster}" unless options[:quiet]
