@@ -172,8 +172,11 @@ module OpenShift
 
       # check DNS resolution for hostname?
 
+      # this is magic.  fix and/or expose it somehow
       # where will the site specs be?
-      manifestdir='${HOME}/origin-setup/puppet/manifests'
+      mdir = File.basename(options[:siterepo], ".git")
+
+      manifestdir="${HOME}/#{mdir}/manifests"
 
 
       #hostname = instance.dns_name
