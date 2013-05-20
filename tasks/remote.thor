@@ -357,6 +357,15 @@ class Remote < Thor
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
+      def self.group(hostname, username, keyfile, path, group,
+          sudo=false, recursive=false, verbose=false)
+        cmd = sudo ? "sudo " : ""
+        cmd += "chgrp"
+        cmd += " -R" if recursive
+        cmd += " " + group + " " + path
+        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
+      end
+
     end # no_tasks
 
     class_option :verbose, :type => :boolean, :default => false
@@ -651,6 +660,21 @@ class Remote < Thor
           hostname, username, key_file, cmd, verbose)
       end
 
+
+      # pull updates to remote repo/branch
+      def self.pull(hostname, username, key_file, 
+          gitroot, remote='origin', branch=nil, 
+          verbose=false)
+     
+        # Compose the remote git clone command
+        cmd = "cd #{gitroot} ; git pull --no-progress "
+        cmd << " --verbose " if verbose
+        cmd << remote
+        cmd << " " + branch if branch
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+      end
+
     end # no_tasks
 
     desc "clone HOSTNAME GITURL", "clone a git URL on a remote host"
@@ -696,6 +720,7 @@ class Remote < Thor
       puts "task: remote:git:pull #{hostname} #{repodir} #{options[:remote]} #{options[:branch]}" unless options[:quiet]
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
     
       cmd = "cd #{repodir} ; git pull #{options[:remote]}"
       cmd += " " + options[:branch] if options[:branch]

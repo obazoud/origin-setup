@@ -171,23 +171,37 @@ module OpenShift
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
       # check DNS resolution for hostname?
-
-      # where will the site specs be?
-      manifestdir='${HOME}/origin-setup/puppet/manifests'
-
+      
+      manifestdir = '/var/lib/puppet/manifests'
 
       #hostname = instance.dns_name
       invoke("origin:prepare", [hostname],
         :packages => ['puppet-server', 'git'],
         :verbose => options[:verbose])
 
+      # add the user to the puppet group
+      cmd = "augtool --autosave set /files/etc/group/puppet/user[1] #{username}"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
 
-      # Allow specifically the puppet user to read the default user's home
-      # directory (will allow puppetmaster to read manfests from git workspace)
-      Remote::File.permission(hostname, username, key_file, '${HOME}', "755",
-        false, false, options[:verbose])
+      # unpack the puppet site information where it can be managed
+      if options[:siterepo]
+        Remote::File.mkdir(hostname, username, key_file,
+          '/var/lib/puppet/manifests', true, true, options[:verbose])
 
-      invoke "remote:git:clone", [hostname, options[:siterepo]] if options[:siterepo]
+        Remote::File.group(hostname, username, key_file,
+          '/var/lib/puppet/manifests', 'puppet', true, false, options[:verbose])
+
+        # Allow the puppet group to write to the manifests area
+        Remote::File.permission(hostname, username, key_file,
+          '/var/lib/puppet/manifests', 'g+ws', true, false, options[:verbose])
+
+        # Clone the manifests into place
+        invoke("remote:git:clone", [hostname, options[:siterepo]],
+          :destdir => '/var/lib/puppet',
+          :destname => 'manifests',
+          :verbose => options[:verbose])
+      end
 
       # initialize configuration
       # TODO: determine location of data dir
@@ -211,18 +225,6 @@ module OpenShift
 
       Remote::File.copy(hostname, username, key_file, 
         "puppet.conf", "/etc/puppet/puppet.conf", true, false, false, options[:verbose])
-
-      Remote::File.mkdir(hostname, username, key_file, manifestdir, true, true, 
-        options[:verbose])
-
-      cmd = "sudo chown puppet:puppet #{manifestdir}"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      # create site.pp (clone config git repo?)
-      cmd = "sudo -u puppet touch #{manifestdir}/site.pp"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
