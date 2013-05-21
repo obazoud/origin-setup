@@ -76,7 +76,7 @@ module OpenShift
           '/etc/puppet/puppet.conf', 'puppet.conf', 
           false, false, false, options[:verbose])
 
-        cmd = "sed -i -e  '/\[main\]/a\    server = #{master}' puppet.conf"
+        cmd = "sed -i -e  '/\\[main\\]/a\\    server = #{master}' puppet.conf"
         exit_code, exit_signal, stdout, stderr = Remote.remote_command(
           hostname, username, key_file, cmd, options[:verbose])
 

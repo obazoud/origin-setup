@@ -646,7 +646,7 @@ class Remote < Thor
           destdir=nil, destname=nil, bare=false, verbose=false)
      
         # Compose the remote git clone command
-        cmd = "git clone "
+        cmd = "git clone --quiet "
         cmd += "--bare " if bare
         cmd += giturl + " "
         cmd += destdir + "/" if destdir

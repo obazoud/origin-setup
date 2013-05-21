@@ -180,7 +180,7 @@ module OpenShift
         :verbose => options[:verbose])
 
       # add the user to the puppet group
-      cmd = "augtool --autosave set /files/etc/group/puppet/user[1] #{username}"
+      cmd = "sudo augtool --autosave set /files/etc/group/puppet/user[1] #{username}"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
 
