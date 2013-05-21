@@ -6,7 +6,12 @@ Mark Lamourine <markllama@gmail.com>
 ** DNS A records
 ** SecurityGroups
 
-* puppetmaster
+* puppet
+
+** puppetmaster
+
+** puppet clients
+
 
 * backend services
 

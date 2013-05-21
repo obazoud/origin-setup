@@ -1,5 +1,0 @@
-[origin-nightly]
-name=Origin Nightly Builds
-baseurl=https://mirror.openshift.com/pub/origin-server/nightly/BASEOS-VERSION/latest/$basearch
-enabled=1
-gpgcheck=0

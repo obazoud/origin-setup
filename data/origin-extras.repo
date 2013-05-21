@@ -1,5 +1,0 @@
-[origin-extras]
-name=Origin Extras
-baseurl=https://mirror.openshift.com/pub/origin-server/BASEOS-VERSION/$basearch
-enabled=1
-gpgcheck=0
