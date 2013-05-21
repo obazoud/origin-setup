@@ -86,6 +86,32 @@ module OpenShift
       end
 
     end
+
+    class Module < Thor
+      namespace "puppet:module"
+
+      class_option :verbose, :type => :boolean, :default => false
+      class_option :debug, :type => :boolean, :default => false
+      class_option :quiet, :type => :boolean, :default => false
+
+      desc "install HOSTNAME MODULE [MODULE]...", "install a puppet module on a remote host"
+      def install(hostname, *modules)
+        
+        puts "task: puppet:module:install #{hostname} #{modules.join(' ')}" if not options[:quiet]
+
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        cmd = "sudo puppet module install --mode master #{modules.join(' ')}"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose]
+          )
+
+      end
+
+
+    end
+
   end
 
 end

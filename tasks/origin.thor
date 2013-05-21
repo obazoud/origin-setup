@@ -90,6 +90,8 @@ module OpenShift
     method_option :username, :type => :string
     method_option :ssh_id, :type => :string
     method_option :packages, :type => :array, :default => []
+    method_option :ntpservers, :type => :array, :default => []
+    method_option :timezone, :type => :string, :default => 
 
     def prepare(hostname)
 
@@ -230,6 +232,12 @@ module OpenShift
 
       Remote::File.copy(hostname, username, key_file, 
         "puppet.conf", "/etc/puppet/puppet.conf", true, false, false, options[:verbose])
+
+
+      Remote::File.mkdir(hostname, username, keyfile,
+        "/var/lib/puppet/modules", true, true, options[verbose])
+
+      invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']]
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 

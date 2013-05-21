@@ -538,7 +538,7 @@
 
     # The search path for modules, as a list of directories separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)
     # The default value is '$confdir/modules:/usr/share/puppet/modules'.
-    modulepath = /etc/puppet/modules:/usr/share/puppet/modules:/home/bos/mlamouri/.puppet/modules
+    modulepath = /etc/puppet/modules:/usr/share/puppet/modules
 
     # The header containing an authenticated
     # client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
@@ -996,3 +996,5 @@
     # Document all resources
     # document_all = false
 
+[main]
+    modulepath = /var/lib/puppet/modules:/usr/share/puppet/modules
