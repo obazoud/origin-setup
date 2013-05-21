@@ -366,6 +366,13 @@ class Remote < Thor
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
+      def self.symlink(hostname, username, keyfile, srcpath, dstpath,
+          sudo=false, verbose=false)
+
+        cmd = sudo ? "sudo " : ""
+        cmd += "ln -s #{srcpath} #{dstpath}"
+      end
+
     end # no_tasks
 
     class_option :verbose, :type => :boolean, :default => false

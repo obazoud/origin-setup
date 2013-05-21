@@ -201,6 +201,11 @@ module OpenShift
           :destdir => '/var/lib/puppet',
           :destname => 'manifests',
           :verbose => options[:verbose])
+
+        # Allow git pulls from user $HOME/manifests
+        Remote::File.symlink(hostname, username, key_file,
+          '/var/lib/puppet/manifests', '${HOME}/manifests', 
+          false, options[:verbose])
       end
 
       # initialize configuration
