@@ -488,11 +488,11 @@
 
     # Where puppet master looks for its manifests.
     # The default value is '$confdir/manifests'.
-    manifestdir = /etc/puppet/manifests
+    manifestdir = <%= manifestdir %>
 
     # The entry-point manifest for puppet master.
     # The default value is '$manifestdir/site.pp'.
-    manifest = /etc/puppet/manifests/site.pp
+    manifest = <%= manifestdir %>/site.pp
 
     # Code to parse directly.  This is essentially only used
     # by `puppet`, and should only be set if you're writing your own Puppet
@@ -538,7 +538,7 @@
 
     # The search path for modules, as a list of directories separated by the system path separator character. (The POSIX path separator is ':', and the Windows path separator is ';'.)
     # The default value is '$confdir/modules:/usr/share/puppet/modules'.
-    modulepath = /etc/puppet/modules:/usr/share/puppet/modules
+    modulepath = /usr/share/puppet/modules:<%= moduledir %>
 
     # The header containing an authenticated
     # client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy

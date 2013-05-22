@@ -371,6 +371,7 @@ class Remote < Thor
 
         cmd = sudo ? "sudo " : ""
         cmd += "ln -s #{srcpath} #{dstpath}"
+        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
     end # no_tasks

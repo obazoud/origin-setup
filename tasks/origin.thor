@@ -175,6 +175,7 @@ module OpenShift
       # check DNS resolution for hostname?
       
       manifestdir = '/var/lib/puppet/manifests'
+      moduledir = '/var/lib/puppet/modules'
 
       #hostname = instance.dns_name
       invoke("origin:prepare", [hostname],
@@ -188,25 +189,32 @@ module OpenShift
 
       # unpack the puppet site information where it can be managed
       if options[:siterepo]
+
+        sitename = File.basename(options[:siterepo], '.git')
+        sitepath = '/var/lib/puppet/' + sitename
+
+        manifestdir = sitepath + '/manifests'
+        moduledir = sitepath + '/modules'
+
         Remote::File.mkdir(hostname, username, key_file,
-          '/var/lib/puppet/manifests', true, true, options[:verbose])
+          sitepath, true, true, options[:verbose])
 
         Remote::File.group(hostname, username, key_file,
-          '/var/lib/puppet/manifests', 'puppet', true, false, options[:verbose])
+          sitepath, 'puppet', true, false, options[:verbose])
 
         # Allow the puppet group to write to the manifests area
         Remote::File.permission(hostname, username, key_file,
-          '/var/lib/puppet/manifests', 'g+ws', true, false, options[:verbose])
+          sitepath, 'g+ws', true, false, options[:verbose])
 
         # Clone the manifests into place
         invoke("remote:git:clone", [hostname, options[:siterepo]],
           :destdir => '/var/lib/puppet',
-          :destname => 'manifests',
+          :destname => sitename,
           :verbose => options[:verbose])
 
         # Allow git pulls from user $HOME/manifests
         Remote::File.symlink(hostname, username, key_file,
-          '/var/lib/puppet/manifests', '${HOME}/manifests', 
+          sitepath, sitename, 
           false, options[:verbose])
       end
 
@@ -220,13 +228,13 @@ module OpenShift
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
 
-      # set location of the manifests in the user's home directory
-      cmd = "sed -i -e \"/manifestdir\s*=/s|=\s*.*$|= #{manifestdir}|\" puppet.conf"
+      # set location of the manifests
+      cmd = "sed -i -e 's|<%= manifestdir %>|#{manifestdir}|' puppet.conf"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
 
-      # set location of the site.pp in the user's home directory
-      cmd = "sed -i -e \"/manifest\s*=/s|=\s*.*$|= #{manifestdir}/site.pp|\" puppet.conf"
+      # set location of the modules
+      cmd = "sed -i -e 's|<%= moduledir %>|#{moduledir}|' puppet.conf"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
 
@@ -234,8 +242,8 @@ module OpenShift
         "puppet.conf", "/etc/puppet/puppet.conf", true, false, false, options[:verbose])
 
 
-      Remote::File.mkdir(hostname, username, keyfile,
-        "/var/lib/puppet/modules", true, true, options[verbose])
+      Remote::File.mkdir(hostname, username, key_file,
+        "/var/lib/puppet/modules", true, true, options[:verbose])
 
       invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']]
 
