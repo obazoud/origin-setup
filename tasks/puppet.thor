@@ -12,6 +12,10 @@ module OpenShift
     class Cert < Thor
       namespace "puppet:cert"
 
+      class_option :verbose, :type => :boolean, :default => false
+      class_option :debug, :type => :boolean, :default => false
+      class_option :quiet, :type => :boolean, :default => false
+
       desc "sign MASTER HOSTNAME", "sign an agent certificate"
       def sign(master, hostname)
         puts "task puppet:cert:sign #{master} #{hostname}" unless options[:quiet]
@@ -41,6 +45,47 @@ module OpenShift
 
       end
 
+      desc "list MASTER", "list the outstanding unsigned (or all) certs"
+      method_option :all, :type => :boolean, :default => false
+      def list(master, hostname=nil)
+        puts "task puppet:cert:list #{master}" unless options[:quiet]
+
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        cmd = "sudo puppet cert list #{hostname}"
+        cmd << " --all" if options[:all]
+
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        master, username, key_file, cmd, options[:verbose])
+
+        # check exit_code
+
+        if hostname
+          # check stdout: 
+          # [+-] "<hostname>"\s+ (<fingerprint)[ (alt names: [names])]
+          # or
+          # err: Could not call list: could not find a certificate for <hostname>
+        else
+          
+        end
+
+        # parse the cert lines for 
+        certlist = stdout.select {|line|
+          # only pick lines that 
+          line.match /^(\+|-)\s/
+        }.map {|line|
+          state, name, fingerprint, attrlist = line.split(' ', 4)
+          # strip the leading and trailing quotes and parens
+          [state, name[1..-2], fingerprint[1..-2]]
+        }
+        
+        certlist.each { |state, name, fingerprint|
+          puts "#{state} #{name} #{fingerprint}"
+        }
+        certlist
+      end
+      
     end
 
     class Master < Thor
