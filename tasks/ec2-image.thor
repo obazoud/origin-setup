@@ -20,10 +20,12 @@ module OpenShift
       images = handle.images.with_owner(options[:owner]).
         filter('state', 'available').
         filter('name', options[:name])
+
       images.each do |i|
         if options[:verbose] then
           puts "#{i.id}, #{i.name}: #{i.architecture}, #{i.platform}" +
-            "#{i.block_device_mappings.to_a}, #{i.state}"
+            "#{i.block_device_mappings.to_a}, #{i.state}" +
+            "\n   #{i.owner_id} '#{i.owner_alias}'"
         else
           puts "#{i.id} #{i.name} #{i.platform}"
         end
@@ -43,7 +45,7 @@ module OpenShift
       end
 
       handle = AWS::EC2.new
-      image = find_image(login, options)
+      image = handle.images[options[:id]]
 
       if not image
         puts "no matching image"

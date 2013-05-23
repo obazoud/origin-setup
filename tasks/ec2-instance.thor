@@ -6,7 +6,9 @@ require 'thor'
 require 'openshift/aws'
 
 # Initialize AWS credentials
-::OpenShift::AWS.awscred
+#begin
+#  ::OpenShift::AWS.awscred
+#rescue
 
 # Manage Amazon Web Services EC2 instances and images
 module OpenShift
@@ -257,6 +259,25 @@ module OpenShift
       else
         puts instance.status
       end
+    end
+
+
+    desc "ipaddress [value]", "set or get the external (elastic) IP address of an identified instance"
+    method_option :id, :type => :string
+    method_option :name, :type => :string, :default => "*"
+    def ipaddress(ipaddr=nil)
+      puts "task ec2:instance:ipaddress #{ipaddr}"
+
+      handle = AWS::EC2.new
+      instance = find_instance(handle, options)
+      raise ArgumentError.new("no instance matches") if not instance
+
+      if ipaddr
+        instance.associate_elastic_ip ipaddr
+      else
+        puts instance.ip_address
+      end
+      instance.ip_address
     end
 
     desc "private_ipaddress", "print the internal ip address of an identified instance"
