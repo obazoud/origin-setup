@@ -305,6 +305,18 @@ module OpenShift
       invoke("remote:service:start", [hostname, "puppet"], 
         :systemd => systemd, :verbose => options[:verbose])
 
+      # wait for the signing request to appear?
+      sleep 5
+      # maxtries = 5
+      # pollinterval = 5 # seconds
+      # (1..maxtries).each { |trynum|
+      #   certlist = invoke "puppet:cert:list", [puppetmaster, hostname]
+      #   break if certlist.count > 0
+      #   sleep pollinterval
+      # }
+
+      # raise Exception.new "timed out waiting for cert request" if certlist.count == 0
+      # then sign it?
       invoke "puppet:cert:sign", [puppetmaster, hostname]
 
     end
