@@ -262,7 +262,7 @@ module OpenShift
     end
 
 
-    desc "ipaddress [value]", "set or get the external (elastic) IP address of an identified instance"
+    desc "ipaddress [IPADDR]", "set or get the external (elastic) IP address of an identified instance"
     method_option :id, :type => :string
     method_option :name, :type => :string, :default => "*"
     def ipaddress(ipaddr=nil)
