@@ -31,7 +31,7 @@ module OpenShift
       instances.each do |i|
         tags = i.tags.map { |t| t.to_s }.join(' ')
         if options[:verbose] then
-          puts "#{i.id} #{i.tags['Name']} #{i.status}"
+          puts "#{i.id} #{i.image_id} #{i.tags['Name']} #{i.status}"
         else
           puts "#{i.id} #{i.tags['Name']}"
         end
