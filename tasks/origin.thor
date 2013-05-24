@@ -29,9 +29,28 @@ module OpenShift
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
 
+      # hostname | a record | ipaddress | eip | valid | actions
+      #   0      |    0     |     0     |  0  |  yes  | none
+      #   1      |    0     |     0     |  0  |  yes  | eip, assoc, a record
+      #   0      |    1     |     0     |  0  |   -   | none
+      #   1      |    1     |     0     |  0  |  error| invalid IP
+      #   0      |    0     |     1     |  0  |  error| invalid IP
+      #   1      |    0     |     1     |  0  |  error| invalid IP
+      #   0      |    1     |     1     |  0  |  error| invalid IP
+      #   1      |    1     |     1     |  0  |  error| invalid IP
+      #   0      |    0     |     0     |  x  |  -    | none
+      #   1      |    0     |     0     |  x  |  -    | none
+      #   0      |    1     |     0     |  x  |  -    | none
+      #   1      |    1     |     0     |  1  |  yes  | assoc
+      #   0      |    0     |     1     |  1  |  yes  | assoc
+      #   1      |    0     |     1     |  1  |  yes  | assoc, a record
+      #   0      |    1     |     1     |  1  |  ??   | assoc (hostname?)
+      #   1      |    1     |     1     |  1  |  yes  | assoc
+
       # If the user offered either IP or hostname or both, resolve to
       # an IP address already in EC2 or create one
       hostname = options[:hostname]
+      hostip = nil
       if hostname
         begin
           hostip = Resolv.getaddress hostname
@@ -46,16 +65,21 @@ module OpenShift
       end
 
       ipaddress = options[:ipaddress]
-      if ipaddress
-        
+      if ipaddress and not hostip
+        eip = invoke "ec2:ip:info", [ipaddress]
         # check that it is an existing elastic IP
-        if not invoke "ec2:ip:info", [ipaddress]
+        if not eip
           raise ArgumentError.new "invalid elastic IP address: #{ipaddress}"
         end
+        hostip = eip.ip_address
       end
 
-
-      exit
+      # If they are both strings and don't match, there's a problem
+      if not ipaddress == hostip
+        raise ArgumentError.new("ipaddress and hostname ip do not match:\n" +
+          "ipaddress: #{ipaddress}\n" +
+          "dns address: #{hostip} - #{hostname}")
+      end
 
       config = ::OpenShift::AWS.config
       #----------------
@@ -75,6 +99,16 @@ module OpenShift
       # TODO: valudate image_id
       puts "- image id: #{image_id}" unless options[:quiet]
 
+
+      # --------------------------
+      # Create Elasic IP if needed
+      # --------------------------
+
+      # ---------------------------------------------
+      # Create A record for hostname and IP if needed
+      # ---------------------------------------------
+
+
       # ------------------------------
       # create new instance and get id
       # ------------------------------
@@ -85,6 +119,10 @@ module OpenShift
         )
 
       puts "instance #{instance.id} starting" if options[:verbose]
+
+      # ----------------------------------------
+      # associate instance with eip if available
+      # ----------------------------------------
 
       # monitor startup process: wait until running
       (1..20).each do |trynum|
