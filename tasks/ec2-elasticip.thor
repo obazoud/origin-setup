@@ -77,6 +77,23 @@ module OpenShift
       }
     end
 
+    desc "info IPADDR", "get information for an IP address"
+    def info(ipaddr)
+      puts "task: ec2:ip:info #{ipaddr}" unless options[:quiet]
+      handle = AWS::EC2.new
+
+      # validate the IP addr and instance id?
+
+      ips = handle.elastic_ips
+      begin
+        ip = ips[ipaddr]
+        puts "IP address: #{ip.ip_address} instance: #{ip.instance_id}"
+      rescue AWS::EC2::Errors::InvalidAddress::NotFound
+        puts "IP address: #{ipaddr} not found"
+        ip = nil
+      end
+      ip
+    end
   end
 
 end
