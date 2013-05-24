@@ -23,8 +23,39 @@ module OpenShift
     method_option :baseos, :type => :string
     method_option :image, :type => :string
     method_option :securitygroup, :type => :string, :default => "default"
+    method_option :hostname, :type => :string
+    method_option :ipaddress, :type => :string
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
+
+
+      # If the user offered either IP or hostname or both, resolve to
+      # an IP address already in EC2 or create one
+      hostname = options[:hostname]
+      if hostname
+        begin
+          hostip = Resolv.getaddress hostname
+          puts "- #{hostname}: #{hostip}"
+          if not invoke "ec2:ip:info", [hostip]
+            raise ArgumentError.new "invalid elastic IP address: #{hostip}"
+          end
+        rescue Resolv::ResolvError => e
+          # no DNS A record
+          hostip = nil
+        end
+      end
+
+      ipaddress = options[:ipaddress]
+      if ipaddress
+        
+        # check that it is an existing elastic IP
+        if not invoke "ec2:ip:info", [ipaddress]
+          raise ArgumentError.new "invalid elastic IP address: #{ipaddress}"
+        end
+      end
+
+
+      exit
 
       config = ::OpenShift::AWS.config
       #----------------

@@ -87,9 +87,9 @@ module OpenShift
       ips = handle.elastic_ips
       begin
         ip = ips[ipaddr]
-        puts "IP address: #{ip.ip_address} instance: #{ip.instance_id}"
+        puts "- IP address: #{ip.ip_address} instance: #{ip.instance_id}"
       rescue AWS::EC2::Errors::InvalidAddress::NotFound
-        puts "IP address: #{ipaddr} not found"
+        puts "- IP address: #{ipaddr} not found"
         ip = nil
       end
       ip
