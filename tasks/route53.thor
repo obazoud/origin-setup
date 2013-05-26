@@ -14,56 +14,50 @@ module OpenShift
 
     AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
 
-    desc "zones", "list hosted zones"
-    def zones
+    class Zone < Thor
+      namespace "route53:zone"
 
-      puts "task: route53:zone" unless options[:quiet]
-      handle = Route53.login
+      desc "list", "list hosted zones"
+      def list
 
-      response = handle.list_hosted_zones
-      zones = response[:hosted_zones]
-      zones.each { |zone|
-        puts "id: #{zone[:id].split('/')[2]} name: #{zone[:name]} records: #{zone[:resource_record_set_count]}"
-      }
-    end
+        puts "task: route53:zone:list" unless options[:quiet]
+        handle = Route53.login
 
-    desc "records", "return records for a zone"
-    method_option :id, :type => :string
-    method_option :zone, :type => :string
-    def records
-      puts "task: route53:records"
-
-      handle = Route53.login
-
-      if options[:zone]
-        zoneid = Route53.zone_id(handle, options[:zone])
-      else
-        zoneid = options[:id]
+        response = handle.list_hosted_zones
+        zones = response[:hosted_zones]
+        zones.each { |zone|
+          puts "id: #{zone[:id].split('/')[2]} name: #{zone[:name]} records: #{zone[:resource_record_set_count]}"
+        }
+        zones.to_a
       end
 
-      response = handle.list_resource_record_sets(
-        :hosted_zone_id => "/hostedzone/#{zoneid}")
+      desc "id ZONE", "return the zone id of a name"
+      def id(zonename)
+        puts "task: route53:zone:id #{zonename}" unless options[:quiet]
 
-      response.data[:resource_record_sets].each { |rrset|
-        name = rrset[:name]
-        type = rrset[:type]
-        values = rrset[:resource_records]
-        puts "#{rrset[:name]} #{rrset[:type]}"
-        values.each { |rvalue|
-          puts "  #{rvalue[:value]}"
+        handle = Route53.login
+
+        id = Route53.zone_id(handle, zonename)
+        puts "id = " + id
+      end
+
+      desc "contains HOSTNAME", "list the zones that could contain the hostname"
+      def contains(hostname)
+        puts "task: route53:zone:contains #{hostname}"
+
+        hostname += "." if not hostname.end_with? '.'
+        handle = Route53.login
+
+        response = handle.list_hosted_zones
+        zones = response[:hosted_zones]
+
+        zones.select {|zone|
+          hostname.match "#{zone[:name]}$"
+        }.each {|zone|
+          puts zone[:id].split('/')[2] + " " + zone[:name]
         }
-      }
+      end
 
-    end
-
-    desc "zoneid ZONE", "return the zone id of a name"
-    def zoneid(zonename)
-      puts "task route53:zoneid #{zonename}" unless options[:quiet]
-
-      handle = Route53.login
-
-      id = Route53.zone_id(handle, zonename)
-      puts "id = " + id
     end
 
     class Record < Thor
