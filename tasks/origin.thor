@@ -28,60 +28,74 @@ module OpenShift
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
+      config = ::OpenShift::AWS.config
 
-      # hostname | a record | ipaddress | eip | valid | actions
-      #   0      |    0     |     0     |  0  |  yes  | none
-      #   1      |    0     |     0     |  0  |  yes  | eip, assoc, a record
-      #   0      |    1     |     0     |  0  |   -   | none
-      #   1      |    1     |     0     |  0  |  error| invalid IP
-      #   0      |    0     |     1     |  0  |  error| invalid IP
-      #   1      |    0     |     1     |  0  |  error| invalid IP
-      #   0      |    1     |     1     |  0  |  error| invalid IP
-      #   1      |    1     |     1     |  0  |  error| invalid IP
-      #   0      |    0     |     0     |  x  |  -    | none
-      #   1      |    0     |     0     |  x  |  -    | none
-      #   0      |    1     |     0     |  x  |  -    | none
-      #   1      |    1     |     0     |  1  |  yes  | assoc
-      #   0      |    0     |     1     |  1  |  yes  | assoc
-      #   1      |    0     |     1     |  1  |  yes  | assoc, a record
-      #   0      |    1     |     1     |  1  |  ??   | assoc (hostname?)
-      #   1      |    1     |     1     |  1  |  yes  | assoc
-
-      # If the user offered either IP or hostname or both, resolve to
-      # an IP address already in EC2 or create one
-      hostname = options[:hostname]
-      hostip = nil
-      if hostname
-        begin
-          hostip = Resolv.getaddress hostname
-          puts "- #{hostname}: #{hostip}"
-          if not invoke "ec2:ip:info", [hostip]
-            raise ArgumentError.new "invalid elastic IP address: #{hostip}"
-          end
-        rescue Resolv::ResolvError => e
-          # no DNS A record
-          hostip = nil
-        end
-      end
-
+      #  check that the IP address is a valid Elastic IP
       ipaddress = options[:ipaddress]
-      if ipaddress and not hostip
+      if ipaddress
         eip = invoke "ec2:ip:info", [ipaddress]
         # check that it is an existing elastic IP
         if not eip
           raise ArgumentError.new "invalid elastic IP address: #{ipaddress}"
         end
-        hostip = eip.ip_address
+      else
+        eip = nil
       end
 
-      # If they are both strings and don't match, there's a problem
-      if not ipaddress == hostip
-        raise ArgumentError.new("ipaddress and hostname ip do not match:\n" +
-          "ipaddress: #{ipaddress}\n" +
-          "dns address: #{hostip} - #{hostname}")
+      #
+      hostname = options[:hostname]
+      if hostname
+        # check if the name has an A record associated
+        begin
+          hostip = Resolv.getaddress hostname
+          puts "- #{hostname}: #{hostip}"
+
+          # there's an A record: does it match the ipaddress?
+          if ipaddress and (not ipaddress == hostip)
+            raise ArgumentError.new(
+              "ipaddress and hostname ip do not match:\n" +
+              "ipaddress: #{ipaddress}\n" +
+              "dns address: #{hostip} - #{hostname}"
+              )
+          else
+            # create a new IP address
+            if not invoke "ec2:ip:info", [hostip]
+              raise ArgumentError.new "invalid elastic IP address: #{hostip}"
+            end
+            ipaddress = hostip
+          end
+
+        rescue Resolv::ResolvError => e
+          # no DNS A record
+          # create a new IP address if needed
+          if not eip
+            eip = invoke("ec2:ip:create", []) if not eip
+            ipaddress = eip.ip_address
+          end
+
+          # determine the available zones
+          zones = invoke "route53:zone:contains", [hostname]
+          if zones.count == 0
+            raise ArgumentError.new(
+              "no available zones contain hostname #{hostname}"
+              )
+          end
+          
+          # find the containing zone
+          zonename = zones[0][:name]
+          fqdn = hostname
+          fqdn += '.' unless hostname.end_with? '.'
+          hostpart = fqdn.gsub('.' + zonename, '')
+
+          # add the IP address to the zone
+          invoke "route53:record:create", [zonename, hostpart, 'A', ipaddress]
+        end
       end
 
-      config = ::OpenShift::AWS.config
+      # -----------------------------------------------
+      # hostname, ipaddress and eip have current values
+      # -----------------------------------------------
+
       #----------------
       # Select an image
       #----------------
@@ -99,16 +113,6 @@ module OpenShift
       # TODO: valudate image_id
       puts "- image id: #{image_id}" unless options[:quiet]
 
-
-      # --------------------------
-      # Create Elasic IP if needed
-      # --------------------------
-
-      # ---------------------------------------------
-      # Create A record for hostname and IP if needed
-      # ---------------------------------------------
-
-
       # ------------------------------
       # create new instance and get id
       # ------------------------------
@@ -120,10 +124,6 @@ module OpenShift
 
       puts "instance #{instance.id} starting" if options[:verbose]
 
-      # ----------------------------------------
-      # associate instance with eip if available
-      # ----------------------------------------
-
       # monitor startup process: wait until running
       (1..20).each do |trynum|
         break if instance.status.to_s === 'running'
@@ -132,6 +132,11 @@ module OpenShift
       end
       raise Exception.new "Instance failed to start" if not instance.status.to_s === 'running'
 
+      # ----------------------------------------
+      # associate instance with eip if available
+      # ----------------------------------------
+      invoke('ec2:ip:associate', [ipaddress, instance.id])
+
       #-------------------------
       # get instance information
       #-------------------------
@@ -139,7 +144,7 @@ module OpenShift
       puts "waiting 3 sec for DNS to be available" if options[:verbose]
       sleep 3
 
-      hostname = instance.dns_name
+      hostname || = instance.dns_name
       puts "waiting for #{hostname} to accept SSH connections" if options[:verbose]
 
       username = options[:username] || Remote.ssh_username
