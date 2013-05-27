@@ -8,7 +8,6 @@ require 'parseconfig'
 
 module OpenShift
   class Route53 < Thor
-    namespace "route53"
     
     class_option :verbose, :type => :boolean, :default => false
 
@@ -61,11 +60,13 @@ module OpenShift
     end
 
     class Record < Thor
+
       namespace "route53:record"
       
       types = ['A', 'NS', 'SOA', 'TXT', 'CNAME']
 
-      class_option :wait, :type => :boolean, :default => true
+      class_option :verbose, :type => :boolean, :default => false
+      class_option :wait, :type => :boolean, :default => false
 
       desc("list ZONE [TYPE]",
         "create a new resource record")
@@ -152,13 +153,13 @@ module OpenShift
         # TODO:check for success/fail
 
         # result.data[:change_info] contains the change request id and status
-        puts "response = #{response.data}"
+        puts "response = #{response.data}" if options[:verbose]
 
         if options[:wait] and 
             not response.data[:change_info][:status] == "INSYNC"
           change_id = response.data[:change_info][:id]
           # poll for INSYNC
-          wait_for_sync(handle, change_id)
+          wait_for_sync(handle, change_id, 12, 5, options[:verbose])
         end
 
       end
@@ -197,7 +198,7 @@ module OpenShift
             not response.data[:change_info][:status] == "INSYNC"
           change_id = response.data[:change_info][:id]
           # poll for INSYNC
-          wait_for_sync(handle, change_id)
+          wait_for_sync(handle, change_id, 12, 5, options[:verbose])
         end
 
       end
@@ -219,11 +220,12 @@ module OpenShift
           }
         end
 
-        def wait_for_sync(handle, change_id, maxtries=12, pollinterval=5)
+        def wait_for_sync(handle, change_id, maxtries=12, pollinterval=5,
+            verbose=false)
           # poll for INSYNC
           change_status = "UNKNOWN"
           (1..maxtries).each { |trynum|
-            puts "#{trynum}) change id: #{change_id}, status: #{change_status} - sleeping #{pollinterval}"
+            puts "#{trynum}) change id: #{change_id}, status: #{change_status} - sleeping #{pollinterval}" if verbose
             sleep pollinterval
             response = handle.get_change(:id => change_id)
             change_status = response.data[:change_info][:status]

@@ -144,7 +144,7 @@ module OpenShift
       puts "waiting 3 sec for DNS to be available" if options[:verbose]
       sleep 3
 
-      hostname || = instance.dns_name
+      hostname ||= instance.dns_name
       puts "waiting for #{hostname} to accept SSH connections" if options[:verbose]
 
       username = options[:username] || Remote.ssh_username
