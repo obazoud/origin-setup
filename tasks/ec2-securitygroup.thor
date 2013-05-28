@@ -76,8 +76,54 @@ module Openshift
           }
         end
       sgroup
+      puts "task: ec2:securitygroup:info" unless options[:quiet]
+
+      sgroup = Securitygroup.get(options[:id], options[:name])
+
+      puts "#{sgroup.id}: #{sgroup.name}, #{sgroup.description}"
+        if options[:verbose]
+          sgroup.ingress_ip_permissions.each { |perm|
+            puts "  in rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+          }
+
+          sgroup.egress_ip_permissions.each { |perm|
+            puts " out rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+          }
+        end
+      sgroup
     end
 
+    desc "rules", "list the rules for a specified securitygroup"
+    method_option :id, :type => :string
+    method_option :name, :type => :string
+    method_option :in, :type => :boolean, :default => true
+    method_option :out, :type => :boolean, :default => false
+    def rules
+      puts "task: ec2:securitygroup:rules" unless options[:quiet]
+  
+      sgroup = Securitygroup.get(options[:id], options[:name])
+
+      rules = []
+      puts "#{sgroup.id}: #{sgroup.name}, #{sgroup.description}"
+      if options[:in]
+        inrules = sgroup.ingress_ip_permissions
+        inrules.each { |perm|
+          puts "  in rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+        }
+        rules << inrules
+      end
+
+      if options[:out]
+        outrules = sgroup.egress_ip_permissions
+        outrules.each { |perm|
+          puts " out rule: #{perm.ip_ranges} #{perm.port_range} #{perm.protocol}"
+        }
+        rules << outrules
+      end
+      
+      rules
+    end
+    
     no_tasks do
       
       # retrieve a single securitygroup by name or id
@@ -101,7 +147,7 @@ module Openshift
         end
         sgroup
       end
-
+      
     end
 
     class Rule < Thor
