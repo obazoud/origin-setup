@@ -88,7 +88,17 @@ module OpenShift
           hostpart = fqdn.gsub('.' + zonename, '')
 
           # add the IP address to the zone
-          invoke "route53:record:create", [zonename, hostpart, 'A', ipaddress]
+          # Wait for it to be in sync or you'll get negative record caching
+          # on the first DNS query and the whole thing will stop.
+          invoke("route53:record:create", [zonename, hostpart, 'A', ipaddress],
+            :ttl => 120, :wait => true, :verbose => options[:verbose])
+
+          # report how long before the name will resolv
+          resolver = Resolv::DNS.open
+          zone_info = resolver.getresources(
+            zonename, Resolv::DNS::Resource::IN::SOA)
+          puts "- #{zonename} fqdn #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
+          
         end
       end
 
@@ -132,11 +142,6 @@ module OpenShift
       end
       raise Exception.new "Instance failed to start" if not instance.status.to_s === 'running'
 
-      # ----------------------------------------
-      # associate instance with eip if available
-      # ----------------------------------------
-      invoke('ec2:ip:associate', [ipaddress, instance.id])
-
       #-------------------------
       # get instance information
       #-------------------------
@@ -144,15 +149,20 @@ module OpenShift
       puts "waiting 3 sec for DNS to be available" if options[:verbose]
       sleep 3
 
-      hostname ||= instance.dns_name
-      puts "waiting for #{hostname} to accept SSH connections" if options[:verbose]
+      #hostname ||= instance.dns_name
+      puts "waiting for #{instance.dns_name} to accept SSH connections" if options[:verbose]
 
       username = options[:username] || Remote.ssh_username
       # wait for SSH to respond
-      available = invoke("remote:available", [hostname], :username => username,
+      available = invoke("remote:available", [instance.dns_name], :username => username,
         :wait => true, :verbose => options[:verbose])
 
-      raise Exception.new("host #{hostname} not available") if not available
+      raise Exception.new("host #{instance.dns_name} not available") if not available
+
+      # ----------------------------------------
+      # associate instance with eip if available
+      # ----------------------------------------
+      invoke('ec2:ip:associate', [ipaddress, instance.id]) if ipaddress
 
       instance
     end

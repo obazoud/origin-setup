@@ -50,7 +50,7 @@ module OpenShift
     # m.1small or t1.micro
     method_option(:type, :type => :string, :default => "t1.micro",
       :desc => "an EC2 image type")
-    method_option(:securitygroup, :type => :string, :default => "default",
+    method_option(:securitygroup, :type => :array, :default => ["default"],
       :desk => "the security group to apply to this instance")
     method_option(:wait, :type => :boolean, :default => false)
     def create
@@ -68,7 +68,7 @@ module OpenShift
         :image_id => options[:image],
         :instance_type => options[:type],
         :key_name => options[:key],
-        :security_groups => [(options[:securitygroup]||'default')],
+        :security_groups => (options[:securitygroup]||['default']),
         :block_device_mappings => {'/dev/sdb' => 'ephemeral0'}
         )
             
@@ -150,7 +150,7 @@ module OpenShift
       instance.start
 
       if options[:wait] then
-        puts "waiting to reach status 'running'" if options[:verbose]
+        puts "- waiting to reach status 'running'" if options[:verbose]
         invoke :wait, [], :id => instance.id, :state => :running, :verbose => options[:verbose]
       end
 
@@ -165,7 +165,7 @@ module OpenShift
         "#{options[:name]}" unless options[:quiet]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
-      puts "Stopping instance #{instance.id}" if options[:verbose]
+      puts "- stopping instance #{instance.id}" if options[:verbose]
       instance.stop
 
       if options[:wait] then
