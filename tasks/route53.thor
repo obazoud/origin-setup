@@ -109,7 +109,7 @@ module OpenShift
       end
 
       desc("get ZONE NAME [TYPE]",
-        "create a new resource record")
+        "get a resource record")
       def get(zonename, recordname, type=nil)
         puts "task: route53:record:get #{zonename} #{recordname} #{type}"
 
@@ -119,21 +119,15 @@ module OpenShift
         opts = {:hosted_zone_id => "/hostedzone/#{zoneid}"}
 
         fqdn = recordname + "." + zonename
+        fqdn += "." unless fqdn.end_with? "."
         
-        response = handle.list_resource_record_sets(opts)
+        record_sets = handle.list_resource_record_sets(opts)[:resource_record_sets]
 
-        response.data[:resource_record_sets].each { |rrset|
-          name = rrset[:name]
-          rrtype = rrset[:type]
-          if type === nil or rrtype === type.upcase
-            values = rrset[:resource_records]
-            puts "#{rrset[:name]} #{rrtype}"
-            values.each { |rvalue|
-              puts "  #{rvalue[:value]}"
-            }
-          end
+        record_sets.select! { |record| record[:name] == fqdn }
+        record_sets.each {|record|
+          puts "#{record[:name]} #{record[:type]} #{record[:ttl]} #{record[:resource_records].map {|v| v[:value]}.join(' ')}"
         }
-        
+        record_sets
       end
       
 

@@ -49,6 +49,7 @@ module OpenShift
       if hostname
         # check if the name has an A record associated
         begin
+          # get this from Route53 instead of DNS to avoid negative cache
           hostip = Resolv.getaddress hostname
           puts "- #{hostname}: #{hostip}"
 
@@ -234,15 +235,12 @@ module OpenShift
       invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
         :verbose => options[:verbose])
 
-      # packages for firewall management
-      pkglist = options[:packages] + ["system-config-firewall-base"]
+      # packages for firewall management and system config management
+      pkglist = options[:packages] + ["system-config-firewall-base", 'augeas']
       
-      # packages for configuration management
-      pkglist << ['puppet', 'facter', 'augeas']
 
       invoke "remote:yum:install", [hostname, [pkglist]]
 
-      #invoke "puppet:master:init", [hostname, puppetcfg]
     end
 
 
@@ -333,14 +331,14 @@ module OpenShift
 
       invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']]
 
-      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
+      systemd = Remote.pidone(hostname, username, key_file) == "systemd"
 
       cmd = "sudo service iptables stop"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
 
       
-      # lokkit seems to block when run via rubygem-ssh
+      # firewall-cmd seems to block when run via rubygem-ssh
       #cmd = "sudo firewall-cmd --zone public --add-service ssh"
       cmd = "sudo lokkit --nostart --service=ssh"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
@@ -381,7 +379,8 @@ module OpenShift
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
-      invoke "origin:prepare", [hostname]
+      # also install additional packages
+      invoke("origin:prepare", [hostname], :packages => ['puppet', 'facter'])
 
       invoke "puppet:agent:set_server", [hostname, puppetmaster]
 
