@@ -242,32 +242,6 @@ module OpenShift
 
       invoke "remote:yum:install", [hostname, [pkglist]]
 
-      # get ssh access
-      username = options[:username] || Remote.ssh_username
-      key_file = options[:ssh_key_file] || Remote.ssh_key_file
-
-      # log puppet to its own file
-      Remote::File.scp_put(hostname, username, key_file,
-        "data/rsyslog-puppet.conf", "rsyslog-puppet.conf",
-        options[:verbose])
-
-      Remote::File.copy(hostname, username, key_file,
-        "rsyslog-puppet.conf", "/etc/rsyslog.d/puppet.conf",
-        true, false, false, options[:verbose])
-
-      cmd = "sudo touch /var/log/puppet.log"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      cmd = "sudo touch /var/log/puppet-master.log"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
-
-      invoke("remote:service:restart", [hostname, "rsyslog"],
-        :systemd => systemd, :verbose => options[:verbose])
-
       #invoke "puppet:master:init", [hostname, puppetcfg]
     end
 
@@ -333,7 +307,7 @@ module OpenShift
       # initialize configuration
       # TODO: determine location of data dir
       Remote::File.scp_put(hostname, username, key_file, 
-        'data/puppet-master.conf.erb', 'puppet.conf')
+        'data/puppet-master.conf.erb', 'puppet.conf', options[:verbose])
 
       # set hostname in appropriate places in the config
       cmd = "sed -i -e 's/<%= hostname %>/#{hostname}/' puppet.conf"
