@@ -92,6 +92,10 @@ module OpenShift
 
       namespace "puppet:master"
 
+      class_option :username
+      class_option :ssh_key_file
+      class_option :verbose
+      
       desc "set_moduledir HOSTNAME MODULEDIR", "set the moduledir for the master configuration"
       def set_moduledir(hostname, moduledir)
         puts "task: puppet:module:set_moduledir #{hostname} #{moduledir}" unless options[:quiet]
@@ -99,8 +103,38 @@ module OpenShift
 
       end
 
-    end
+      desc "enable_logging HOSTNAME", "log puppet master events to a specific file"
+      def enable_logging(hostname)
+        puts "task: puppet:master:enable_logging #{hostname}"
 
+        # get ssh access
+         username = options[:username] || Remote.ssh_username
+         key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        # log puppet to its own file
+        Remote::File.scp_put(hostname, username, key_file,
+          "data/rsyslog-puppet-master.conf", "rsyslog-puppet-master.conf",
+          options[:verbose])
+
+        Remote::File.copy(hostname, username, key_file,
+          "rsyslog-puppet-master.conf", "/etc/rsyslog.d/puppet-master.conf",
+          true, false, false, options[:verbose])
+
+        cmd = "sudo touch /var/log/puppet-master.log"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose])
+
+        if options[:systemd] == nil
+          systemd = Remote.pidone(hostname, username, key_file) == "systemd"
+        else
+          systemd = options[:systemd]
+        end
+
+        Remote::Service.execute(hostname, username, key_file, 
+          "rsyslog", 'restart', systemd, options[:verbose])
+      end
+    end
+    
     class Agent < Thor
 
       namespace "puppet:agent"

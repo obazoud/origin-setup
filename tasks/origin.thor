@@ -12,7 +12,7 @@ require 'openshift/aws'
 
 module OpenShift
   class Origin < Thor
-
+    
     namespace "origin"
 
     class_option :verbose, :type => :boolean, :default => false
@@ -22,6 +22,8 @@ module OpenShift
     desc "baseinstance NAME", "create a base instance for customization"
     method_option :baseos, :type => :string
     method_option :image, :type => :string
+    method_option :type, :type => :string
+    method_option :keypair, :type => :string
     method_option :securitygroup, :type => :string, :default => "default"
     method_option :hostname, :type => :string
     method_option :ipaddress, :type => :string
@@ -85,6 +87,7 @@ module OpenShift
           zonename = zones[0][:name]
           fqdn = hostname
           fqdn += '.' unless hostname.end_with? '.'
+          puts "- fqdn = #{fqdn}"
           hostpart = fqdn.gsub('.' + zonename, '')
 
           # add the IP address to the zone
@@ -94,12 +97,16 @@ module OpenShift
             :ttl => 120, :wait => true, :verbose => options[:verbose])
 
           # report how long before the name will resolv
-          resolver = Resolv::DNS.open
-          zone_info = resolver.getresources(
-            zonename, Resolv::DNS::Resource::IN::SOA)
-          puts "- #{zonename} fqdn #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
+          #resolver = Resolv::DNS.open
+          #zone_info = resolver.getresources(
+          #  zonename, Resolv::DNS::Resource::IN::SOA)
+          #puts "- #{zonename} fqdn #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
           
         end
+      else
+        # hostname not given
+        # find one from IP if given
+
       end
 
       # -----------------------------------------------
@@ -122,6 +129,9 @@ module OpenShift
       end
       # TODO: valudate image_id
       puts "- image id: #{image_id}" unless options[:quiet]
+
+      keypair = options[:keypair] || config['AWSKeyPairName']
+      type = options[:type] || config['AWSEC2Type']
 
       # ------------------------------
       # create new instance and get id
@@ -163,6 +173,24 @@ module OpenShift
       # associate instance with eip if available
       # ----------------------------------------
       invoke('ec2:ip:associate', [ipaddress, instance.id]) if ipaddress
+
+      # report how long before the name will resolve
+      # new records aren't propagated until the SOA TTL expires.
+      # AWS sets the SOA TTL at 900 seconds (15 min) so that's the longest
+      # you should have to wait for a new name.
+      if defined? fqdn
+        begin
+          newaddr = Resolv.getaddress fqdn
+          puts "- #{fqdn} resolves to #{newaddr}"
+        rescue
+          resolver = Resolv::DNS.open
+          zone_info = resolver.getresources(
+            zonename, Resolv::DNS::Resource::IN::SOA)
+          puts "- #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
+        end
+      else
+        puts "- fqdn is undefined"
+      end
 
       instance
     end

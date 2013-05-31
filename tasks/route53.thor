@@ -41,6 +41,7 @@ module OpenShift
       end
 
       desc "contains HOSTNAME", "list the zones that could contain the hostname"
+      method_option :all, :type => :boolean, :default => false
       def contains(hostname)
         puts "task: route53:zone:contains #{hostname}"
 
@@ -48,13 +49,24 @@ module OpenShift
         handle = Route53.login
 
         response = handle.list_hosted_zones
-        zones = response[:hosted_zones]
+        allzones = response[:hosted_zones]
 
-        zones.select {|zone|
+        zones = allzones.select {|zone|
           hostname.match "#{zone[:name]}$"
-        }.each {|zone|
+        }
+
+        # sort in descending order (best match first)
+        zones.sort! { |a, b| a[:name] <=> b[:name] }
+        
+        # only return the longest one
+        unless (options[:all] or zones.count < 1) 
+          zones = zones.slice(0,1)
+        end
+
+        zones.each { |zone|
           puts zone[:id].split('/')[2] + " " + zone[:name]
         }
+        zones
       end
 
     end
@@ -87,7 +99,7 @@ module OpenShift
           rrtype = rrset[:type]
           if type === nil or rrtype === type.upcase
             values = rrset[:resource_records]
-            puts "#{rrset[:name]} #{rrtype}"
+            puts "#{rrset[:name]} #{rrtype} ttl=#{rrset[:ttl]}"
             values.each { |rvalue|
               puts "  #{rvalue[:value]}"
             }

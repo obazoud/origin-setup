@@ -876,127 +876,129 @@ class Remote < Thor
     class_option(:verbose, :type => :boolean, :default => false)
     class_option(:username, :type => :string)
     class_option(:ssh_key_file, :type => :string)
-    class_option(:systemd, :type => :boolean, :default => true)
+    class_option(:systemd, :type => :boolean, :default => nil)
 
     no_tasks do
 
-      def systemd_cmd(service, action)
-        "systemctl #{action} #{service}.service"
-      end
+      def self.cmd(service, action, systemd=true)
+        if systemd
+          return "systemctl #{action} #{service}.service"
+        end
 
-      def upstart_cmd(service, action)
-
-        # enable/disable uses chkconfig
         if ['enable', 'disable'].member? action
           return "chkconfig #{service} #{action == 'enable'? 'on' : 'off'}"
         end
-
+          
         "service #{service} #{action}"
+      end
+
+      def self.execute(hostname, username, key_file, service, action, systemd, 
+          verbose=false)
+
+        cmd = "sudo " + Remote::Service.cmd(service, action, systemd)
+        Remote.remote_command(hostname, username, key_file, cmd, verbose)
       end
 
     end
 
     # start
-    desc "start SERVICE [SERVICE...]", "start a service on a remote host"
+    desc "start HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def start(hostname, *services)
-      
+      puts "task: remote:service:start #{hostname} #{services.join(' ')}"
+
+
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      if options[:systemd]
-        service_cmd = :systemd_cmd
+      if options[:systemd] == nil
+        systemd = Remote.pidone(hostname, username, key_file) == "systemd"
       else
-        service_cmd = :upstart_cmd
+        systemd = options[:systemd]
       end
-
+      
       services.each { |service|
-        cmd = "sudo " + send(service_cmd, service, "start")
-        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-          hostname, username, key_file, cmd, options[:verbose])
+        Remote::Service.execute(hostname, username, key_file,
+          service, 'start', systemd, options[:verbose])
       }
+
     end
 
     # stop
-    desc "stop SERVICE [SERVICE...]", "start a service on a remote host"
+    desc "stop HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def stop(hostname, *services)
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      if options[:systemd]
-        service_cmd = :systemd_cmd
+      if options[:systemd] == nil
+        systemd = Remote.pidone(hostname, username, key_file) == "systemd"
       else
-        service_cmd = :upstart_cmd
+        systemd = options[:systemd]
       end
-
-      services.each { |service|
-        cmd = "sudo " + send(service_cmd, service, "stop")
-        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-          hostname, username, key_file, cmd, options[:verbose])
-      }
       
+      services.each { |service|
+        Remote::Service.execute(hostname, username, key_file,
+          service, 'stop', systemd, options[:verbose])
+      }
+
     end
 
     # restart
     # start
-    desc "restart SERVICE [SERVICE...]", "start a service on a remote host"
+    desc "restart HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def restart(hostname, *services)
-      
+
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      if options[:systemd]
-        service_cmd = :systemd_cmd
+      if options[:systemd] == nil
+        systemd = Remote.pidone(hostname, username, key_file) == "systemd"
       else
-        service_cmd = :upstart_cmd
+        systemd = options[:systemd]
       end
-
+      
       services.each { |service|
-        cmd = "sudo " + send(service_cmd, service, "restart")
-        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-          hostname, username, key_file, cmd, options[:verbose])
+        Remote::Service.execute(hostname, username, key_file,
+          service, 'restart', systemd, options[:verbose])
       }
     end
 
     # status
 
     # enable
-    desc "enable SERVICE [SERVICE...]", "start a service on a remote host"
+    desc "enable HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def enable(hostname, *services)
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      if options[:systemd]
-        service_cmd = :systemd_cmd
+      if options[:systemd] == nil
+        systemd = Remote.pidone(hostname, username, key_file) == "systemd"
       else
-        service_cmd = :upstart_cmd
+        systemd = options[:systemd]
       end
-
+      
       services.each { |service|
-        cmd = "sudo " + send(service_cmd, service, "enable")
-        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-          hostname, username, key_file, cmd, options[:verbose])
+        Remote::Service.execute(hostname, username, key_file,
+          service, 'enable', systemd, options[:verbose])
       }
-      
-      
     end
 
     # disable
-    desc "disable SERVICE [SERVICE...]", "start a service on a remote host"
+    desc "disable HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def disable(hostname, *services)
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      if options[:systemd]
-        service_cmd = :systemd_cmd
+      if options[:systemd] == nil
+        systemd = Remote.pidone(hostname, username, key_file) == "systemd"
       else
-        service_cmd = :upstart_cmd
+        systemd = options[:systemd]
       end
-
+      
       services.each { |service|
-        cmd = "sudo " + send(service_cmd, service, "disable")
-        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-          hostname, username, key_file, cmd, options[:verbose])
+        Remote::Service.execute(hostname, username, key_file,
+          service, 'disable', systemd, options[:verbose])
       }
+
     end
 
   end

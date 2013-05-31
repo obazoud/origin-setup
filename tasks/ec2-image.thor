@@ -15,11 +15,13 @@ module OpenShift
     method_option(:name, :type => :string, :default => "*")
     method_option(:location, :type => :string, :default => "*")
     method_option(:owner, :default => :self)
+    method_option(:arch, :type => :string, :default => "*")
     def list
       handle = AWS::EC2.new
-      images = handle.images.with_owner(options[:owner]).
-        filter('state', 'available').
-        filter('name', options[:name])
+      images = handle.images.filter('state', 'available')
+      images = images.with_owner(options[:owner]) if options[:owner]
+      images = images.filter('architecture', options[:arch]) if options[:arch]
+      images = images.filter('name', options[:name]) if options[:name]
 
       images.each do |i|
         if options[:verbose] then
@@ -27,7 +29,7 @@ module OpenShift
             "#{i.block_device_mappings.to_a}, #{i.state}" +
             "\n   #{i.owner_id} '#{i.owner_alias}'"
         else
-          puts "#{i.id} #{i.name} #{i.platform}"
+          puts "#{i.id} #{i.owner_id} #{i.architecture} #{i.name} #{i.platform}"
         end
       end
     end
