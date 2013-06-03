@@ -252,6 +252,44 @@ class Remote < Thor
     start_process
   end
 
+  desc "timezone HOSTNAME [ZONE]", "get or set the system timezone on a remote host"
+  def timezone(hostname, zone=nil)
+    puts "task: timezone #{hostname} #{zone}"
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+    puts "- username: #{username}" if options[:verbose]
+    puts "- key_file: #{key_file}" if options[:verbose]
+
+    if zone
+      filename = "/usr/share/zoneinfo/#{zone}"
+
+      cmd = "test -f #{filename} && sudo cp #{filename} /etc/localtime"
+
+      puts "- cmd = #{cmd}" if options[:verbose]
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      if not exit_code == 0
+        puts "invalid time zone string #{zone}: #{filename} - file not found"        
+      end
+    
+    else
+      cmd = "date +%Z"
+      puts "- cmd = #{cmd}" if options[:verbose]
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      puts stdout[0]
+      stdout[0]
+
+    end
+
+  end
+
   class File < Thor
 
     namespace "remote:file"

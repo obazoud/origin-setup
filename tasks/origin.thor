@@ -208,7 +208,7 @@ module OpenShift
     method_option :ssh_id, :type => :string
     method_option :packages, :type => :array, :default => []
     method_option :ntpservers, :type => :array, :default => []
-    method_option :timezone, :type => :string, :default => 
+    method_option :timezone, :type => :string, :default => "UTC"
 
     def prepare(hostname)
 
@@ -221,6 +221,7 @@ module OpenShift
       arch = invoke("remote:arch", [hostname])
       puts "- instance is #{os}-#{releasever} #{arch}" if options[:verbose]
 
+      invoke "remote:timezone", [hostname, options[:timezone]]
 
       ipaddr = Resolv.new.getaddress hostname
       invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
