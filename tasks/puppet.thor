@@ -112,13 +112,12 @@ module OpenShift
       class_option :ssh_key_file
       class_option :verbose
       
-      desc "set_moduledir HOSTNAME MODULEDIR", "set the moduledir for the master configuration"
-      def set_moduledir(hostname, moduledir)
-        puts "task: puppet:module:set_moduledir #{hostname} #{moduledir}" unless options[:quiet]
-
-
+      desc "configure HOSTNAME", "set the puppet master configuration on a host"
+      method_option :moduledir
+      method_option :manifestdir
+      def configure(hostname)
       end
-
+        
       desc "enable_logging HOSTNAME", "log puppet master events to a specific file"
       def enable_logging(hostname)
         puts "task: puppet:master:enable_logging #{hostname}"

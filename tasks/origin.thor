@@ -268,6 +268,7 @@ module OpenShift
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
 
+
       # unpack the puppet site information where it can be managed
       if options[:siterepo]
 
