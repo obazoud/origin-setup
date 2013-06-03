@@ -252,6 +252,11 @@ module OpenShift
       manifestdir = '/var/lib/puppet/manifests'
       moduledir = '/var/lib/puppet/modules'
 
+      available = invoke("remote:available", [instance.dns_name], :username => username,
+        :wait => true, :verbose => options[:verbose])
+
+      raise Exception.new("host #{hostname} not available") if not available
+
       #hostname = instance.dns_name
       invoke("origin:prepare", [hostname],
         :packages => ['puppet-server', 'git'],
@@ -368,6 +373,11 @@ module OpenShift
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
+      available = invoke("remote:available", [hostname], :username => username,
+        :wait => true, :verbose => options[:verbose])
+
+      raise Exception.new("host #{hostname} not available") if not available
+
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
       # also install additional packages
@@ -382,16 +392,18 @@ module OpenShift
         :systemd => systemd, :verbose => options[:verbose])
 
       # wait for the signing request to appear?
-      sleep 5
-      # maxtries = 5
-      # pollinterval = 5 # seconds
-      # (1..maxtries).each { |trynum|
-      #   certlist = invoke "puppet:cert:list", [puppetmaster, hostname]
-      #   break if certlist.count > 0
-      #   sleep pollinterval
-      # }
+      maxtries = 5
+      pollinterval = 5 # seconds
+      (1..maxtries).each { |trynum|
+        certlist = Puppet::Cert.list(puppetmaster, username, key_file, hostname, false, 
+          options[:verbose])
+        puts "certlist = #{certlist}"
+        break if certlist.count > 0
+        sleep pollinterval
+      }
 
       # raise Exception.new "timed out waiting for cert request" if certlist.count == 0
+
       # then sign it?
       invoke "puppet:cert:sign", [puppetmaster, hostname]
 

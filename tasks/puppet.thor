@@ -45,7 +45,21 @@ module OpenShift
 
       end
 
-      desc "list MASTER", "list the outstanding unsigned (or all) certs"
+      desc "clean MASTER HOSTNAME", "remove a host certificate from the master list"
+      def clean(master, hostname)
+        puts "task puppet:cert:clean #{master} #{hostname}" unless options[:quiet]
+
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        cmd = "sudo puppet cert clean #{hostname}"
+
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        master, username, key_file, cmd, options[:verbose])
+
+      end
+
+      desc "list MASTER [HOSTNAME]", "list the outstanding unsigned (or all) certs"
       method_option :all, :type => :boolean, :default => false
       def list(master, hostname=nil)
         puts "task puppet:cert:list #{master}" unless options[:quiet]
@@ -53,39 +67,41 @@ module OpenShift
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-        cmd = "sudo puppet cert list #{hostname}"
-        cmd << " --all" if options[:all]
+        certlist = Puppet::Cert.list(master, username, key_file, hostname, options[:all],
+          options[:verbose])
 
-        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        master, username, key_file, cmd, options[:verbose])
-
-        # check exit_code
-
-        if hostname
-          # check stdout: 
-          # [+-] "<hostname>"\s+ (<fingerprint)[ (alt names: [names])]
-          # or
-          # err: Could not call list: could not find a certificate for <hostname>
-        else
-          
-        end
-
-        # parse the cert lines for 
-        certlist = stdout.select {|line|
-          # only pick lines that 
-          line.match /^(\+|-)\s/
-        }.map {|line|
-          state, name, fingerprint, attrlist = line.split(' ', 4)
-          # strip the leading and trailing quotes and parens
-          [state, name[1..-2], fingerprint[1..-2]]
-        }
-        
+        puts "there are #{certlist.count} matches" if options[:verbose]
         certlist.each { |state, name, fingerprint|
           puts "#{state} #{name} #{fingerprint}"
         }
+        
         certlist
       end
       
+      no_tasks do
+        def self.list(master, username, key_file, hostname, all=false, verbose=false)
+
+          cert_re = /^((\+|-)\s)?"([^\s]+)"\s+\(((([A-F0-9]{2}):){15}[A-F0-9]{2})\)/
+
+          cmd = "sudo puppet cert list #{hostname}"
+          cmd << " --all" if all
+
+          exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+            master, username, key_file, cmd, verbose)
+
+          # check exit_code
+
+          # parse the cert lines for 
+          certlist = stdout.map {|line|
+            # only pick lines that match
+            match = line.match cert_re
+            match and match.to_a.slice(2,4)
+            # and filter the null entries
+          }.select {|entry| entry }
+        
+          certlist
+        end
+      end
     end
 
     class Master < Thor
