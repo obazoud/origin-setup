@@ -209,6 +209,25 @@ module OpenShift
 
       end
 
+      desc "exist HOSTNAME", "check if a record exists for a given name"
+      def exist(zonename, hostpart)
+        puts "task: route53:record:exist #{zonename} #{hostpart}" unless options[:quiet]
+
+        handle = Route53.login
+
+        zoneid = Route53.zone_id(handle, zonename)
+        opts = {:hosted_zone_id => "/hostedzone/#{zoneid}"}
+
+        fqdn = hostpart + "." + zonename
+        fqdn += "." unless fqdn.end_with? "."
+        
+        record_sets = handle.list_resource_record_sets(opts)[:resource_record_sets]
+        record_sets.select! { |record| record[:name] == fqdn }
+        
+        puts record_sets if options[:verbose]
+        return record_sets.count > 0
+      end
+
       no_tasks do
         def change_record(action, fqdn, type, ttl, value)
 

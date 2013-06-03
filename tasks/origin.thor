@@ -24,7 +24,7 @@ module OpenShift
     method_option :image, :type => :string
     method_option :type, :type => :string
     method_option :keypair, :type => :string
-    method_option :securitygroup, :type => :string, :default => "default"
+    method_option :securitygroup, :type => :array, :default => ['default']
     method_option :hostname, :type => :string
     method_option :ipaddress, :type => :string
     def baseinstance(name)
@@ -48,11 +48,45 @@ module OpenShift
       hostname = options[:hostname]
       if hostname
         # check if the name has an A record associated
-        begin
-          # get this from Route53 instead of DNS to avoid negative cache
-          hostip = Resolv.getaddress hostname
-          puts "- #{hostname}: #{hostip}"
+        # determine the available zones
+        zones = invoke "route53:zone:contains", [hostname]
+        if zones.count == 0
+          raise ArgumentError.new(
+            "no available zones contain hostname #{hostname}"
+            )
+        end
+          
+        # find the containing zone
+        zonename = zones[0][:name]
+        fqdn = hostname
+        fqdn += '.' unless hostname.end_with? '.'
+        hostpart = fqdn.gsub('.' + zonename, '')
 
+        host_rr_list = invoke "route53:record:get", [zonename, hostpart]
+        if host_rr_list.count < 1
+          puts "- no IP address"
+          hostip=nil
+
+          # no DNS A record
+          # create a new IP address if needed
+          if not eip
+            eip = invoke("ec2:ip:create", []) if not eip
+            ipaddress = eip.ip_address
+          end
+
+          # add the IP address to the zone
+          # Wait for it to be in sync or you'll get negative record caching
+          # on the first DNS query and the whole thing will stop.
+          invoke("route53:record:create", [zonename, hostpart, 'A', ipaddress],
+            :ttl => 120, :wait => true, :verbose => options[:verbose])
+
+        elsif host_rr_list.count > 1
+          raise Exception.new("too many records for #{fqdn}")
+        else
+          # this needs better checking
+          hostip = host_rr_list[0][:resource_records][0][:value]
+
+          puts "- #{hostname}: #{hostip}"
           # there's an A record: does it match the ipaddress?
           if ipaddress and (not ipaddress == hostip)
             raise ArgumentError.new(
@@ -68,47 +102,14 @@ module OpenShift
             ipaddress = hostip
           end
 
-        rescue Resolv::ResolvError => e
-          # no DNS A record
-          # create a new IP address if needed
-          if not eip
-            eip = invoke("ec2:ip:create", []) if not eip
-            ipaddress = eip.ip_address
-          end
-
-          # determine the available zones
-          zones = invoke "route53:zone:contains", [hostname]
-          if zones.count == 0
-            raise ArgumentError.new(
-              "no available zones contain hostname #{hostname}"
-              )
-          end
-          
-          # find the containing zone
-          zonename = zones[0][:name]
-          fqdn = hostname
-          fqdn += '.' unless hostname.end_with? '.'
-          puts "- fqdn = #{fqdn}"
-          hostpart = fqdn.gsub('.' + zonename, '')
-
-          # add the IP address to the zone
-          # Wait for it to be in sync or you'll get negative record caching
-          # on the first DNS query and the whole thing will stop.
-          invoke("route53:record:create", [zonename, hostpart, 'A', ipaddress],
-            :ttl => 120, :wait => true, :verbose => options[:verbose])
-
-          # report how long before the name will resolv
-          #resolver = Resolv::DNS.open
-          #zone_info = resolver.getresources(
-          #  zonename, Resolv::DNS::Resource::IN::SOA)
-          #puts "- #{zonename} fqdn #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
-          
         end
+
       else
         # hostname not given
         # find one from IP if given
 
       end
+
 
       # -----------------------------------------------
       # hostname, ipaddress and eip have current values
@@ -139,16 +140,19 @@ module OpenShift
       # ------------------------------
       #
       instance = invoke('ec2:instance:create', [], 
-        :image => image_id, :name => name, :key => config['AWSKeyPairName'],
-        :type => config['AWSEC2Type'], :securitygroup => options[:securitygroup]
+        :image => image_id, :name => name, 
+        :key => config['AWSKeyPairName'],
+        :type => config['AWSEC2Type'], 
+        :securitygroup => options[:securitygroup],
+        :verbose => options[:verbose]
         )
 
-      puts "instance #{instance.id} starting" if options[:verbose]
+      puts "- instance #{instance.id} starting" if options[:verbose]
 
       # monitor startup process: wait until running
       (1..20).each do |trynum|
         break if instance.status.to_s === 'running'
-        puts "#{instance.id} '#{instance.status}' waiting..." if options[:verbose]
+        puts "- #{instance.id} '#{instance.status}' waiting..." if options[:verbose]
         sleep 15
       end
       raise Exception.new "Instance failed to start" if not instance.status.to_s === 'running'
@@ -157,11 +161,11 @@ module OpenShift
       # get instance information
       #-------------------------
 
-      puts "waiting 3 sec for DNS to be available" if options[:verbose]
+      puts "- waiting 3 sec for DNS to be available" if options[:verbose]
       sleep 3
 
       #hostname ||= instance.dns_name
-      puts "waiting for #{instance.dns_name} to accept SSH connections" if options[:verbose]
+      puts "- waiting for #{instance.dns_name} to accept SSH connections" if options[:verbose]
 
       username = options[:username] || Remote.ssh_username
       # wait for SSH to respond
@@ -215,22 +219,9 @@ module OpenShift
 
       # check archecture
       arch = invoke("remote:arch", [hostname])
-      puts "instance is #{os}-#{releasever} #{arch}" if options[:verbose]
+      puts "- instance is #{os}-#{releasever} #{arch}" if options[:verbose]
 
-      # ===============================================
-      # Prepare the instance for installation
-      # ===============================================
 
-      # NOTE: do these with puppet later ML 201305
-      # select stock, nightly, private or local
-      #invoke("origin:yum:repo:nightly", [hostname, os, releasever, arch])
-      #invoke("origin:yum:repo:extras", [hostname, os, releasever, arch])
-
-      # add puppetlabs repo release RPM
-      #if not os === "fedora"
-      #  invoke "origin:yum:repo:puppetlabs", [hostname, os, releasever, arch]
-      #end
-      
       ipaddr = Resolv.new.getaddress hostname
       invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
         :verbose => options[:verbose])

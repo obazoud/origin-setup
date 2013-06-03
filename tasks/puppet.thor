@@ -164,6 +164,37 @@ module OpenShift
           true, false, false, options[:verbose])
       end
 
+      desc "enable_logging HOSTNAME", "log puppet agent events to a specific file"
+      def enable_logging(hostname)
+        puts "task: puppet:agent:enable_logging #{hostname}"
+
+        # get ssh access
+         username = options[:username] || Remote.ssh_username
+         key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        # log puppet to its own file
+        Remote::File.scp_put(hostname, username, key_file,
+          "data/rsyslog-puppet.conf", "rsyslog-puppet.conf",
+          options[:verbose])
+
+        Remote::File.copy(hostname, username, key_file,
+          "rsyslog-puppet.conf", "/etc/rsyslog.d/puppet.conf",
+          true, false, false, options[:verbose])
+
+        cmd = "sudo touch /var/log/puppet.log"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose])
+
+        if options[:systemd] == nil
+          systemd = Remote.pidone(hostname, username, key_file) == "systemd"
+        else
+          systemd = options[:systemd]
+        end
+
+        Remote::Service.execute(hostname, username, key_file, 
+          "rsyslog", 'restart', systemd, options[:verbose])
+      end
+
     end
 
     class Module < Thor

@@ -54,11 +54,11 @@ class Remote < Thor
           ssh.open_channel do | channel |
             channel.request_pty
 
-            puts "cmd: #{command}" if verbose
+            puts "- cmd: #{command}" if verbose
             result = channel.exec(command) do |ch, success |
 
               channel.on_data do | ch, data |
-                puts "remote: #{data.strip}" if verbose and not data.match(/^\s+$/)
+                puts "- remote: #{data.strip}" if verbose and not data.match(/^\s+$/)
                 stdout << data.strip if not data.match(/^\s+$/)
               end      
 
@@ -81,25 +81,25 @@ class Remote < Thor
         end # Net::SSH.start
 
       rescue Net::SSH::AuthenticationFailed => e
-        puts "Authentication failed" if verbose
+        puts "- Authentication failed" if verbose
         return nil
       rescue Net::SSH::Disconnect => e
-        puts "Connection closed by remote host" if verbose
+        puts "- Connection closed by remote host" if verbose
         return nil
       rescue SocketError => e
-        puts "socket error: #{e.message}" if verbose
+        puts "- socket error: #{e.message}" if verbose
         return nil
       rescue Errno::ETIMEDOUT => e
-        puts "timed out attempting to connect" if verbose
+        puts "- timed out attempting to connect" if verbose
         return nil
       rescue Timeout::Error => e
-        puts "timed out attempting to connect" if verbose
+        puts "- timed out attempting to connect" if verbose
         return nil
       rescue Errno::ECONNREFUSED
-        puts "connection refused" if verbose
+        puts "- connection refused" if verbose
         return nil
       rescue Errno::ECONNRESET
-        puts "connection reset" if verbose
+        puts "- connection reset" if verbose
         return nil
       end # try block
       [exit_code, exit_signal, stdout, stderr]
@@ -108,7 +108,7 @@ class Remote < Thor
     # determine if a host uses init (upstart) or systemd
     def self.pidone(hostname, username, key_file, verbose=false)
       cmd = "ps -h -o comm -p 1"
-      puts "cmd = #{cmd}" if verbose
+      puts "- cmd = #{cmd}" if verbose
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, verbose)
       stdout[0]
@@ -129,7 +129,7 @@ class Remote < Thor
     puts "task: remote:available #{hostname}" unless options[:quiet]
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
-    puts "using username #{username} and key file #{key_file}" if options[:verbose]
+    puts "- using username #{username} and key file #{key_file}" if options[:verbose]
 
     cmd = "echo success"
 
@@ -139,18 +139,18 @@ class Remote < Thor
       if result then
         exit_code, exit_signal, stdout, stderr = result
         if options[:verbose] then
-          puts stdout.join("\n") 
-          puts stderr.join("\n")
-          puts "stdout length = #{stdout.count}"
-          puts "exit code: #{exit_code}"
+          puts "- STDOUT\n" + stdout.join("\n") 
+          puts "- STDERR\n" + stderr.join("\n")
+          puts "- stdout length = #{stdout.count}"
+          puts "- exit code: #{exit_code}"
         end
         return true
       end
       break if not options[:wait]
-      puts "sleeping #{options[:pollrate]}" if options[:verbose]
+      puts "- sleeping #{options[:pollrate]}" if options[:verbose]
       sleep 10
     end
-    puts "#{hostname} not available" if options[:verbose]
+    puts "- #{hostname} not available" if options[:verbose]
     return false
   end
 
@@ -166,7 +166,7 @@ class Remote < Thor
 
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
-    puts "using key file #{key_file}" if options[:verbose]
+    puts "- using key file #{key_file}" if options[:verbose]
 
     cmd = "cat /etc/redhat-release"
 
@@ -179,7 +179,7 @@ class Remote < Thor
     info = stdout[0].match /^(Fedora|Red Hat|CentOS).*release ([\d.]+)/
 
     release_info = [distro_table[info[1]], info[2]]
-    puts release_info[0] + ' ' + release_info[1]
+    puts "- " + release_info[0] + ' ' + release_info[1]
     release_info
   end
 
@@ -191,10 +191,10 @@ class Remote < Thor
 
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
-    puts "using key file #{key_file}" if options[:verbose]
+    puts "- using key file #{key_file}" if options[:verbose]
 
-    puts "username: #{username}" if options[:verbose]
-    puts "key_file: #{key_file}" if options[:verbose]
+    puts "- username: #{username}" if options[:verbose]
+    puts "- key_file: #{key_file}" if options[:verbose]
 
     cmd = "wget -q #{options[:filepath]? ('-O ' + options[:filepath]):''} #{url} "
 

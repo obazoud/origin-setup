@@ -63,7 +63,7 @@ module OpenShift
       key = options[:key] || Remote.ssh_key_file
 
       # TODO: check if it already exists?
-
+      puts "- type = #{options[:type]}" if options[:verbose]
       instance = handle.instances.create(
         :image_id => options[:image],
         :instance_type => options[:type],
@@ -192,6 +192,7 @@ module OpenShift
         puts "  Platform: #{image.platform}"
         puts "  Private IP: #{instance.private_ip_address}"
         puts "  Private Hostname: #{instance.private_dns_name}"
+        puts "  Security Groups: #{instance.groups.map {|s| s.name}.join(' ')}"
       else
         puts "#{instance.id} #{instance.tags['Name']}, #{instance.status} " + 
           ([:running, :pending].member?(instance.status) ? instance.dns_name : "")
