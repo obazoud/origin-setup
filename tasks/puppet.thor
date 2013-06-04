@@ -113,11 +113,89 @@ module OpenShift
       class_option :verbose
       
       desc "configure HOSTNAME", "set the puppet master configuration on a host"
-      method_option :moduledir
-      method_option :manifestdir
+      method_option(:moduledir, :type => :string, 
+        :default => "/var/lib/puppet/manifests")
+      method_option(:manifestdir, :type => :string,
+        :default => '/var/lib/puppet/modules')
       def configure(hostname)
+        puts "puppet:master:configure #{hostname}"
+
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        # initialize configuration
+        # TODO: determine location of data dir
+        Remote::File.scp_put(hostname, username, key_file, 
+          'data/puppet-master.conf.erb', 'puppet.conf', options[:verbose])
+
+        # set hostname in appropriate places in the config
+        cmd = "sed -i -e 's/<%= hostname %>/#{hostname}/' puppet.conf"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose])
+
+        # set location of the manifests
+        cmd = "sed -i -e 's|<%= manifestdir %>|#{options[:manifestdir]}|' puppet.conf"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose])
+
+        # set location of the modules
+        cmd = "sed -i -e 's|<%= moduledir %>|#{options[:moduledir]}|' puppet.conf"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose])
+
+        Remote::File.copy(hostname, username, key_file, 
+          "puppet.conf", "/etc/puppet/puppet.conf", true, false, false,
+          options[:verbose])
+
+        Remote::File.mkdir(hostname, username, key_file,
+          options[:moduledir], true, true, options[:verbose])
+      end
+
+      desc "site_repo HOSTNAME GITURL, [MANIFESTDIR]", "check out a configuration repo on the host"
+      def site_repo(hostname, giturl, manifestdir=nil)
+
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        sitename = File.basename(giturl, '.git')
+        sitepath = '/var/lib/puppet/' + sitename
+
+        manifestdir = sitepath + '/manifests'
+        moduledir = sitepath + '/modules'
+
+        Remote::File.mkdir(hostname, username, key_file,
+          sitepath, true, true, options[:verbose])
+
+        Remote::File.group(hostname, username, key_file,
+          sitepath, 'puppet', true, false, options[:verbose])
+
+        # Allow the puppet group to write to the manifests area
+        Remote::File.permission(hostname, username, key_file,
+          sitepath, 'g+ws', true, false, options[:verbose])
+
+        # Clone the manifests into place
+        invoke("remote:git:clone", [hostname, giturl],
+          :destdir => '/var/lib/puppet',
+          :destname => sitename,
+          :verbose => options[:verbose])
+
+        # Allow git pulls from user $HOME/manifests
+        Remote::File.symlink(hostname, username, key_file,
+          sitepath, sitename, 
+          false, options[:verbose])
       end
         
+      desc "join_group HOSTNAME", "add the user to the puppet group"
+      def join_group(hostname)
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+        
+        # add the user to the puppet group
+        cmd = "sudo augtool --autosave set /files/etc/group/puppet/user[1] #{username}"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose])
+      end
+
       desc "enable_logging HOSTNAME", "log puppet master events to a specific file"
       def enable_logging(hostname)
         puts "task: puppet:master:enable_logging #{hostname}"

@@ -22,7 +22,7 @@ AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
 class Remote < Thor
   include Thor::Actions
 
-  namespace "remote"
+  #namespace "remote"
 
   no_tasks do
 
@@ -292,7 +292,7 @@ class Remote < Thor
 
   class File < Thor
 
-    namespace "remote:file"
+    #namespace "remote:file"
 
     no_tasks do
       #
@@ -549,7 +549,7 @@ class Remote < Thor
 
   class Yum < Thor
 
-    namespace "remote:yum"
+    #namespace "remote:yum"
 
     class_option(:verbose, :type => :boolean, :default => false)
     class_option(:username, :type => :string)
@@ -671,12 +671,11 @@ class Remote < Thor
 
   end
 
-
   class Git < Thor
 
     include Thor::Actions
 
-    namespace "remote:git"
+    #namespace "remote:git"
 
     class_option(:verbose, :type => :boolean, :default => false)
     class_option(:username, :type => :string)
@@ -907,6 +906,153 @@ class Remote < Thor
     end
   end
 
+  class Firewall < Thor
+    
+    namespace "remote:firewall"
+
+    class_option :verbose, :type => :boolean, :default => false
+    class_option(:username, :type => :string)
+    class_option(:ssh_key_file, :type => :string)
+    class_option(:systemd, :type => :boolean)
+    
+    desc "port HOSTNAME PORTNUM [PORTNUM]...", "open a port on a remote host"
+    method_option :protocol, :type => :string, :default => "tcp"
+    def port(hostname, *ports)
+      puts "task: remote:firewall:port #{hostname} #{ports.join(' ')}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      ports.each { |portnum|
+        puts "opening port #{portnum}" if options[:verbose]
+        Remote::Firewall.port(hostname, username, key_file,  
+          portnum, protocol='tcp', 
+          close=false, options[:verbose])
+      }
+    end
+
+    desc "service HOSTNAME SERVICE [SERVICE]...", "allow a service on a remote host"
+    def service(hostname, *services)
+      puts "task: remote:firewall:service #{hostname} #{services.join(' ')}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      services.each { |service|
+        puts "allowing service #{service}" if options[:verbose]
+        Remote::Firewall.service(hostname, username, key_file, service,
+          options[:verbose])
+      }
+    end
+
+    desc "start HOSTNAME", "start the firewall service on the host"
+    def start(hostname)
+      puts "task: remote:firewall:start #{hostname}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      systemd = options[:systemd]
+      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
+
+      Remote::Service.execute(hostname, username, key_file,
+        'iptables', 'start', systemd, options[:verbose])
+    end
+
+    desc "start HOSTNAME", "start the firewall service on the host"
+    def start(hostname)
+      puts "task: remote:firewall:start #{hostname}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      systemd = options[:systemd]
+      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
+
+      Remote::Service.execute(hostname, username, key_file,
+        'iptables', 'start', systemd, options[:verbose])
+    end
+
+    desc "stop HOSTNAME", "stop the firewall service on the host"
+    def stop(hostname)
+      puts "task: remote:firewall:stop #{hostname}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      systemd = options[:systemd]
+      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
+
+      Remote::Service.execute(hostname, username, key_file,
+        'iptables', 'stop', systemd, options[:verbose])
+    end
+
+    desc "enable HOSTNAME", "enable the firewall service on the host"
+    def enable(hostname)
+      puts "task: remote:firewall:enable #{hostname}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      systemd = options[:systemd]
+      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
+
+      Remote::Service.execute(hostname, username, key_file,
+        'iptables', 'enable', systemd, options[:verbose])
+    end
+
+    desc "disable HOSTNAME", "disable the firewall service on the host"
+    def disable(hostname)
+      puts "task: remote:firewall:disable #{hostname}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      systemd = options[:systemd]
+      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
+
+      Remote::Service.execute(hostname, username, key_file,
+        'iptables', 'disable', systemd, options[:verbose])
+    end
+
+    desc "status HOSTNAME", "status of the firewall service on the host"
+    def status(hostname)
+      puts "task: remote:firewall:status #{hostname}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      systemd = options[:systemd]
+      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
+
+      Remote::Service.execute(hostname, username, key_file,
+        'iptables', 'status', systemd, options[:verbose])
+    end
+
+    no_tasks do
+      def self.port(hostname, username, key_file, 
+          portnum, protocol='tcp', close=false,
+          verbose=false)
+
+        #cmd = "sudo firewall-cmd --zone public --add-port 8140/tcp"
+        cmd = "sudo lokkit --nostart --port=#{portnum}:#{protocol}"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+      end
+
+      def self.service(hostname, username, key_file, service,
+          verbose=false)
+
+        #cmd = "sudo firewall-cmd --zone public --add-port 8140/tcp"
+        cmd = "sudo lokkit --nostart --service=#{service}"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+      end
+
+    end
+  end
+
+
   class Service < Thor
 
     namespace "remote:service"
@@ -949,7 +1095,7 @@ class Remote < Thor
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
       if options[:systemd] == nil
-        systemd = Remote.pidone(hostname, username, key_file) == "systemd"
+        systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) == "systemd"
       else
         systemd = options[:systemd]
       end

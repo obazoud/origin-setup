@@ -250,9 +250,6 @@ module OpenShift
 
       # check DNS resolution for hostname?
       
-      manifestdir = '/var/lib/puppet/manifests'
-      moduledir = '/var/lib/puppet/modules'
-
       available = invoke("remote:available", [instance.dns_name], :username => username,
         :wait => true, :verbose => options[:verbose])
 
@@ -264,12 +261,11 @@ module OpenShift
         :verbose => options[:verbose])
 
       # add the user to the puppet group
-      cmd = "sudo augtool --autosave set /files/etc/group/puppet/user[1] #{username}"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
+      invoke "puppet:master:join_group", [hostname]
 
       # unpack the puppet site information where it can be managed
+
+
       if options[:siterepo]
 
         sitename = File.basename(options[:siterepo], '.git')
@@ -300,61 +296,21 @@ module OpenShift
           false, options[:verbose])
       end
 
-      # initialize configuration
-      # TODO: determine location of data dir
-      Remote::File.scp_put(hostname, username, key_file, 
-        'data/puppet-master.conf.erb', 'puppet.conf', options[:verbose])
-
-      # set hostname in appropriate places in the config
-      cmd = "sed -i -e 's/<%= hostname %>/#{hostname}/' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      # set location of the manifests
-      cmd = "sed -i -e 's|<%= manifestdir %>|#{manifestdir}|' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      # set location of the modules
-      cmd = "sed -i -e 's|<%= moduledir %>|#{moduledir}|' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      Remote::File.copy(hostname, username, key_file, 
-        "puppet.conf", "/etc/puppet/puppet.conf", true, false, false, options[:verbose])
-
-
-      Remote::File.mkdir(hostname, username, key_file,
-        "/var/lib/puppet/modules", true, true, options[:verbose])
+      invoke "puppet:master:configure", [hostname]
 
       invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']]
 
       systemd = Remote.pidone(hostname, username, key_file) == "systemd"
 
-      cmd = "sudo service iptables stop"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      invoke "remote:firewall:stop", [hostname]
 
-      
-      # firewall-cmd seems to block when run via rubygem-ssh
-      #cmd = "sudo firewall-cmd --zone public --add-service ssh"
-      cmd = "sudo lokkit --nostart --service=ssh"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      Remote::Firewall.service(hostname, username, key_file, 'ssh', 
+        options[:verbose])
 
-      #cmd = "sudo firewall-cmd --zone public --add-port 8140/tcp"
-      cmd = "sudo lokkit --nostart --port=8140:tcp"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      Remote::Firewall.port(hostname, username, key_file, 8140, 'tcp',
+        options[:verbose])
 
-      # NOTE: lokkit seems to hang when run by rubygem-ssh
-      #cmd = "sudo lokkit --enabled &"
-      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      #  hostname, username, key_file, cmd, options[:verbose])
-
-      cmd = "sudo service iptables start"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      invoke "remote:firewall:start", [hostname]
 
       invoke("puppet:cert:generate", [hostname, hostname])
 
