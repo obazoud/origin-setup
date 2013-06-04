@@ -239,6 +239,7 @@ module OpenShift
     desc "puppetmaster NAME", "create a puppetmaster instance"
     method_option :instance, :type => :string
     method_option :hostname, :type => :string
+    method_option :siteroot, :type => :string, :default => "/var/lib/puppet/site"
     method_option :siterepo, :type => :string
     
     def puppetmaster(hostname)
@@ -250,7 +251,7 @@ module OpenShift
 
       # check DNS resolution for hostname?
       
-      available = invoke("remote:available", [instance.dns_name], :username => username,
+      available = invoke("remote:available", [hostname], :username => username,
         :wait => true, :verbose => options[:verbose])
 
       raise Exception.new("host #{hostname} not available") if not available
@@ -263,44 +264,28 @@ module OpenShift
       # add the user to the puppet group
       invoke "puppet:master:join_group", [hostname]
 
-      # unpack the puppet site information where it can be managed
+      # create the site root (where the site files will go) if needed
+      # check if the directory exists
+      invoke "puppet:master:siteroot", [hostname, options[:siteroot]]
 
+      
+      # Clone the manifests into place
+      invoke("remote:git:clone", [hostname, options[:siterepo]],
+        :destdir => File.dirname(options[:siteroot]),
+        :destname => File.basename(options[:siteroot]),
+        :verbose => options[:verbose]) if options[:siterepo]
 
-      if options[:siterepo]
+      # tell it where to find modules and the site (manifests)
+      invoke("puppet:master:configure", [hostname],
+        :moduledir => options[:siteroot] + "/modules",
+        :manifestdir => options[:siteroot] + "/manifests",
+        :verbose => options[:verbose])
+      
+      # split logs out into their own file
+      invoke "puppet:master:enable_logging", [hostname]
 
-        sitename = File.basename(options[:siterepo], '.git')
-        sitepath = '/var/lib/puppet/' + sitename
-
-        manifestdir = sitepath + '/manifests'
-        moduledir = sitepath + '/modules'
-
-        Remote::File.mkdir(hostname, username, key_file,
-          sitepath, true, true, options[:verbose])
-
-        Remote::File.group(hostname, username, key_file,
-          sitepath, 'puppet', true, false, options[:verbose])
-
-        # Allow the puppet group to write to the manifests area
-        Remote::File.permission(hostname, username, key_file,
-          sitepath, 'g+ws', true, false, options[:verbose])
-
-        # Clone the manifests into place
-        invoke("remote:git:clone", [hostname, options[:siterepo]],
-          :destdir => '/var/lib/puppet',
-          :destname => sitename,
-          :verbose => options[:verbose])
-
-        # Allow git pulls from user $HOME/manifests
-        Remote::File.symlink(hostname, username, key_file,
-          sitepath, sitename, 
-          false, options[:verbose])
-      end
-
-      invoke "puppet:master:configure", [hostname]
-
+      # install standard modules
       invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']]
-
-      systemd = Remote.pidone(hostname, username, key_file) == "systemd"
 
       invoke "remote:firewall:stop", [hostname]
 
@@ -314,16 +299,16 @@ module OpenShift
 
       invoke("puppet:cert:generate", [hostname, hostname])
 
+      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
+
       # start puppet master daemon
       invoke("remote:service:enable", [hostname, "puppetmaster"],
         :systemd => systemd, :verbose => options[:verbose])
       invoke("remote:service:start", [hostname, "puppetmaster"], 
         :systemd => systemd, :verbose => options[:verbose])
-
     end
 
     desc "puppetclient HOSTNAME MASTER", "create a puppet client instance"
-    method_option :instance, :type => :string    
     def puppetclient(hostname, puppetmaster)
 
       puts "origin:puppetclient #{hostname}, #{puppetmaster}" unless options[:quiet]
@@ -342,6 +327,9 @@ module OpenShift
       invoke("origin:prepare", [hostname], :packages => ['puppet', 'facter'])
 
       invoke "puppet:agent:set_server", [hostname, puppetmaster]
+
+      # split logs out into their own file
+      invoke "puppet:agent:enable_logging", [hostname]
 
       # start puppet daemon
       invoke("remote:service:enable", [hostname, "puppet"],

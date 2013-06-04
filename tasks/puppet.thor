@@ -38,8 +38,9 @@ module OpenShift
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-        cmd = "sudo puppet cert sign #{hostname}"
+        # wait for the master cert to be waiting and then sign?
 
+        cmd = "sudo puppet cert sign #{hostname}"
         exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         master, username, key_file, cmd, options[:verbose])
 
@@ -151,14 +152,11 @@ module OpenShift
           options[:moduledir], true, true, options[:verbose])
       end
 
-      desc "site_repo HOSTNAME GITURL, [MANIFESTDIR]", "check out a configuration repo on the host"
-      def site_repo(hostname, giturl, manifestdir=nil)
+      desc "siteroot HOSTNAME PATH", "create a directory to contain the puppet site configuration"
+      def siteroot(hostname, sitepath)
 
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
-
-        sitename = File.basename(giturl, '.git')
-        sitepath = '/var/lib/puppet/' + sitename
 
         manifestdir = sitepath + '/manifests'
         moduledir = sitepath + '/modules'
@@ -173,20 +171,17 @@ module OpenShift
         Remote::File.permission(hostname, username, key_file,
           sitepath, 'g+ws', true, false, options[:verbose])
 
-        # Clone the manifests into place
-        invoke("remote:git:clone", [hostname, giturl],
-          :destdir => '/var/lib/puppet',
-          :destname => sitename,
-          :verbose => options[:verbose])
-
         # Allow git pulls from user $HOME/manifests
         Remote::File.symlink(hostname, username, key_file,
-          sitepath, sitename, 
+          sitepath, "site", 
           false, options[:verbose])
       end
         
       desc "join_group HOSTNAME", "add the user to the puppet group"
       def join_group(hostname)
+
+        puts "task puppet:master:join_group #{hostname}" unless options[:quiet]
+
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
         

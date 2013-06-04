@@ -82,10 +82,10 @@ module OpenShift
       end
 
       if options[:verbose]
-        puts "created new instance: id = #{instance.id}, " +
+        puts "- created new instance: id = #{instance.id}, " +
           "name = #{instance.tags['Name']}"
       else
-        puts "  id = " + instance.id unless options[:quiet]
+        puts "- instance id: " + instance.id unless options[:quiet]
       end
 
       #if options[:wait] then
