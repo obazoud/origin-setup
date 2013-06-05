@@ -18,7 +18,7 @@ module OpenShift
 
       desc "sign MASTER HOSTNAME", "sign an agent certificate"
       def sign(master, hostname)
-        puts "task puppet:cert:sign #{master} #{hostname}" unless options[:quiet]
+        puts "task: puppet:cert:sign #{master} #{hostname}" unless options[:quiet]
 
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
@@ -33,7 +33,7 @@ module OpenShift
 
       desc "generate MASTER HOSTNAME", "sign an agent certificate"
       def generate(master, hostname)
-        puts "task puppet:cert:generate #{master} #{hostname}" unless options[:quiet]
+        puts "task: puppet:cert:generate #{master} #{hostname}" unless options[:quiet]
 
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
@@ -119,7 +119,7 @@ module OpenShift
       method_option(:manifestdir, :type => :string,
         :default => '/var/lib/puppet/modules')
       def configure(hostname)
-        puts "puppet:master:configure #{hostname}"
+        puts "task: puppet:master:configure #{hostname}"
 
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
@@ -180,7 +180,7 @@ module OpenShift
       desc "join_group HOSTNAME", "add the user to the puppet group"
       def join_group(hostname)
 
-        puts "task puppet:master:join_group #{hostname}" unless options[:quiet]
+        puts "task: puppet:master:join_group #{hostname}" unless options[:quiet]
 
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
@@ -234,7 +234,7 @@ module OpenShift
       desc "set_server HOSTNAME MASTER", "set the master hostname on an agent"
       def set_server(hostname, master)
 
-        puts "task puppet:agent:set_server #{hostname} #{master}" unless options[:quiet]
+        puts "task: puppet:agent:set_server #{hostname} #{master}" unless options[:quiet]
 
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file

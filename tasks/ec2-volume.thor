@@ -22,7 +22,7 @@ module OpenShift
       handle = AWS::EC2.new      
       volumes = handle.volumes
       volumes.each { |volume|
-        puts "#{volume.id}: start #{volume.create_time} (#{volume.status}) (#{volume.size}GB)"
+        puts "#{volume.id} created #{volume.create_time} (#{volume.status}) (#{volume.size}GB)"
       }
 
     end

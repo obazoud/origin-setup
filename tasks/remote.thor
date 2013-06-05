@@ -179,7 +179,7 @@ class Remote < Thor
     info = stdout[0].match /^(Fedora|Red Hat|CentOS).*release ([\d.]+)/
 
     release_info = [distro_table[info[1]], info[2]]
-    puts "- " + release_info[0] + ' ' + release_info[1]
+    puts release_info[0] + ' ' + release_info[1]
     release_info
   end
 
@@ -254,7 +254,7 @@ class Remote < Thor
 
   desc "timezone HOSTNAME [ZONE]", "get or set the system timezone on a remote host"
   def timezone(hostname, zone=nil)
-    puts "task: timezone #{hostname} #{zone}"
+    puts "task: remote:timezone #{hostname} #{zone}"
 
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
@@ -1110,6 +1110,9 @@ class Remote < Thor
     # stop
     desc "stop HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def stop(hostname, *services)
+      puts "task: remote:service:stop #{hostname} #{services.join(' ')}"
+
+
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
@@ -1130,6 +1133,8 @@ class Remote < Thor
     # start
     desc "restart HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def restart(hostname, *services)
+      puts "task: remote:service:restart #{hostname} #{services.join(' ')}"
+
 
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
@@ -1151,6 +1156,9 @@ class Remote < Thor
     # enable
     desc "enable HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def enable(hostname, *services)
+
+      puts "task: remote:service:enable #{hostname} #{services.join(' ')}"
+
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
@@ -1169,6 +1177,8 @@ class Remote < Thor
     # disable
     desc "disable HOSTNAME SERVICE [SERVICE...]", "start a service on a remote host"
     def disable(hostname, *services)
+      puts "task: remote:service:disable #{hostname} #{services.join(' ')}"
+
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 

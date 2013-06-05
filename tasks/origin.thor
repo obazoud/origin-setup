@@ -78,7 +78,7 @@ module OpenShift
           # Wait for it to be in sync or you'll get negative record caching
           # on the first DNS query and the whole thing will stop.
           invoke("route53:record:create", [zonename, hostpart, 'A', ipaddress],
-            :ttl => 120, :wait => true, :verbose => options[:verbose])
+            :ttl => 300, :wait => true, :verbose => options[:verbose])
 
         elsif host_rr_list.count > 1
           raise Exception.new("too many records for #{fqdn}")
@@ -239,6 +239,7 @@ module OpenShift
     desc "puppetmaster NAME", "create a puppetmaster instance"
     method_option :instance, :type => :string
     method_option :hostname, :type => :string
+    method_option :timezone, :type => :string, :default => "UTC"
     method_option :siteroot, :type => :string, :default => "/var/lib/puppet/site"
     method_option :siterepo, :type => :string
     
@@ -259,7 +260,9 @@ module OpenShift
       #hostname = instance.dns_name
       invoke("origin:prepare", [hostname],
         :packages => ['puppet-server', 'git'],
-        :verbose => options[:verbose])
+        :timezone => options[:timezone],
+        :verbose => options[:verbose],
+        )
 
       # add the user to the puppet group
       invoke "puppet:master:join_group", [hostname]
@@ -287,17 +290,13 @@ module OpenShift
       # install standard modules
       invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']]
 
+      # open ports for SSH and puppet
       invoke "remote:firewall:stop", [hostname]
-
-      Remote::Firewall.service(hostname, username, key_file, 'ssh', 
-        options[:verbose])
-
-      Remote::Firewall.port(hostname, username, key_file, 8140, 'tcp',
-        options[:verbose])
-
+      invoke "remote:firewall:service", [hostname, 'ssh']
+      invoke "remote:firewall:port", [hostname, 8140]
       invoke "remote:firewall:start", [hostname]
 
-      invoke("puppet:cert:generate", [hostname, hostname])
+      #invoke("puppet:cert:generate", [hostname, hostname])
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
@@ -309,6 +308,8 @@ module OpenShift
     end
 
     desc "puppetclient HOSTNAME MASTER", "create a puppet client instance"
+    method_option :timezone, :type => :string, :default => "UTC"
+
     def puppetclient(hostname, puppetmaster)
 
       puts "origin:puppetclient #{hostname}, #{puppetmaster}" unless options[:quiet]
@@ -324,7 +325,9 @@ module OpenShift
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
       # also install additional packages
-      invoke("origin:prepare", [hostname], :packages => ['puppet', 'facter'])
+      invoke("origin:prepare", [hostname], :packages => ['puppet', 'facter'],
+        :timezone => options[:timezone],
+        :verbose => options[:verbose])
 
       invoke "puppet:agent:set_server", [hostname, puppetmaster]
 
@@ -343,7 +346,7 @@ module OpenShift
       (1..maxtries).each { |trynum|
         certlist = Puppet::Cert.list(puppetmaster, username, key_file, hostname, false, 
           options[:verbose])
-        puts "certlist = #{certlist}"
+        puts "- try #{trynum}: certlist = #{certlist}" if options[:verbose]
         break if certlist.count > 0
         sleep pollinterval
       }
