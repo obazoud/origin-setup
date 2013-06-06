@@ -13,7 +13,7 @@ require 'openshift/aws'
 module OpenShift
   class Origin < Thor
     
-    namespace "origin"
+   namespace "origin"
 
     class_option :verbose, :type => :boolean, :default => false
     class_option :debug, :type => :boolean, :default => false

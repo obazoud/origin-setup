@@ -292,7 +292,7 @@ class Remote < Thor
 
   class File < Thor
 
-    #namespace "remote:file"
+  #   #namespace "remote:file"
 
     no_tasks do
       #
@@ -386,7 +386,7 @@ class Remote < Thor
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
-      def self.permission(hostname, username, keyfile, path, mode,
+      def self.set_permission(hostname, username, keyfile, path, mode,
           sudo=false, recursive=false, verbose=false)
         cmd = sudo ? "sudo " : ""
         cmd += "chmod"
@@ -395,13 +395,13 @@ class Remote < Thor
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
-      def self.group(hostname, username, keyfile, path, group,
-          sudo=false, recursive=false, verbose=false)
-        cmd = sudo ? "sudo " : ""
-        cmd += "chgrp"
-        cmd += " -R" if recursive
-        cmd += " " + group + " " + path
-        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
+      def self.set_group(hostname, username, keyfile, path, group,
+           sudo=false, recursive=false, verbose=false)
+         cmd = sudo ? "sudo " : ""
+         cmd += "chgrp"
+         cmd += " -R" if recursive
+         cmd += " " + group + " " + path
+         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
       def self.symlink(hostname, username, keyfile, srcpath, dstpath,
@@ -468,7 +468,15 @@ class Remote < Thor
 
     desc "copy HOSTNAME SOURCE DEST", "copy a remote file from one place to another"
     method_option(:sudo, :type => :boolean, :default => false)
-    def copy
+    def copy(hostname, src, dst)
+      username = options[:username] || Remote.ssh_username
+      keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+      puts "task: remote:copy #{hostname} #{src} #{dst}" unless options[:quiet]
+      exit_code, exit_signal, stdout, stderr = File.copy(
+        hostname, username, keyfile, src, dst,
+        options[:sudo], options[:recursive], options[:force], options[:verbose])
+      
       
     end
 
@@ -531,9 +539,9 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
-      puts "task: remote:file:permissions #{hostname} #{path} {#mode}"
+      puts "task: remote:file:permissions #{hostname} #{path} #{mode}" unless options[:quiet]
 
-       exit_code, exit_signal, stdout, stderr = File.permission(
+       exit_code, exit_signal, stdout, stderr = File.set_permission(
         hostname, username, keyfile, path, mode,
         options[:sudo], options[:recursive], options[:verbose])
     end
@@ -542,6 +550,13 @@ class Remote < Thor
     def group(hostname, path, group)
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+      puts "task: remote:file:group #{hostname} #{path} #{group}" unless options[:quiet]
+
+       exit_code, exit_signal, stdout, stderr = File.set_group(
+        hostname, username, keyfile, path, group,
+        options[:sudo], options[:recursive], options[:verbose])
+      
 
     end
 
@@ -908,7 +923,7 @@ class Remote < Thor
 
   class Firewall < Thor
     
-    namespace "remote:firewall"
+   #namespace "remote:firewall"
 
     class_option :verbose, :type => :boolean, :default => false
     class_option(:username, :type => :string)
@@ -1055,7 +1070,7 @@ class Remote < Thor
 
   class Service < Thor
 
-    namespace "remote:service"
+   #namespace "remote:service"
 
     class_option(:verbose, :type => :boolean, :default => false)
     class_option(:username, :type => :string)
@@ -1305,6 +1320,6 @@ class Remote < Thor
 end
 
 #if self.to_s === "main" then
-#  OpenShift::Tasks::Remote.start()
+#  Tasks::Remote.start()
 #end
 

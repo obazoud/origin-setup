@@ -3,7 +3,7 @@
 require 'rubygems'
 require 'thor'
 require 'openshift/aws'
-module OpenShift
+module EC2
   # Manage Amazon Web Services EC2 instances and images
 
   class Image < Thor
@@ -223,5 +223,5 @@ module OpenShift
 end
 
 if self.to_s === "main" then
-  OpenShift::Image.start()
+  EC2::Image.start()
 end

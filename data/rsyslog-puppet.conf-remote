@@ -1,0 +1,8 @@
+# 
+if $programname == 'puppet' then /var/log/puppet.log 
+& @@puppet.infra.lamourine.org
+#if $programname == 'puppet' then @@puppet.infra.lamourine.org
+
+if $programname == 'puppet-agent' then /var/log/puppet.log 
+& @@puppet.infra.lamourine.org
+#if $programname == 'puppet-agent' then @@puppet.infra.lamourine.org

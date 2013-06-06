@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 #
-# Set up an OpenShift Origin service on AWS EC2
+# Set up an EC2 Origin service on AWS EC2
 #
 require 'rubygems'
 require 'thor'
 require 'openshift/aws'
 
-module Openshift
+module EC2
 
   class Snapshot < Thor
 

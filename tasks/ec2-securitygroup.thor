@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 #
-# Set up an OpenShift Origin service on AWS EC2
+# Set up an EC2 Origin service on AWS EC2
 #
 require 'rubygems'
 require 'parseconfig'
 require 'aws'
 require 'thor'
 
-module Openshift
+module EC2
 
   class Securitygroup < Thor
 

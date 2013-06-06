@@ -6,7 +6,6 @@ require 'thor'
 require 'aws'
 require 'parseconfig'
 
-module OpenShift
   class Route53 < Thor
     
     class_option :verbose, :type => :boolean, :default => false
@@ -14,7 +13,7 @@ module OpenShift
     AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
 
     class Zone < Thor
-      namespace "route53:zone"
+     #namespace "route53:zone"
 
       desc "list", "list hosted zones"
       def list
@@ -73,7 +72,7 @@ module OpenShift
 
     class Record < Thor
 
-      namespace "route53:record"
+     #namespace "route53:record"
       
       types = ['A', 'NS', 'SOA', 'TXT', 'CNAME']
 
@@ -296,4 +295,3 @@ module OpenShift
       end 
     end
   end
-end

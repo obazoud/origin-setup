@@ -5,12 +5,10 @@
 require 'rubygems'
 require 'thor'
 
-module OpenShift
-
   module  Puppet
 
     class Cert < Thor
-      namespace "puppet:cert"
+     #namespace "puppet:cert"
 
       class_option :verbose, :type => :boolean, :default => false
       class_option :debug, :type => :boolean, :default => false
@@ -107,7 +105,7 @@ module OpenShift
 
     class Master < Thor
 
-      namespace "puppet:master"
+     #namespace "puppet:master"
 
       class_option :username
       class_option :ssh_key_file
@@ -224,7 +222,7 @@ module OpenShift
     
     class Agent < Thor
 
-      namespace "puppet:agent"
+     #namespace "puppet:agent"
 
       class_option :verbose, :type => :boolean, :default => false
       class_option :debug, :type => :boolean, :default => false
@@ -285,7 +283,7 @@ module OpenShift
     end
 
     class Module < Thor
-      namespace "puppet:module"
+     #namespace "puppet:module"
 
       class_option :verbose, :type => :boolean, :default => false
       class_option :debug, :type => :boolean, :default => false
@@ -310,6 +308,3 @@ module OpenShift
     end
 
   end
-
-end
-

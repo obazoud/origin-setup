@@ -7,11 +7,11 @@ require 'openshift/aws'
 
 # Initialize AWS credentials
 #begin
-#  ::OpenShift::AWS.awscred
+#  ::EC2::AWS.awscred
 #rescue
 
 # Manage Amazon Web Services EC2 instances and images
-module OpenShift
+module EC2
   class Instance < Thor
 
     namespace "ec2:instance"
@@ -365,5 +365,5 @@ module OpenShift
 end
 
 if self.to_s === "main" then
-  OpenShift::Instance.start()
+  EC2::Instance.start()
 end
