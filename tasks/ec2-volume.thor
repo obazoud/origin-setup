@@ -6,7 +6,7 @@ require 'thor'
 require 'openshift/aws'
 
 # Initialize AWS credentials
-::EC2::AWS.awscred
+::OpenShift::AWS.awscred
 
 module EC2
 
