@@ -468,7 +468,15 @@ class Remote < Thor
 
     desc "copy HOSTNAME SOURCE DEST", "copy a remote file from one place to another"
     method_option(:sudo, :type => :boolean, :default => false)
-    def copy
+    def copy(hostname, src, dst)
+      username = options[:username] || Remote.ssh_username
+      keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+      puts "task: remote:copy #{hostname} #{src} #{dst}" unless options[:quiet]
+      exit_code, exit_signal, stdout, stderr = File.copy(
+        hostname, username, keyfile, src, dst,
+        options[:sudo], options[:recursive], options[:force], options[:verbose])
+      
       
     end
 
