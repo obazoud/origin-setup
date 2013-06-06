@@ -147,7 +147,7 @@ module OpenShift
         :verbose => options[:verbose]
         )
 
-      puts "- instance #{instance.id} starting" if options[:verbose]
+      puts "- instance #{instance.id} starting" unless options[:quiet]
 
       # monitor startup process: wait until running
       (1..20).each do |trynum|
@@ -156,6 +156,7 @@ module OpenShift
         sleep 15
       end
       raise Exception.new "Instance failed to start" if not instance.status.to_s === 'running'
+      puts "- instance #{instance.id} running" unless options[:quiet]
 
       #-------------------------
       # get instance information
@@ -165,7 +166,7 @@ module OpenShift
       sleep 3
 
       #hostname ||= instance.dns_name
-      puts "- waiting for #{instance.dns_name} to accept SSH connections" if options[:verbose]
+      puts "- waiting for #{instance.dns_name} to accept SSH connections" unless options[:quiet]
 
       username = options[:username] || Remote.ssh_username
       # wait for SSH to respond
@@ -173,6 +174,7 @@ module OpenShift
         :wait => true, :verbose => options[:verbose])
 
       raise Exception.new("host #{instance.dns_name} not available") if not available
+      puts "- host #{instance.dns_name} is available" unless options[:quiet]
 
       # ----------------------------------------
       # associate instance with eip if available
