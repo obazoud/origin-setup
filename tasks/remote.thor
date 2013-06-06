@@ -292,7 +292,7 @@ class Remote < Thor
 
   class File < Thor
 
-    #namespace "remote:file"
+  #   #namespace "remote:file"
 
     no_tasks do
       #
@@ -386,7 +386,7 @@ class Remote < Thor
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
-      def self.permission(hostname, username, keyfile, path, mode,
+      def self.set_permission(hostname, username, keyfile, path, mode,
           sudo=false, recursive=false, verbose=false)
         cmd = sudo ? "sudo " : ""
         cmd += "chmod"
@@ -395,13 +395,13 @@ class Remote < Thor
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
-      def self.group(hostname, username, keyfile, path, group,
-          sudo=false, recursive=false, verbose=false)
-        cmd = sudo ? "sudo " : ""
-        cmd += "chgrp"
-        cmd += " -R" if recursive
-        cmd += " " + group + " " + path
-        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
+      def self.set_group(hostname, username, keyfile, path, group,
+           sudo=false, recursive=false, verbose=false)
+         cmd = sudo ? "sudo " : ""
+         cmd += "chgrp"
+         cmd += " -R" if recursive
+         cmd += " " + group + " " + path
+         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
       def self.symlink(hostname, username, keyfile, srcpath, dstpath,
