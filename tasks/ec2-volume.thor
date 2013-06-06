@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 #
-# Set up an OpenShift Origin service on AWS EC2
+# Set up an EC2 Origin service on AWS EC2
 #
 require 'thor'
 require 'openshift/aws'
 
 # Initialize AWS credentials
-::OpenShift::AWS.awscred
+::EC2::AWS.awscred
 
-module OpenShift
+module EC2
 
   class Volume < Thor
 

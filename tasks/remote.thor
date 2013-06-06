@@ -923,7 +923,7 @@ class Remote < Thor
 
   class Firewall < Thor
     
-    namespace "remote:firewall"
+   #namespace "remote:firewall"
 
     class_option :verbose, :type => :boolean, :default => false
     class_option(:username, :type => :string)
@@ -1070,7 +1070,7 @@ class Remote < Thor
 
   class Service < Thor
 
-    namespace "remote:service"
+   #namespace "remote:service"
 
     class_option(:verbose, :type => :boolean, :default => false)
     class_option(:username, :type => :string)
@@ -1320,6 +1320,6 @@ class Remote < Thor
 end
 
 #if self.to_s === "main" then
-#  OpenShift::Tasks::Remote.start()
+#  Tasks::Remote.start()
 #end
 

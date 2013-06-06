@@ -5,7 +5,7 @@ require 'rubygems'
 require 'thor'
 require 'openshift/aws'
 
-module OpenShift
+module EC2
 
   class Elasticip < Thor
 
@@ -62,7 +62,7 @@ module OpenShift
       }
     end
 
-    desc "associate IPADDR INSTANCE", "associate and Elastic IP with an instance"
+    desc "disassociate IPADDR INSTANCE", "associate and Elastic IP with an instance"
     def disassociate(ipaddr)
       puts "task: ec2:ip:disassociate #{ipaddr}" unless options[:quiet]
       handle = AWS::EC2.new
