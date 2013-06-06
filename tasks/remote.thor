@@ -539,9 +539,9 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
-      puts "task: remote:file:permissions #{hostname} #{path} {#mode}"
+      puts "task: remote:file:permissions #{hostname} #{path} #{mode}" unless options[:quiet]
 
-       exit_code, exit_signal, stdout, stderr = File.permission(
+       exit_code, exit_signal, stdout, stderr = File.set_permission(
         hostname, username, keyfile, path, mode,
         options[:sudo], options[:recursive], options[:verbose])
     end
@@ -550,6 +550,13 @@ class Remote < Thor
     def group(hostname, path, group)
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+      puts "task: remote:file:group #{hostname} #{path} #{group}" unless options[:quiet]
+
+       exit_code, exit_signal, stdout, stderr = File.set_group(
+        hostname, username, keyfile, path, group,
+        options[:sudo], options[:recursive], options[:verbose])
+      
 
     end
 
