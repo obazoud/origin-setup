@@ -154,12 +154,11 @@ module OpenShift
 
       desc "siteroot HOSTNAME PATH", "create a directory to contain the puppet site configuration"
       def siteroot(hostname, sitepath)
+        
+        puts "task: puppet:master:siteroot #{hostname} #{sitepath}"
 
         username = options[:username] || Remote.ssh_username
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
-
-        manifestdir = sitepath + '/manifests'
-        moduledir = sitepath + '/modules'
 
         Remote::File.mkdir(hostname, username, key_file,
           sitepath, true, true, options[:verbose])
