@@ -74,3 +74,5 @@ module OpenShift
 
   end
 end
+
+OpenShift::AWS.awscred

@@ -6,7 +6,7 @@ require 'rubygems'
 require 'thor'
 require 'resolv'
 
-require 'openshift/aws'
+#require 'openshift/aws'
 
 # create a puppetmaster host
 

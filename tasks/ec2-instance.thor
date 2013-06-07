@@ -1,14 +1,9 @@
 #!/usr/bin/env ruby
 # Present tasks to manage AWS EC2 images and instances
 #
-require 'rubygems'
-require 'thor'
-require 'openshift/aws'
-
-# Initialize AWS credentials
-#begin
-#  ::EC2::AWS.awscred
-#rescue
+#require 'rubygems'
+#require 'thor'
+#require 'openshift/aws'
 
 # Manage Amazon Web Services EC2 instances and images
 module EC2

@@ -2,8 +2,8 @@
 #
 # Set up an EC2 Origin service on AWS EC2
 #
-require 'thor'
-require 'openshift/aws'
+#require 'thor'
+#require 'openshift/aws'
 
 # Initialize AWS credentials
 ::OpenShift::AWS.awscred

@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 #
-require 'rubygems'
-require 'thor'
-require 'openshift/aws'
+#require 'rubygems'
+#require 'thor'
+#require 'openshift/aws'
 module EC2
   # Manage Amazon Web Services EC2 instances and images
 
