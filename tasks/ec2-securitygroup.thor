@@ -3,9 +3,8 @@
 # Set up an EC2 Origin service on AWS EC2
 #
 require 'rubygems'
-require 'parseconfig'
-require 'aws'
 require 'thor'
+require 'aws'
 
 module EC2
 
@@ -14,8 +13,6 @@ module EC2
     namespace "ec2:securitygroup"
 
     class_option :verbose, :type => :boolean, :default => false
-
-    AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
 
     desc "list", "list the available snapshots"
     def list

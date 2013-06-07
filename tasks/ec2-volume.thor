@@ -2,11 +2,9 @@
 #
 # Set up an EC2 Origin service on AWS EC2
 #
-#require 'thor'
-#require 'openshift/aws'
-
-# Initialize AWS credentials
-::OpenShift::AWS.awscred
+require 'rubygems'
+require 'thor'
+require 'aws'
 
 module EC2
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 # Present tasks to manage AWS EC2 images and instances
 #
-#require 'rubygems'
-#require 'thor'
-#require 'openshift/aws'
+require 'rubygems'
+require 'thor'
+require 'aws'
 
 module EC2
 
