@@ -41,68 +41,70 @@ class Remote < Thor
       config.params['RemoteUser']
     end
 
-    def self.remote_command(hostname, username, key_file, command, verbose=false, timeout=15)
-      stdout = []
-      stderr = []
-      exit_code = nil
-      exit_signal = nil
+    def self.remote_command(hostname, username, key_file, command, verbose=false, timeout=15, maxtries=3)
 
-      begin
-        Net::SSH.start(hostname, username, :timeout => timeout,
-          :keys => [key_file], :keys_only => true) do |ssh|
+      (1..maxtries).each do |trynum|
+        puts "- remote command try #{trynum}" if verbose
 
-          ssh.open_channel do | channel |
-            channel.request_pty
+        exit_code = nil
+        exit_signal = nil
+        stdout = []
+        stderr = []
 
-            puts "- cmd: #{command}" if verbose
-            result = channel.exec(command) do |ch, success |
+        begin
+          Net::SSH.start(hostname, username, :timeout => timeout,
+            :keys => [key_file], :keys_only => true) do |ssh|
 
-              channel.on_data do | ch, data |
-                puts "- remote: #{data.strip}" if verbose and not data.match(/^\s+$/)
-                stdout << data.strip if not data.match(/^\s+$/)
-              end      
+            ssh.open_channel do | channel |
+              channel.request_pty
 
-              channel.on_extended_data do | ch, type, data |
-                #puts "stderr: #{data}"
-                stderr << data.strip if not data.match(/^\s+$/)
+              puts "- cmd: #{command}" if verbose
+              result = channel.exec(command) do |ch, success|
+
+                channel.on_data do | ch, data |
+                  puts "- remote: #{data.strip}" if verbose and not data.match(/^\s+$/)
+                  stdout << data.strip if not data.match(/^\s+$/)
+                end      
+
+                channel.on_extended_data do | ch, type, data |
+                  #puts "stderr: #{data}"
+                  stderr << data.strip if not data.match(/^\s+$/)
+                end
+
+                channel.on_request('exit-status') do |ch, data|
+                  exit_code = data.read_long
+                end
+
+                channel.on_request('exit-signal') do |ch, data|
+                  exit_signal = data.read_long
+                end
               end
 
-              channel.on_request('exit-status') do |ch, data|
-                exit_code = data.read_long
-              end
+              channel.wait
+            end # channel
+          end # Net::SSH.start
+          return [exit_code, exit_signal, stdout, stderr]
 
-              channel.on_request('exit-signal') do |ch, data|
-                exit_signal = data.read_long
-              end
-            end
-
-            channel.wait
-          end # channel
-        end # Net::SSH.start
-
-      rescue Net::SSH::AuthenticationFailed => e
-        puts "- Authentication failed" if verbose
-        return nil
-      rescue Net::SSH::Disconnect => e
-        puts "- Connection closed by remote host" if verbose
-        return nil
-      rescue SocketError => e
-        puts "- socket error: #{e.message}" if verbose
-        return nil
-      rescue Errno::ETIMEDOUT => e
-        puts "- timed out attempting to connect" if verbose
-        return nil
-      rescue Timeout::Error => e
-        puts "- timed out attempting to connect" if verbose
-        return nil
-      rescue Errno::ECONNREFUSED
-        puts "- connection refused" if verbose
-        return nil
-      rescue Errno::ECONNRESET
-        puts "- connection reset" if verbose
-        return nil
-      end # try block
-      [exit_code, exit_signal, stdout, stderr]
+        rescue Net::SSH::AuthenticationFailed => e
+          puts "- Authentication failed" if verbose
+        rescue Net::SSH::Disconnect => e
+          puts "- Connection closed by remote host" if verbose
+        rescue SocketError => e
+          puts "- socket error: #{e.message}" if verbose
+        rescue Errno::ETIMEDOUT => e
+          puts "- timed out attempting to connect" if verbose
+        rescue Timeout::Error => e
+          puts "- timed out attempting to connect" if verbose
+        rescue Errno::ECONNREFUSED
+          puts "- connection refused" if verbose
+        rescue Errno::ECONNRESET
+          puts "- connection reset" if verbose
+        rescue Exception => e
+          puts "unknown exception #{e}"
+        end # try block
+        puts "trying again #{trynum}"
+      end
+      return nil
     end # remote_command
 
     # determine if a host uses init (upstart) or systemd

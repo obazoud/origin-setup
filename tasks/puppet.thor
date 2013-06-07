@@ -161,11 +161,11 @@ require 'thor'
         Remote::File.mkdir(hostname, username, key_file,
           sitepath, true, true, options[:verbose])
 
-        Remote::File.group(hostname, username, key_file,
+        Remote::File.set_group(hostname, username, key_file,
           sitepath, 'puppet', true, false, options[:verbose])
 
         # Allow the puppet group to write to the manifests area
-        Remote::File.permission(hostname, username, key_file,
+        Remote::File.set_permission(hostname, username, key_file,
           sitepath, 'g+ws', true, false, options[:verbose])
 
         # Allow git pulls from user $HOME/manifests

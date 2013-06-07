@@ -87,7 +87,7 @@ require 'parseconfig'
         handle = Route53.login
 
         zoneid = Route53.zone_id(handle, zonename)
-        puts "looking for zone id #{zoneid}"
+        puts "looking for zone id #{zoneid}" unless options[:quiet]
 
         opts = {:hosted_zone_id => "/hostedzone/#{zoneid}"}
 
@@ -98,10 +98,13 @@ require 'parseconfig'
           rrtype = rrset[:type]
           if type === nil or rrtype === type.upcase
             values = rrset[:resource_records]
-            puts "#{rrset[:name]} #{rrtype} ttl=#{rrset[:ttl]}"
+            record_string = "#{rrset[:name]} #{rrtype} #{rrset[:ttl]}"
+
             values.each { |rvalue|
-              puts "  #{rvalue[:value]}"
+              record_string += " #{rvalue[:value]}"
             }
+            puts record_string
+
           end
         }
         

@@ -30,7 +30,7 @@ module OpenShift
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
-      config = ::OpenShift::AWS.config
+      config = OpenShift::AWS.config
 
       #  check that the IP address is a valid Elastic IP
       ipaddress = options[:ipaddress]
