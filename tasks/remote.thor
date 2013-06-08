@@ -41,7 +41,7 @@ class Remote < Thor
       config.params['RemoteUser']
     end
 
-    def self.remote_command(hostname, username, key_file, command, verbose=false, timeout=15, maxtries=3)
+    def self.remote_command(hostname, username, key_file, command, verbose=false, timeout=5, maxtries=3)
 
       (1..maxtries).each do |trynum|
         puts "- remote command try #{trynum}" if verbose
@@ -134,10 +134,11 @@ class Remote < Thor
     puts "- using username #{username} and key file #{key_file}" if options[:verbose]
 
     cmd = "echo success"
+    pollrate = options[:pollrate] || 10
 
     (1..10).each do |trynum|
       result = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+        hostname, username, key_file, cmd, options[:verbose], 25, 1)
       if result then
         exit_code, exit_signal, stdout, stderr = result
         if options[:verbose] then
@@ -149,8 +150,8 @@ class Remote < Thor
         return true
       end
       break if not options[:wait]
-      puts "- sleeping #{options[:pollrate]}" if options[:verbose]
-      sleep 10
+      puts "- sleeping #{pollrate}" if options[:verbose]
+      sleep pollrate
     end
     puts "- #{hostname} not available" if options[:verbose]
     return false
