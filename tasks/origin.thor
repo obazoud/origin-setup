@@ -324,7 +324,6 @@ module OpenShift
 
       raise Exception.new("host #{hostname} not available") if not available
 
-      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
       # also install additional packages
       invoke("origin:prepare", [hostname], :packages => ['puppet', 'facter'],
@@ -335,6 +334,8 @@ module OpenShift
 
       # split logs out into their own file
       invoke "puppet:agent:enable_logging", [hostname]
+
+      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
       # start puppet daemon
       invoke("remote:service:enable", [hostname, "puppet"],
