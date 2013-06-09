@@ -184,7 +184,7 @@ module EC2
         puts "  IP Address: #{instance.ip_address}"
         puts "  Status: #{instance.status}"
         puts "  Image: #{instance.image_id}"
-        puts "  Platform: #{image.platform}"
+        #puts "  Platform: #{image.platform}"
         puts "  Private IP: #{instance.private_ip_address}"
         puts "  Private Hostname: #{instance.private_dns_name}"
         puts "  Security Groups: #{instance.groups.map {|s| s.name}.join(' ')}"
