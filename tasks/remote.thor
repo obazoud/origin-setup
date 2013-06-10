@@ -4,6 +4,7 @@
 require 'rubygems'
 require 'thor'
 require 'parseconfig'
+#require 'resolv'
 
 # rubygem-net-ssh is only available from the openshift repo for RHEL
 require 'net/ssh'
@@ -41,7 +42,18 @@ class Remote < Thor
       config.params['RemoteUser']
     end
 
-    def self.remote_command(hostname, username, key_file, command, verbose=false, timeout=5, maxtries=3)
+    def self.remote_command(hostname, username, key_file, command, verbose=false, timeout=15, maxtries=6)
+
+      puts "- remote command: #{command}" if verbose
+      #
+      # check that DNS resolves
+      #
+      begin
+        dns_record = Resolv.getaddress(hostname)
+      rescue Resolv::ResolvError => e
+        puts "hostname does not resolve: #{hostname}"
+        return false
+      end
 
       (1..maxtries).each do |trynum|
         puts "- remote command try #{trynum}" if verbose
@@ -86,23 +98,23 @@ class Remote < Thor
           return [exit_code, exit_signal, stdout, stderr]
 
         rescue Net::SSH::AuthenticationFailed => e
-          puts "- Authentication failed" if verbose
+          puts "- #{trynum}: Authentication failed" if verbose
         rescue Net::SSH::Disconnect => e
-          puts "- Connection closed by remote host" if verbose
+          puts "- #{trynum}: Connection closed by remote host" if verbose
         rescue SocketError => e
-          puts "- socket error: #{e.message}" if verbose
+          puts "- #{trynum}: socket error: #{e.message}" if verbose
         rescue Errno::ETIMEDOUT => e
-          puts "- timed out attempting to connect" if verbose
+          puts "- #{trynum}: timed out attempting to connect" if verbose
         rescue Timeout::Error => e
-          puts "- timed out attempting to connect" if verbose
+          puts "- #{trynum}: timed out attempting to connect" if verbose
         rescue Errno::ECONNREFUSED
-          puts "- connection refused" if verbose
+          puts "- #{trynum}: connection refused" if verbose
         rescue Errno::ECONNRESET
-          puts "- connection reset" if verbose
+          puts "- #{trynum}: connection reset" if verbose
         rescue Exception => e
-          puts "unknown exception #{e}"
+          puts "- #{trynum}: unknown exception #{e}"
         end # try block
-        puts "trying again #{trynum}"
+        #puts "- trying again"
       end
       return nil
     end # remote_command
@@ -138,7 +150,7 @@ class Remote < Thor
 
     (1..10).each do |trynum|
       result = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose], 25, 1)
+        hostname, username, key_file, cmd, options[:verbose])
       if result then
         exit_code, exit_signal, stdout, stderr = result
         if options[:verbose] then
