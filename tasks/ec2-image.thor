@@ -106,7 +106,7 @@ module EC2
       end
     end
 
-    desc "create", "Create a new image from an existing configured instance"
+    desc "create INSTANCE NAME", "Create a new image from an existing configured instance"
     method_option :description, :type => :string, :default => ""
     method_option :wait, :type => :boolean, :default => false
     def create(instance, name)
