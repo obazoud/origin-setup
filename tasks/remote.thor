@@ -1227,7 +1227,72 @@ class Remote < Thor
 
   end
 
+  # remote augeas commands
+  class Augeas < Thor
 
+    class_option :verbose, :type => :boolean, :default => false
+    class_option(:username, :type => :string)
+    class_option(:ssh_key_file, :type => :string)
+
+    desc "get HOSTNAME PATH", "retrieve a value from a remote host using Augeas"
+    def get(hostname, path)
+      
+      puts "remote:augeas:get #{hostname} #{path}"
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "sudo augtool get #{path}"
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      # check the exit_code
+
+      response = stdout[0]
+      check_path, value = response.split('=')
+      check_path.strip!
+      value.strip!
+      puts value
+      return value
+
+    end
+
+    desc "set HOSTNAME PATH VALUE", "put a value on a remote host using Augeas"
+    def set(hostname, path, value)
+
+      puts "remote:augeas:set #{hostname} #{path} #{value}"
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "sudo augtool -s set #{path} #{value}"
+
+      puts "- cmd: #{cmd}" if options[:verbose]
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+      puts "STDOUT:"
+      stdout.each {|l| puts "- remote: " + l }
+
+      puts "STDERR:"
+      stderr.each {|l| puts "- remote: " + l }
+
+      puts exit_code == 0 ? "success" : "fail"
+      return exit_code == 0
+    end
+
+    no_tasks do
+
+      def self.get(hostname, username, key_file, path)
+
+      end
+
+      def self.set(hostnae, username, key_file, path, value)
+        
+      end
+    end
+
+  end
+  
   desc "arch HOSTNAME", "get the base architcture of the host"
   def arch(hostname)
     
