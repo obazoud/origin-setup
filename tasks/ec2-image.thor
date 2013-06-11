@@ -25,12 +25,12 @@ module EC2
       images = images.filter('name', options[:name]) if options[:name]
 
       images.each do |i|
+        puts "#{i.id} #{i.owner_id} #{i.architecture} #{i.name} #{i.platform}"
         if options[:verbose] then
-          puts "#{i.id}, #{i.name}: #{i.architecture}, #{i.platform}" +
-            "#{i.block_device_mappings.to_a}, #{i.state}" +
-            "\n   #{i.owner_id} '#{i.owner_alias}'"
+          i.tags.each do | key, value |
+            puts "- #{key}: #{value}"
+          end
         else
-          puts "#{i.id} #{i.owner_id} #{i.architecture} #{i.name} #{i.platform}"
         end
       end
     end
@@ -81,26 +81,32 @@ module EC2
     method_option(:name, :type => :string)
     method_option(:tag, :type => :string, :required => true)
     method_option(:value, :type => :string)
+    method_option(:delete, :type => :boolean, :default => false)
     def tag
 
       if not options[:id] || options[:name] then
         puts "No values provided for either --name or --id"
-        return
+        return nil
       end
 
       handle = AWS::EC2.new
-      image = find_image(login, options)
+      image = find_image(handle, options)
 
       if not image
         puts "no matching image"
         return
       end
 
+      if options[:delete]
+        image.tags.delete options[:tag]
+        return nil
+      end
+
       # set a value if it is given
       if options[:value] then
         image.add_tag(options[:tag], { :value => options[:value] })
       else
-        value = options[:tag]
+        value = image.tags[options[:tag]]
         puts "#{options[:tag]}: #{value}"
         return value
       end
