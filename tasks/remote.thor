@@ -23,7 +23,7 @@ AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
 class Remote < Thor
   include Thor::Actions
 
-  #namespace "remote"
+  namespace "remote"
 
   no_tasks do
 
@@ -694,11 +694,81 @@ class Remote < Thor
         cmd = "sudo yum --debuglevel 1 -y install #{packages}"
 
         exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, verbose)
+          hostname, username, key_file, cmd, verbose)
 
       end
     end
 
+  end
+
+  # manage yum repos 
+  class Repo < Thor
+
+    namespace "remote:repo"
+
+    class_option(:verbose, :type => :boolean, :default => false)
+    class_option(:username, :type => :string)
+    class_option(:ssh_key_file, :type => :string)
+
+    desc("enable HOSTNAME REPONAME", 
+      "enable the components of a repo")
+    method_option :all, :type => :boolean, :default => false
+    def enable(hostname, reponame)
+      puts "task: remote:repo:enable #{hostname} #{reponame} #{subrepo}"
+    end
+
+    desc("disable HOSTNAME REPONAME",
+      "disable the components of a repo")
+    method_option :all, :type => :boolean, :default => false
+    def disable(hostname, reponame)
+      puts "task: remote:repo:disable #{hostname} #{reponame}"
+
+    end
+
+    desc "create HOSTNAME REPONAME REPOFILE", "create a new YUM repo on the remote host"
+    method_option(:string, :type => :boolean, :default => false,
+      :desc => "repofile is the literal string content"
+      )
+    def create(hostname, reponame, repofile)
+      puts "task: remote:repo:create #{hostname} #{reponame} #{repofile}"
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      filename = "/etc/yum.repos.d/#{reponame}.repo"
+
+      if options[:string]
+      #   write to a file or scp a string/stream?
+
+      else
+        # copy file to host
+        # remove file, using sudo, no recurse, no force
+        Remote::File.scp_put(hostname, username, key_file, 
+          repofile, RealFile.basename(repofile))
+        
+      end
+      # copy file on host to /etc/yum.repos.d/<filename>.repo
+      Remote::File.copy(hostname, username, key_file, 
+        RealFile.basename(repofile), filename,
+        true, false, false, options[:verbose])
+    end
+
+    desc "delete HOSTNAME REPONAME REPOFILE", "remove a YUM repo on the remote host"
+    def delete(hostname, reponame)
+      puts "task: remote:repo:delete #{hostname} #{reponame} #{reponame}"
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      filename = "/etc/yum.repos.d/#{reponame}.repo"
+      # remove file, using sudo, no recurse, no force
+      Remote::File.delete(hostname, username, key_file, filename, 
+        true, false, false, options[:verbose])
+    end
+
+    no_tasks do
+
+    end
   end
 
   class Git < Thor
@@ -1241,20 +1311,10 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      cmd = "sudo augtool get #{path}"
-
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      # check the exit_code
-
-      response = stdout[0]
-      check_path, value = response.split('=')
-      check_path.strip!
-      value.strip!
+      value = Remote::Augeas.get(hostname, username, key_file, path, 
+        options[:verbose])
       puts value
       return value
-
     end
 
     desc "set HOSTNAME PATH VALUE", "put a value on a remote host using Augeas"
@@ -1264,30 +1324,32 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      cmd = "sudo augtool -s set #{path} #{value}"
-
-      puts "- cmd: #{cmd}" if options[:verbose]
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      puts "STDOUT:"
-      stdout.each {|l| puts "- remote: " + l }
-
-      puts "STDERR:"
-      stderr.each {|l| puts "- remote: " + l }
-
-      puts exit_code == 0 ? "success" : "fail"
-      return exit_code == 0
+      Remote::Augeas.set(hostname, username, key_file, path, value, 
+        options[:verbose])
     end
 
     no_tasks do
 
-      def self.get(hostname, username, key_file, path)
+      def self.get(hostname, username, key_file, path, verbose)
+        cmd = "sudo augtool get #{path}"
 
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+
+        response = stdout[0]
+        check_path, value = response.split('=')
+        value.strip        
       end
 
-      def self.set(hostnae, username, key_file, path, value)
-        
+      def self.set(hostname, username, key_file, path, value, verbose=false)
+
+        cmd = "sudo augtool -s set #{path} #{value}"
+
+        puts "- cmd: #{cmd}" if verbose
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+
+        return exit_code == 0        
       end
     end
 
