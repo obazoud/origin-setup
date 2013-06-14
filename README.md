@@ -80,6 +80,7 @@ the task description. For example:
 
 * Describe a task
 
+<pre>
     thor help remote:yum:install
     Usage:
     thor remote:yum:install HOSTNAME RPMNAME
@@ -88,6 +89,7 @@ the task description. For example:
     [--verbose]                    
     [--username=USERNAME]          
     [--ssh-key-file=SSH_KEY_FILE]  
+</pre>
 
 ## Build
 
