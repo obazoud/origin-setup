@@ -124,11 +124,11 @@ type, SSH key pair name and remote user (root or ec2-user)
 
 <pre>
 # AWS Access Informaton
-AWSAccessKeyId=<your AWS access key id>
-AWSSecretKey=<your AWS secret key>
+AWSAccessKeyId=&lt;;your AWS access key id&gt;
+AWSSecretKey=&lt;your AWS secret key&gt;
 #
 # EC2 SSH login information
-AWSKeyPairName=<your SSH key pair name>
+AWSKeyPairName=&lt;your SSH key pair name&gt;
 RemoteUser=ec2-user
 #
 # Default EC2 instance type
