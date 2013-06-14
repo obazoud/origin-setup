@@ -11,6 +11,17 @@ The Thor scripts proper are stored in the [tasks](tasks) subdirectory.
 Eventually these may be made into separate callable scripts, but for now they are invoked from
 inside the origin-setup directory
 
+# Requirements
+
+The thor scripts require these RPMs on Fedora:
+
+* rubygems
+* rubygem-thor
+* rubygem-parseconfig
+* rubygem-aws-sdk
+* rubygem-net-ssh
+* rubygem-net-scp
+
 # Download and Usage
 
 The Thor scripts proper are stored in the [tasks](tasks) subdirectory.
