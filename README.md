@@ -19,17 +19,17 @@ Eventually these may be made into separate callable scripts, but for now they ar
 inside the origin-setup directory.  Clone the github repository to try it out.
 
 <pre>
-    git clone https://github.com/markllama/origin-setup
-    cd origin-setup
-    thor list
-    ... lots of tasks ...
+git clone https://github.com/markllama/origin-setup
+cd origin-setup
+thor list
+... lots of tasks ...
 </pre>
 
 To list tasks in the _remote_ namespace:
 
 <pre>
-    thor list remote
-    ... fewer tasks ...
+thor list remote
+... fewer tasks ...
 </pre>
 
 To get help for a specific task:
@@ -70,31 +70,27 @@ the task description. For example:
 * List tasks in namespace
 
 <pre>
-    thor list remote:yum
-    remote
-    ------
-    thor remote:yum:exclude HOSTNAME REPO PATTERN  # exclude a package
-    pattern fr...
-    thor remote:yum:install HOSTNAME RPMNAME       # install an RPM on
-    the remote...
-    thor remote:yum:list HOSTNAME                  # list RPMs on the
-    remote system
-    thor remote:yum:remove HOSTNAME RPMNAME        # remove an RPM on
-    the remote ...
-    thor remote:yum:update HOSTNAME                # update RPMs on the remote sy...
+thor list remote:yum
+remote
+------
+thor remote:yum:exclude HOSTNAME REPO PATTERN  # exclude a package pattern fr...
+thor remote:yum:install HOSTNAME RPMNAME       # install an RPM on the remote...
+thor remote:yum:list HOSTNAME                  # list RPMs on the remote system
+thor remote:yum:remove HOSTNAME RPMNAME        # remove an RPM on the remote ...
+thor remote:yum:update HOSTNAME                # update RPMs on the remote sy...
 </pre>
 
 * Describe a task
 
 <pre>
-    thor help remote:yum:install
-    Usage:
-    thor remote:yum:install HOSTNAME RPMNAME
-    
-    Options:
-    [--verbose]                    
-    [--username=USERNAME]          
-    [--ssh-key-file=SSH_KEY_FILE]  
+thor help remote:yum:install
+Usage:
+thor remote:yum:install HOSTNAME RPMNAME
+
+Options:
+[--verbose]                    
+[--username=USERNAME]          
+[--ssh-key-file=SSH_KEY_FILE]  
 </pre>
 
 ## Build
@@ -127,16 +123,16 @@ type, SSH key pair name and remote user (root or ec2-user)
 > $HOME/.awscred
 
 <pre>
-    # AWS Access Informaton
-    AWSAccessKeyId=<your AWS access key id>
-    AWSSecretKey=<your AWS secret key>
-    #
-    # EC2 SSH login information
-    AWSKeyPairName=<your SSH key pair name>
-    RemoteUser=ec2-user
-    #
-    # Default EC2 instance type
-    AWSEC2Type=t1.micro
+# AWS Access Informaton
+AWSAccessKeyId=<your AWS access key id>
+AWSSecretKey=<your AWS secret key>
+#
+# EC2 SSH login information
+AWSKeyPairName=<your SSH key pair name>
+RemoteUser=ec2-user
+#
+# Default EC2 instance type
+AWSEC2Type=t1.micro
 </pre>
 
 The AWS access key id and secret key are also required for the route53
