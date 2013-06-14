@@ -63,18 +63,24 @@ exact invocation syntax and help text, use `thor list <namespace>` to
 see the list of available tasks and `thor help <namespace>` to view
 the task description. For example: 
 
-- List tasks in namespace
-> thor list remote:yum
-> remote
-> ------
-> thor remote:yum:exclude HOSTNAME REPO PATTERN  # exclude a package pattern fr...
-> thor remote:yum:install HOSTNAME RPMNAME       # install an RPM on the remote...
-> thor remote:yum:list HOSTNAME                  # list RPMs on the remote system
-> thor remote:yum:remove HOSTNAME RPMNAME        # remove an RPM on the remote ...
-> thor remote:yum:update HOSTNAME                # update RPMs on the remote sy...
+* List tasks in namespace
 
-- Describe a task
-> thor help remote:yum:install
+    thor list remote:yum
+    remote
+    ------
+    thor remote:yum:exclude HOSTNAME REPO PATTERN  # exclude a package
+    pattern fr...
+    thor remote:yum:install HOSTNAME RPMNAME       # install an RPM on
+    the remote...
+    thor remote:yum:list HOSTNAME                  # list RPMs on the
+    remote system
+    thor remote:yum:remove HOSTNAME RPMNAME        # remove an RPM on
+    the remote ...
+    thor remote:yum:update HOSTNAME                # update RPMs on the remote sy...
+
+* Describe a task
+
+    thor help remote:yum:install
 > Usage:
 >   thor remote:yum:install HOSTNAME RPMNAME
 >
@@ -110,17 +116,18 @@ Place AWS access key id and secret key in a file named `.awscred` in
 your home directory.  You can also specify the default EC2 instance
 type, SSH key pair name and remote user (root or ec2-user)
 
-- $HOME/.awscred
-> # AWS Access Informaton
-> AWSAccessKeyId=<your AWS access key id>
-> AWSSecretKey=<your AWS secret key>
-> #
-> # EC2 SSH login information
-> AWSKeyPairName=<your SSH key pair name>
-> RemoteUser=ec2-user
-> #
-> # Default EC2 instance type
-> AWSEC2Type=t1.micro
+> $HOME/.awscred
+
+    # AWS Access Informaton
+    AWSAccessKeyId=<your AWS access key id>
+    AWSSecretKey=<your AWS secret key>
+    #
+    # EC2 SSH login information
+    AWSKeyPairName=<your SSH key pair name>
+    RemoteUser=ec2-user
+    #
+    # Default EC2 instance type
+    AWSEC2Type=t1.micro
 
 The AWS access key id and secret key are also required for the route53
 tasks
