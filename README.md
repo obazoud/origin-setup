@@ -18,15 +18,15 @@ The Thor scripts proper are stored in the [tasks](tasks) subdirectory.
 Eventually these may be made into separate callable scripts, but for now they are invoked from
 inside the origin-setup directory.  Clone the github repository to try it out.
 
-> git clone https://github.com/markllama/origin-setup
-> cd origin-setup
-> thor list
-> ... lots of tasks ...
+    git clone https://github.com/markllama/origin-setup
+    cd origin-setup
+    thor list
+    ... lots of tasks ...
 
 To list tasks in the _remote_ namespace:
 
-> thor list remote
-> ... fewer tasks ...
+    thor list remote
+... fewer tasks ...
 
 To get help for a specific task:
 
