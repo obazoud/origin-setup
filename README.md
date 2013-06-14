@@ -18,15 +18,19 @@ The Thor scripts proper are stored in the [tasks](tasks) subdirectory.
 Eventually these may be made into separate callable scripts, but for now they are invoked from
 inside the origin-setup directory.  Clone the github repository to try it out.
 
+<pre>
     git clone https://github.com/markllama/origin-setup
     cd origin-setup
     thor list
     ... lots of tasks ...
+</pre>
 
 To list tasks in the _remote_ namespace:
 
+<pre>
     thor list remote
     ... fewer tasks ...
+</pre>
 
 To get help for a specific task:
 
@@ -65,6 +69,7 @@ the task description. For example:
 
 * List tasks in namespace
 
+<pre>
     thor list remote:yum
     remote
     ------
@@ -77,6 +82,7 @@ the task description. For example:
     thor remote:yum:remove HOSTNAME RPMNAME        # remove an RPM on
     the remote ...
     thor remote:yum:update HOSTNAME                # update RPMs on the remote sy...
+</pre>
 
 * Describe a task
 
@@ -120,6 +126,7 @@ type, SSH key pair name and remote user (root or ec2-user)
 
 > $HOME/.awscred
 
+<pre>
     # AWS Access Informaton
     AWSAccessKeyId=<your AWS access key id>
     AWSSecretKey=<your AWS secret key>
@@ -130,6 +137,7 @@ type, SSH key pair name and remote user (root or ec2-user)
     #
     # Default EC2 instance type
     AWSEC2Type=t1.micro
+</pre>
 
 The AWS access key id and secret key are also required for the route53
 tasks
@@ -186,6 +194,7 @@ tasks
 ## Route53
 
 * Status: *stable*
+
 These tasks are used to manage DNS updates through the AWS Route53
 service.
 
