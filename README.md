@@ -26,7 +26,7 @@ inside the origin-setup directory.  Clone the github repository to try it out.
 To list tasks in the _remote_ namespace:
 
     thor list remote
-... fewer tasks ...
+    ... fewer tasks ...
 
 To get help for a specific task:
 
@@ -81,13 +81,13 @@ the task description. For example:
 * Describe a task
 
     thor help remote:yum:install
-> Usage:
->   thor remote:yum:install HOSTNAME RPMNAME
->
-> Options:
->   [--verbose]                    
->   [--username=USERNAME]          
->   [--ssh-key-file=SSH_KEY_FILE]  
+    Usage:
+    thor remote:yum:install HOSTNAME RPMNAME
+    
+    Options:
+    [--verbose]                    
+    [--username=USERNAME]          
+    [--ssh-key-file=SSH_KEY_FILE]  
 
 ## Build
 
