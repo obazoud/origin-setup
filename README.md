@@ -20,7 +20,7 @@ The thor scripts require these RPMs on Fedora:
 * rubygem-parseconfig
 * rubygem-aws-sdk
 * rubygem-net-ssh
-* rubygem-net-scp
+* rubygem-net-scp (worked around on RHEL)
 
 # Download and Usage
 
@@ -151,15 +151,27 @@ tasks
 
 ### ec2:image
 
+These tasks manage and report on EC2 images
+
 ### ec2:instance
+
+These tasks create, delete and manipulate EC2 instances
 
 ### ec2:ip
 
+These tasks manage and report on EC2 Elastic IP addresses
+
 ### ec2:securitygroup
+
+These tasks manage and report on EC2 security groups
 
 ### ec2:snapshot
 
+These tasks manage and report on EC2 disk snapshots
+
 ### ec2:volume
+
+These tasks manage and report on EC2 disk volumes
 
 ## Origin
 
@@ -168,13 +180,25 @@ tasks
 
 ## Puppet
 
+* Status: *under developement*
+
+These tasks manage puppet services on a remote host.
+
 ### puppet:agent
+
+These tasks install, configure and manage a puppet agent on a remote host
 
 ### puppet:cert
 
+These tasks manage certificates on a puppet master
+
 ### puppet:master
 
+These tasks install and manage puppet master processes on a remote server.
+
 ### puppet:module
+
+These tasks manage puppet modules on a remote host
 
 ## Release
 
@@ -186,17 +210,33 @@ tasks
 
 ### remote:augeas
 
+These tasks get or set configuration values on remote hosts using Augeas
+
 ### remote:file
+
+These tasks copy files to and from a remote host, and move them from
+place to place on the remote host.  They can also set permissions and
+ownership of remote files and directories
 
 ### remote:firewall
 
+These tasks manage the firewall rules on a remote host
+
 ### remote:git
+
+These tasks manage git repositories on a remote host
 
 ### remote:repo
 
+These tasks manage YUM repository configuration on a remote host
+
 ### remote:service
 
+These tasks manage service settings on a remote host
+
 ### remote:yum
+
+These tasks install and remove packages on a remote host using yum.
 
 ## Route53
 
