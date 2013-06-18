@@ -26,14 +26,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
      inkscape:cx="516.11778"
-     inkscape:cy="427.73599"
+     inkscape:cy="350.0429"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1037"
-     inkscape:window-height="834"
-     inkscape:window-x="551"
-     inkscape:window-y="78"
+     inkscape:window-width="1024"
+     inkscape:window-height="600"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -43,7 +43,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -523,13 +523,55 @@
        rx="5.9624243"
        ry="6.6072626" />
     <rect
-       ry="5.0574107"
-       rx="8.5887299"
-       y="841.64429"
-       x="374.7666"
-       height="87.681244"
-       width="342.23965"
+       ry="5.2205529"
+       rx="5.1106486"
+       y="844.47272"
+       x="370.52396"
+       height="90.509674"
+       width="203.64673"
        id="rect4048"
        style="fill:#00afff;fill-opacity:0.58371043;stroke:none" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="303.14423"
+       y="860.37225"
+       id="text3066"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3068"
+         x="303.14423"
+         y="860.37225">Hardware</tspan></text>
+    <rect
+       style="fill:#00afff;fill-opacity:0.58371043;stroke:none"
+       id="rect3851"
+       width="125.86499"
+       height="115.96552"
+       x="593.96973"
+       y="819.01691"
+       rx="3.1586647"
+       ry="6.6888332" />
+    <text
+       xml:space="preserve"
+       style="font-size:28px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="625.8692"
+       y="846.47278"
+       id="text3853"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3855"
+         x="625.8692"
+         y="846.47278">IaaS</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="380.66608"
+       y="864.85754"
+       id="text3857"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3860"
+         x="380.66608"
+         y="864.85754">Virtual Machines</tspan></text>
   </g>
 </svg>
