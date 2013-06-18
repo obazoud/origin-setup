@@ -26,14 +26,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
      inkscape:cx="265.80198"
-     inkscape:cy="350.0429"
+     inkscape:cy="304.96153"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1627"
-     inkscape:window-height="939"
+     inkscape:window-width="1024"
+     inkscape:window-height="600"
      inkscape:window-x="0"
-     inkscape:window-y="33"
+     inkscape:window-y="0"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -539,31 +539,31 @@
        style="fill:#00ffee;fill-opacity:0.20361992;stroke:none"
        id="rect4038"
        width="237.58788"
-       height="114.5513"
+       height="173.94827"
        x="243.58072"
-       y="902.85754"
+       y="860.43115"
        rx="5.9624243"
-       ry="6.6072626" />
+       ry="10.03325" />
     <rect
-       ry="5.2205529"
+       ry="8.8096828"
        rx="6.4947829"
-       y="916.99963"
-       x="375.1026"
-       height="90.509674"
+       y="866.67377"
+       x="377.93103"
+       height="152.73508"
        width="258.80106"
        id="rect4048"
        style="fill:#00afff;fill-opacity:0.58371043;stroke:none" />
     <text
        xml:space="preserve"
        style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="307.72287"
-       y="932.89917"
+       x="306.30865"
+       y="881.64435"
        id="text3066"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3068"
-         x="307.72287"
-         y="932.89917">Hardware</tspan></text>
+         x="306.30865"
+         y="881.64435">Hardware</tspan></text>
     <rect
        style="fill:#00afff;fill-opacity:0.58371043;stroke:none"
        id="rect3851"
@@ -588,13 +588,13 @@
        xml:space="preserve"
        style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="413.24472"
-       y="943.38446"
+       y="901.38446"
        id="text3857"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3860"
          x="413.24472"
-         y="943.38446">Virtual Machines</tspan></text>
+         y="901.38446">Virtual Machines</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -617,7 +617,7 @@
          sodipodi:role="line"
          id="tspan3882"
          x="725.50879"
-         y="906.31342"></tspan><tspan
+         y="906.31342" /><tspan
          sodipodi:role="line"
          id="tspan3884"
          x="725.50879"
@@ -630,9 +630,18 @@
          id="tspan3888"
          x="725.50879"
          y="972.31342">2</tspan></text>
+    <rect
+       ry="3.8338435"
+       rx="2.5553243"
+       y="942.25452"
+       x="257.34521"
+       height="66.46804"
+       width="101.82337"
+       id="rect3950"
+       style="fill:#00b5bd;fill-opacity:0.38914028;stroke:none" />
     <text
        xml:space="preserve"
-       style="font-size:25.96806526px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       style="font-size:25.96806524px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="277.14804"
        y="963.05829"
        id="text3864"
@@ -641,13 +650,9 @@
        inkscape:transform-center-y="-192.35224"
        transform="scale(0.99438837,1.0056433)"><tspan
          sodipodi:role="line"
-         id="tspan3954"
-         x="277.14804"
-         y="963.05829">ILOM</tspan><tspan
+         id="tspan3123">ILOM</tspan><tspan
          sodipodi:role="line"
-         id="tspan3956"
-         x="277.14804"
-         y="995.51837">ICMP</tspan></text>
+         id="tspan3125">IPMI</tspan></text>
     <g
        id="g3924"
        transform="translate(-8,-2)">
@@ -756,15 +761,6 @@
          x="504.70056"
          y="815.01691">spacewalk</tspan></text>
     <rect
-       ry="3.8338435"
-       rx="2.5553243"
-       y="942.25452"
-       x="257.34521"
-       height="66.46804"
-       width="101.82337"
-       id="rect3950"
-       style="fill:#00b5bd;fill-opacity:0.38914028;stroke:none" />
-    <rect
        ry="27.21063"
        rx="17.914169"
        y="379.79581"
@@ -787,71 +783,122 @@
          id="tspan4106">P</tspan><tspan
          sodipodi:role="line"
          id="tspan4108">A</tspan></text>
+    <g
+       id="g3127"
+       transform="translate(4,-40)">
+      <rect
+         ry="2.0402162"
+         rx="13.230113"
+         y="949.36719"
+         x="380.80823"
+         height="48.083263"
+         width="77.781738"
+         id="rect3960"
+         style="fill:#007da8;fill-opacity:0.88235294;stroke:none" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text4110"
+         y="981.06573"
+         x="385.29352"
+         style="font-size:24px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+         xml:space="preserve"><tspan
+           y="981.06573"
+           x="385.29352"
+           id="tspan4112"
+           sodipodi:role="line">libvirt</tspan></text>
+    </g>
+    <g
+       id="g3132"
+       transform="translate(0,-40)">
+      <rect
+         style="fill:#007da8;fill-opacity:0.88235294;stroke:none"
+         id="rect4121"
+         width="77.781738"
+         height="43.840622"
+         x="467.63666"
+         y="952.78143"
+         rx="13.230113"
+         ry="1.8601971" />
+      <text
+         transform="scale(1.15195,0.86809324)"
+         xml:space="preserve"
+         style="font-size:20.83423805px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:89.99999762%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+         x="438.64188"
+         y="1120.3549"
+         id="text4123"
+         sodipodi:linespacing="89.999998%"><tspan
+           y="1120.3549"
+           x="438.64188"
+           id="tspan4147"
+           sodipodi:role="line">virtual</tspan><tspan
+           y="1139.1057"
+           x="438.64188"
+           id="tspan4149"
+           sodipodi:role="line">box</tspan></text>
+    </g>
+    <g
+       id="g3138"
+       transform="translate(0,-40)">
+      <rect
+         ry="1.9202034"
+         rx="13.230113"
+         y="952.78143"
+         x="551.63666"
+         height="45.254837"
+         width="77.781738"
+         id="rect4129"
+         style="fill:#007da8;fill-opacity:0.88235294;stroke:none" />
+      <text
+         transform="scale(0.94434137,1.0589391)"
+         sodipodi:linespacing="100%"
+         id="text4131"
+         y="926.461"
+         x="588.60419"
+         style="font-size:18.88682747px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+         xml:space="preserve"><tspan
+           y="926.461"
+           x="588.60419"
+           id="tspan4145"
+           sodipodi:role="line">vmware</tspan></text>
+    </g>
+    <rect
+       ry="2.0402162"
+       rx="13.230113"
+       y="963.36719"
+       x="420.80823"
+       height="48.083263"
+       width="77.781738"
+       id="rect3145"
+       style="fill:#007da8;fill-opacity:0.88235294;stroke:none" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text3147"
+       y="993.06573"
+       x="439.29352"
+       style="font-size:24px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       xml:space="preserve"><tspan
+         sodipodi:role="line"
+         id="tspan3162"
+         x="439.29352"
+         y="993.06573">xen</tspan></text>
     <rect
        style="fill:#007da8;fill-opacity:0.88235294;stroke:none"
-       id="rect3960"
-       width="77.781738"
+       id="rect3153"
+       width="104.65179"
        height="48.083263"
-       x="380.80823"
-       y="949.36719"
-       rx="13.230113"
+       x="514.80823"
+       y="963.36719"
+       rx="17.800516"
        ry="2.0402162" />
     <text
        xml:space="preserve"
-       style="font-size:24px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="385.29352"
-       y="983.06573"
-       id="text4110"
-       sodipodi:linespacing="125%"><tspan
+       style="font-size:21.86752475px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal;text-anchor:start;text-align:start;writing-mode:lr"
+       x="572.91351"
+       y="906.65106"
+       id="text3155"
+       sodipodi:linespacing="125%"
+       transform="scale(0.9111469,1.0975179)"><tspan
          sodipodi:role="line"
-         id="tspan4112"
-         x="385.29352"
-         y="983.06573">libvirt</tspan></text>
-    <rect
-       ry="1.8601971"
-       rx="13.230113"
-       y="952.78143"
-       x="467.63666"
-       height="43.840622"
-       width="77.781738"
-       id="rect4121"
-       style="fill:#007da8;fill-opacity:0.88235294;stroke:none" />
-    <text
-       sodipodi:linespacing="89.999998%"
-       id="text4123"
-       y="1120.3549"
-       x="438.64188"
-       style="font-size:20.83423805px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:89.99999762%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       xml:space="preserve"
-       transform="scale(1.15195,0.86809324)"><tspan
-         sodipodi:role="line"
-         id="tspan4147"
-         x="438.64188"
-         y="1120.3549">virtual</tspan><tspan
-         sodipodi:role="line"
-         id="tspan4149"
-         x="438.64188"
-         y="1139.1057">box</tspan></text>
-    <rect
-       style="fill:#007da8;fill-opacity:0.88235294;stroke:none"
-       id="rect4129"
-       width="77.781738"
-       height="45.254837"
-       x="551.63666"
-       y="952.78143"
-       rx="13.230113"
-       ry="1.9202034" />
-    <text
-       xml:space="preserve"
-       style="font-size:18.88682747px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="588.60419"
-       y="926.461"
-       id="text4131"
-       sodipodi:linespacing="100%"
-       transform="scale(0.94434137,1.0589391)"><tspan
-         sodipodi:role="line"
-         id="tspan4145"
-         x="588.60419"
-         y="926.461">vmware</tspan></text>
+         id="tspan3167">parallels</tspan></text>
   </g>
 </svg>
