@@ -364,7 +364,7 @@ class Remote < Thor
         end
 
       end
-      
+
       # Delete a file or file tree on a remote host
       # Defining this as a function allows it to be called repeatedly
       # by different tasks.
@@ -389,6 +389,15 @@ class Remote < Thor
         cmd += " -r" if recursive
         cmd += " -f" if force
         cmd += " " + sourcepath + " " + destpath
+        Remote.remote_command(hostname, username, keyfile, cmd, verbose)
+      end
+
+      def self.touch(hostname, username, keyfile, filepath,
+          sudo=false, verbose=false)
+
+        cmd = sudo ? "sudo " : ""
+        cmd += "touch"
+        cmd += " " + filepath
         Remote.remote_command(hostname, username, keyfile, cmd, verbose)
       end
 
@@ -509,6 +518,18 @@ class Remote < Thor
       exit_code, exit_signal, stdout, stderr = File.delete(
         hostname, username, keyfile, filepath, 
         options[:sudo], options[:recursive], options[:force], options[:verbose])
+    end
+
+    desc "touch HOSTNAME FILEPATH", "create a file on a remote host"
+    method_option(:sudo, :type => :boolean, :default => false)
+    def touch(hostname, filepath)
+      username = options[:username] || Remote.ssh_username
+      keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+      puts "task: remote:touch #{hostname} #{filepath}" unless options[:quiet]
+
+      Remote::File.touch(hostname, username, keyfile, filepath,
+        options[:sudo], options[:verbose])
     end
 
 
@@ -1008,7 +1029,7 @@ class Remote < Thor
 
   class Firewall < Thor
     
-   #namespace "remote:firewall"
+   namespace "remote:firewall"
 
     class_option :verbose, :type => :boolean, :default => false
     class_option(:username, :type => :string)
@@ -1026,7 +1047,7 @@ class Remote < Thor
       ports.each { |portnum|
         puts "opening port #{portnum}" if options[:verbose]
         Remote::Firewall.port(hostname, username, key_file,  
-          portnum, protocol='tcp', 
+          portnum, protocol=options[:protocol], 
           close=false, options[:verbose])
       }
     end
