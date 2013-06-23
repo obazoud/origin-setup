@@ -123,11 +123,11 @@ module OpenShift
       image_id = options[:image]
       if not image_id
         # use the current OS unless told explicitly
-        baseos = options[:baseos] || guess_os
+        osname, osversion = options[:baseos] || guess_os
         # TODO: validate baseos
-        puts "- baseos: #{baseos}" unless options[:quiet]
+        puts "- osname: #{osname}, osversion: #{osversion}" unless options[:quiet]
 
-        image_id  = config[baseos]['BaseOSImage']
+        image_id  = config[osname + osversion]['BaseOSImage']
       end
       # TODO: valudate image_id
       puts "- image id: #{image_id}" unless options[:quiet]
@@ -365,14 +365,18 @@ module OpenShift
 
       # determine which distribution family we're running on
       def guess_os
-        return "fedora" if File.exist?("/etc/fedora-release")
-        if File.exist?("/etc/redhat-release")
-          data = File.read("/etc/redhat-release")
-          return "centos" if data.match(/centos/)
-          return "rhel"
-        end
+        raise Exception.new("Unable to get base OS: no release file") unless File.exist?("/etc/redhat-release")
+        data = File.read("/etc/redhat-release").strip
+        parts = data.match(/^(.*)\srelease\s+((\d+)(\.(\d+))?)\s+/)
+        return nil if parts == nil
+        osname = "fedora" if parts[1] == "Fedora"
+        osname = "rhel" if parts[1] == "Red Hat Enterprise Linux Server"
+        osname = "centos" if data.downcase.match(/centos/) #
+        raise Exception.new("Unable to get base OS from release file") if not defined? osname
+
+        osversion = parts[2]
+        return osname, osversion
       end
     end
-
   end
 end

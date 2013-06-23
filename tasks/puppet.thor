@@ -232,6 +232,22 @@ class  Puppet < Thor
     class_option :debug, :type => :boolean, :default => false
     class_option :quiet, :type => :boolean, :default => false
 
+    desc "onetime HOSTNAME", "run the puppet agent a single time"
+    method_option :noop, :type => :boolean, :default => false
+    def onetime(hostname)
+      puts "task: puppet:agent:onetime #{hostname} " unless options[:quiet]
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "sudo puppet agent --onetime --no-daemonize"
+      cmd += " --noop" if options[:noop]
+      cmd += " --verbose" if options[:verbose]
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+    end
+
     desc "set_server HOSTNAME MASTER", "set the master hostname on an agent"
     def set_server(hostname, master)
 
