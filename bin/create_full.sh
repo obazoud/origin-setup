@@ -69,9 +69,11 @@ create_puppetclient() {
     _puppethost=$2
     _securitygroup=$3
 
+    _instancename=$(echo $_hostname | cut -d. -f1)
+
     echo
     echo "# creating $_hostname"
-    thor origin:baseinstance broker --hostname ${_hostname} \
+    thor origin:baseinstance ${_instancename} --hostname ${_hostname} \
         --securitygroup default #{_securitygroup} ${VERBOSE}
     thor remote:available ${_hostname} ${VERBOSE}
     thor origin:puppetclient ${_hostname} ${_puppethost} ${VERBOSE}
