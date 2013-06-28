@@ -5,7 +5,7 @@ INFRAZONE=infra.lamourine.org
 PUPPETHOST=puppet.${INFRAZONE}
 SERVICEHOSTS="broker data1 message1 node1"
 
-VERBOSE="--verbose"
+#VERBOSE="--verbose"
 
 syslog_puppet() {
     # BASHISM
@@ -61,21 +61,29 @@ create_puppetmaster() {
 }
 
 create_puppetclient() {
-    local _hostname
+    local _instancename
     local _securitygroup
     local _puppethost
+    local _hostname
+    _instancename=$1
+    _securitygroup=$2
+    _puppethost=$3
+    _hostname=$4
 
-    _hostname=$1
-    _puppethost=$2
-    _securitygroup=$3
+    local _hostarg
 
-    _instancename=$(echo $_hostname | cut -d. -f1)
+    if [ -n "$_hostname" ] ; then
+        _hostarg="--hostname ${_hostname}"
+    fi
 
     echo
     echo "# creating $_hostname"
-    thor origin:baseinstance ${_instancename} --hostname ${_hostname} \
+    thor origin:baseinstance ${_instancename} ${_hostarg} \
         --securitygroup default #{_securitygroup} ${VERBOSE}
-    thor remote:available ${_hostname} ${VERBOSE}
+    if [ -z "${_hostname}" ] ; then
+        _hostname=$(thor ec2:instance hostname --name ${_instancename})
+    fi
+    echo thor remote:available ${_hostname} ${VERBOSE}
     thor origin:puppetclient ${_hostname} ${_puppethost} ${VERBOSE}
     syslog_puppet ${_hostname} ${_puppethost}
 }
@@ -83,9 +91,12 @@ create_puppetclient() {
 PUPPETHOST=puppet.infra.lamourine.org
 create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet
 
-create_puppetclient broker.infra.lamourine.org ${PUPPETHOST} broker
-create_puppetclient data1.infra.lamourine.org ${PUPPETHOST} datastore
-create_puppetclient message1.infra.lamourine.org ${PUPPETHOST} messagebroker
-create_puppetclient node1.infra.lamourine.org ${PUPPETHOST} node
+create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
+create_puppetclient data1 datastore ${PUPPETHOST}
+# Create a node entry for a data store with this hostname
+create_puppetclient message1 messagebroker ${PUPPETHOST}
+
+create_puppetclient node1 node ${PUPPETHOST}
 
 

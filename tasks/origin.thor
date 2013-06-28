@@ -107,9 +107,8 @@ module OpenShift
       else
         # hostname not given
         # find one from IP if given
-
+        puts "no hostname given"
       end
-
 
       # -----------------------------------------------
       # hostname, ipaddress and eip have current values
@@ -173,6 +172,8 @@ module OpenShift
       available = invoke("remote:available", [instance.dns_name], :username => username,
         :wait => true, :verbose => options[:verbose])
 
+
+
       raise Exception.new("host #{instance.dns_name} not available") if not available
       puts "- host #{instance.dns_name} is available" unless options[:quiet]
 
@@ -185,8 +186,9 @@ module OpenShift
       # new records aren't propagated until the SOA TTL expires.
       # AWS sets the SOA TTL at 900 seconds (15 min) so that's the longest
       # you should have to wait for a new name.
-      if defined? fqdn
+      if ((defined? fqdn) and (not fqdn == nil))
         begin
+          puts "trying to resolve '#{fqdn}'"
           newaddr = Resolv.getaddress fqdn
           puts "- #{fqdn} resolves to #{newaddr}"
         rescue
@@ -196,7 +198,7 @@ module OpenShift
           puts "- #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
         end
       else
-        puts "- fqdn is undefined"
+        puts "- fqdn is undefined - no hostname specified"
       end
 
       instance
