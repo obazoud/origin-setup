@@ -92,11 +92,32 @@ PUPPETHOST=puppet.infra.lamourine.org
 create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet
 
 create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
-create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
-create_puppetclient data1 datastore ${PUPPETHOST}
+#create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
+
+PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
+
 # Create a node entry for a data store with this hostname
+create_puppetclient data1 datastore ${PUPPETHOST}
+DATAHOST=$(thor ec2:instance hostname --name data1)
+# copy the data1.infra.pp to <hostname>.pp
+cp ${PUPPET_NODE_ROOT}/data1.infra.pp ${PUPPET_NODE_ROOT}/${DATAHOST}.pp
+sed -i -e "/node/s/^.*$/node '${DATAHOST}' {/" ${PUPPET_NODE_ROOT}/${DATAHOST}.pp
+(cd $PUPPET_NODE_ROOT ; git add ${DATAHOST}.pp ; git commit -m "adding datahost ${DATAHOST}")
+
+# update the contents of the new file
+
 create_puppetclient message1 messagebroker ${PUPPETHOST}
+MSGHOST=$(thor ec2:instance hostname --name message1)
+cp ${PUPPET_NODE_ROOT}/message1.infra.pp ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
+sed -i -e "/node/s/^.*$/node '${MSGHOST}' {/" ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
+(cd $PUPPET_NODE_ROOT ; git add ${MSGHOST}.pp ; git commit -m "adding datahost ${MSGHOST}")
 
 create_puppetclient node1 node ${PUPPETHOST}
+NODEHOST=$(thor ec2:instance hostname --name node1)
+cp ${PUPPET_NODE_ROOT}/node1.infra.pp ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
+sed -i -e "/node/s/^.*$/node '${NODEHOST}' {/" ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
+(cd $PUPPET_NODE_ROOT ; git add ${NODEHOST}.pp ; git commit -m "adding nodehost ${NODEHOST}")
+
+(cd $PUPPET_NODE_ROT ; git push origin lamourine)
 
 
