@@ -127,7 +127,7 @@ sed -i -e "/node/s/^.*$/node '${MSGHOST}' {/" ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
 create_puppetclient node1 node ${PUPPETHOST}
 NODEHOST=$(thor ec2:instance hostname --name node1)
 cp ${PUPPET_NODE_ROOT}/node1.infra.pp ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
-sed -i -e "/node/s/^.*$/node '${NODEHOST}' {/" ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
+sed -i -e "/^node '/s/^.*$/node '${NODEHOST}' {/" ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
 (cd $PUPPET_NODE_ROOT ; git add ${NODEHOST}.pp ; git commit -m "adding nodehost ${NODEHOST}")
 
 (cd $PUPPET_NODE_ROOT ; git push origin lamourine)
