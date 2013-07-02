@@ -18,9 +18,9 @@ module OpenShift
     class_option :verbose, :type => :boolean, :default => false
     class_option :debug, :type => :boolean, :default => false
     class_option :quiet, :type => :boolean, :default => false
+    class_option :baseos, :type => :string, :default => "fedora19"
 
     desc "baseinstance NAME", "create a base instance for customization"
-    method_option :baseos, :type => :string
     method_option :image, :type => :string
     method_option :type, :type => :string
     method_option :keypair, :type => :string
@@ -122,11 +122,19 @@ module OpenShift
       image_id = options[:image]
       if not image_id
         # use the current OS unless told explicitly
-        osname, osversion = options[:baseos] || guess_os
+        if options[:baseos]
+          puts "trying to get osname and osversion from #{options[:baseos]}"
+          #osname, osversion
+          osmatch = options[:baseos].downcase.match(/([^\d-]+)-?([\.\d]+)/)
+          puts "osmatch = #{osmatch}"
+          @osname, @osversion = osmatch[1..2] if osmatch
+        end
+        puts "- before guess: osname = #{@osname}, osversion = #{@osversion}"
+        osname, osversion = guess_os unless osname and osversion
         # TODO: validate baseos
-        puts "- osname: #{osname}, osversion: #{osversion}" unless options[:quiet]
+        puts "- osname: #{@osname}, osversion: #{@osversion}" unless options[:quiet]
 
-        image_id  = config[osname + osversion]['BaseOSImage']
+        image_id  = config[@osname + @osversion]['BaseOSImage']        
       end
       # TODO: valudate image_id
       puts "- image id: #{image_id}" unless options[:quiet]
@@ -173,7 +181,6 @@ module OpenShift
         :wait => true, :verbose => options[:verbose])
 
 
-
       raise Exception.new("host #{instance.dns_name} not available") if not available
       puts "- host #{instance.dns_name} is available" unless options[:quiet]
 
@@ -212,7 +219,7 @@ module OpenShift
     method_option :ssh_id, :type => :string
     method_option :packages, :type => :array, :default => []
     method_option :ntpservers, :type => :array, :default => []
-    method_option :timezone, :type => :string, :default => "UTC"
+    method_option :timezone, :type => :string, :default => "Etc/UTC"
 
     def prepare(hostname)
 
@@ -339,10 +346,13 @@ module OpenShift
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
+      osname, osvers = Remote.distribution(hostname, username, key_file)
+      puppetagent = (osname == 'fedora' and osvers.to_i > 18) ? 'puppetagent' : 'puppet'
+
       # start puppet daemon
-      invoke("remote:service:enable", [hostname, "puppet"],
+      invoke("remote:service:enable", [hostname, puppetagent],
         :systemd => systemd, :verbose => options[:verbose])
-      invoke("remote:service:start", [hostname, "puppet"], 
+      invoke("remote:service:start", [hostname, puppetagent], 
         :systemd => systemd, :verbose => options[:verbose])
 
       # wait for the signing request to appear?

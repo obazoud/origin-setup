@@ -35,3 +35,12 @@ records() {
 
 echo "DELETING VOLUMES"
 thor ec2:volume list | cut -d' ' -f1 | xargs -I{} thor ec2:volume delete {}
+
+echo "removing ssh keys"
+for HOSTNAME in puppet broker ident ; do
+    ssh-keygen -R ${HOSTNAME}.infra.lamourine.org
+done
+
+for HOSTNAME in $(grep ec2- ~/.ssh/known_hosts | cut -d, -f1) ; do
+    ssh-keygen -R ${HOSTNAME}
+done

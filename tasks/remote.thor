@@ -36,10 +36,11 @@ class Remote < Thor
       # TODO: check that the key file exists?
     end
 
-    def self.ssh_username
+    def self.ssh_username(baseos=nil)
       credentials_file ||= AWS_CREDENTIALS_FILE
       config = ParseConfig.new(RealFile.expand_path(credentials_file))
-      config.params['RemoteUser']
+      
+      baseos ? config.params[baseos]['RemoteUser'] : config.params['RemoteUser'] 
     end
 
     def self.remote_command(hostname, username, key_file, command, verbose=false, timeout=15, maxtries=6)
@@ -65,7 +66,8 @@ class Remote < Thor
 
         begin
           Net::SSH.start(hostname, username, :timeout => timeout,
-            :keys => [key_file], :keys_only => true) do |ssh|
+            :keys => [key_file], :keys_only => true, 
+            :paranoid => false) do |ssh|
 
             ssh.open_channel do | channel |
               channel.request_pty
@@ -128,6 +130,26 @@ class Remote < Thor
       stdout[0]
     end
 
+    def self.distribution(hostname, username, key_file, verbose=false)
+      distro_table = {
+        "Red Hat" => 'rhel',
+        "CentOS" => 'centos',
+        "Fedora" => 'fedora'
+      }
+
+      cmd = "cat /etc/redhat-release"
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, verbose)
+
+      # check for exit code == 0
+
+      # parse contents of output
+      info = stdout[0].match /^(Fedora|Red Hat|CentOS).*release ([\d.]+)/
+
+      [distro_table[info[1]], info[2]]
+    end
+
   end # no_tasks
 
   class_option :verbose, :type => :boolean, :default => false
@@ -173,28 +195,13 @@ class Remote < Thor
   def distribution(hostname)
 
     puts "task: remote:distribution #{hostname}" unless options[:quiet]
-    distro_table = {
-      "Red Hat" => 'rhel',
-      "CentOS" => 'centos',
-      "Fedora" => 'fedora'
-    }
 
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
-    puts "- using key file #{key_file}" if options[:verbose]
 
-    cmd = "cat /etc/redhat-release"
+    release_info = Remote.distribution(hostname, username, key_file, options[:verbose])
 
-    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      hostname, username, key_file, cmd, options[:verbose])
-
-    # check for exit code == 0
-
-    # parse contents of output
-    info = stdout[0].match /^(Fedora|Red Hat|CentOS).*release ([\d.]+)/
-
-    release_info = [distro_table[info[1]], info[2]]
-    puts release_info[0] + ' ' + release_info[1]
+    puts release_info.join
     release_info
   end
 
@@ -280,7 +287,7 @@ class Remote < Thor
     if zone
       filename = "/usr/share/zoneinfo/#{zone}"
 
-      cmd = "test -f #{filename} && sudo cp #{filename} /etc/localtime"
+      cmd = "test -f #{filename} && (sudo rm /etc/localtime ; sudo ln -s #{filename} /etc/localtime)"
 
       puts "- cmd = #{cmd}" if options[:verbose]
 

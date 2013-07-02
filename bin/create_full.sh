@@ -1,5 +1,8 @@
 #!/bin/bash
 
+BASEOS=${BASEOS:="fedora19"}
+PUPPETAGENT=${PUPPETAGENT:="puppetagent"}
+
 INFRAZONE=infra.lamourine.org
 
 PUPPETHOST=puppet.${INFRAZONE}
@@ -11,8 +14,10 @@ syslog_puppet() {
     # BASHISM
     local _puppetclient
     local _puppetmaster
+    local _puppetservice
     _puppetclient=$1
     _puppetmaster=$2
+    _puppetservice=${3:-'puppet'}
 
     # push the rsyslog remote file to the client
     thor remote:file:put ${_puppetclient} data/rsyslog-puppet.conf-remote ${VERBOSE}
@@ -24,7 +29,7 @@ syslog_puppet() {
     thor remote:file:copy ${_puppetclient} rsyslog-puppet.conf-remote /etc/rsyslog.d/puppet.conf --sudo ${VERBOSE}
 
     thor remote:service:restart ${_puppetclient} rsyslog ${VERBOSE}
-    thor remote:service:restart ${_puppetclient} puppet ${VERBOSE}
+    thor remote:service:restart ${_puppetclient} ${_puppetservice} ${VERBOSE}
 }
 
 
@@ -37,7 +42,7 @@ create_puppetmaster() {
 
     echo "# creating puppetmaster"
     thor origin:baseinstance puppet --hostname ${_hostname} \
-        --securitygroup default puppetmaster ${VERBOSE}
+        --securitygroup default puppetmaster ${VERBOSE} --baseos ${BASEOS}
     thor remote:available ${_hostname} ${VERBOSE}
     thor origin:puppetmaster ${_hostname} \
         --siterepo $_siterepo ${VERBOSE}
@@ -78,20 +83,27 @@ create_puppetclient() {
 
     echo
     echo "# creating $_hostname"
-    thor origin:baseinstance ${_instancename} ${_hostarg} \
-        --securitygroup default #{_securitygroup} ${VERBOSE}
+    thor origin:baseinstance ${_instancename} ${_hostarg} --baseos ${BASEOS} \
+        --securitygroup default ${_securitygroup} ${VERBOSE} 
     if [ -z "${_hostname}" ] ; then
         _hostname=$(thor ec2:instance hostname --name ${_instancename})
     fi
     echo thor remote:available ${_hostname} ${VERBOSE}
     thor origin:puppetclient ${_hostname} ${_puppethost} ${VERBOSE}
-    syslog_puppet ${_hostname} ${_puppethost}
+    syslog_puppet ${_hostname} ${_puppethost} ${PUPPETAGENT}
 }
 
-PUPPETHOST=puppet.infra.lamourine.org
-create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet
 
-create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+#ssh-keygen -R puppet.infra.lamourine.org
+#ssh-keygen -R broker.infra.lamourine.org
+#ssh-keygen -R infra.infra.lamourine.org
+
+PUPPETHOST=puppet.infra.lamourine.org
+#create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet
+
+
+
+#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 #create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
 PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
@@ -118,6 +130,6 @@ cp ${PUPPET_NODE_ROOT}/node1.infra.pp ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
 sed -i -e "/node/s/^.*$/node '${NODEHOST}' {/" ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
 (cd $PUPPET_NODE_ROOT ; git add ${NODEHOST}.pp ; git commit -m "adding nodehost ${NODEHOST}")
 
-(cd $PUPPET_NODE_ROT ; git push origin lamourine)
+(cd $PUPPET_NODE_ROOT ; git push origin lamourine)
 
 
