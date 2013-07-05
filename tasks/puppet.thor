@@ -126,29 +126,47 @@ class  Puppet < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
+      puppet_conf = "/files/etc/puppet/puppet.conf/main/"
+      path = puppet_conf + "modulepath"
+      value = "/etc/puppet/modules:/usr/share/puppet/modules:#{options[:moduledir]}"
+      Remote::Augeas.set(hostname, username, key_file, path, value, 
+        options[:verbose])
+
+      path = puppet_conf + "manifestdir"
+      value = options[:manifestdir]
+      Remote::Augeas.set(hostname, username, key_file, path, value,
+        options[:verbose])
+
+      path = puppet_conf + "manifest"
+      value = options[:manifestdir] + "/site.pp"
+      Remote::Augeas.set(hostname, username, key_file, path, value,
+        options[:verbose])
+
       # initialize configuration
       # TODO: determine location of data dir
-      Remote::File.scp_put(hostname, username, key_file, 
-        'data/puppet-master.conf.erb', 'puppet.conf', options[:verbose])
+      #Remote::File.scp_put(hostname, username, key_file, 
+      #  'data/puppet-master.conf.erb', 'puppet.conf', options[:verbose])
 
       # set hostname in appropriate places in the config
-      cmd = "sed -i -e 's/<%= hostname %>/#{hostname}/' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      #cmd = "sed -i -e 's/<%= hostname %>/#{hostname}/' puppet.conf"
+      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      #  hostname, username, key_file, cmd, options[:verbose])
 
       # set location of the manifests
-      cmd = "sed -i -e 's|<%= manifestdir %>|#{options[:manifestdir]}|' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      #cmd = "sed -i -e 's|<%= manifestdir %>|#{options[:manifestdir]}|' puppet.conf"
+      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      #  hostname, username, key_file, cmd, options[:verbose])
 
       # set location of the modules
-      cmd = "sed -i -e 's|<%= moduledir %>|#{options[:moduledir]}|' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      #cmd = "sed -i -e 's|<%= moduledir %>|#{options[:moduledir]}|' puppet.conf"
+      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      #  hostname, username, key_file, cmd, options[:verbose])
 
-      Remote::File.copy(hostname, username, key_file, 
-        "puppet.conf", "/etc/puppet/puppet.conf", true, false, false,
-        options[:verbose])
+      #Remote::File.copy(hostname, username, key_file, 
+      #  "puppet.conf", "/etc/puppet/puppet.conf", true, false, false,
+      #  options[:verbose])
+
+
 
       Remote::File.mkdir(hostname, username, key_file,
         options[:moduledir], true, true, options[:verbose])
@@ -256,17 +274,9 @@ class  Puppet < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      Remote::File.copy(hostname, username, key_file,
-        '/etc/puppet/puppet.conf', 'puppet.conf', 
-        false, false, false, options[:verbose])
-
-      cmd = "sed -i -e  '/\\[main\\]/a\\    server = #{master}' puppet.conf"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
-      Remote::File.copy(hostname, username, key_file,
-        'puppet.conf', '/etc/puppet/puppet.conf',
-        true, false, false, options[:verbose])
+      path = '/files/etc/puppet/puppet.conf/main/server'
+      Remote::Augeas.set(hostname, username, key_file, path, master,
+        options[:verbose])
     end
 
     desc "enable_logging HOSTNAME", "log puppet agent events to a specific file"
@@ -317,7 +327,8 @@ class  Puppet < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      cmd = "sudo puppet module install --mode master #{modules.join(' ')}"
+      #cmd = "sudo puppet module install --mode master #{modules.join(' ')}"
+      cmd = "sudo puppet module install #{modules.join(' ')}"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose]
         )
@@ -341,5 +352,41 @@ class  Puppet < Thor
       )
   end
 
+  desc "version HOSTNAME", "report the puppet version on the remote host"
+  def version(hostname)
+    
+    puts "task: puppet:version #{hostname}" if not options[:quiet]
 
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+    cmd = "sudo puppet --version"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose]
+      )
+    puts stdout[0]
+    stdout[0]
+  end
+
+  desc "config HOSTNAME", "return the puppet configuration"
+  def config(hostname)
+    puts "task: puppet:config #{hostname}" if not options[:quiet]
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+    cmd = "sudo puppet config print"
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose]
+      )
+    puts stdout.join("\n")
+
+    config = {}
+    stdout.each do |line|
+      keystring, value = line.split(' = ')
+      keysym = keystring.to_sym
+      config[keysym] = value
+    end
+    config
+  end
 end

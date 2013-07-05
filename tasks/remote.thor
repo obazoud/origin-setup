@@ -605,6 +605,34 @@ class Remote < Thor
 
   end
 
+  class Rpm < Thor
+
+    class_option(:verbose, :type => :boolean, :default => false)
+    class_option(:username, :type => :string)
+    class_option(:ssh_key_file, :type => :string)
+
+    desc "version HOSTNAME PACKAGE", "Get the version of an installed package"
+    def version(hostname, package)
+      puts "task: remote:rpm:version #{hostname} #{package}"
+
+      username = options[:username] || Remote.ssh_username
+      keyfile = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "rpm -q #{package} --qf %{VERSION}"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, keyfile, cmd, options[:verbose])
+      
+      if exit_code == 0
+        puts stdout[0]
+        return stdout[0]
+      else
+        puts stdout[0]
+        return nil
+      end
+    end
+  end
+
+
   class Yum < Thor
 
     #namespace "remote:yum"

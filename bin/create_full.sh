@@ -101,8 +101,6 @@ create_puppetclient() {
 PUPPETHOST=puppet.infra.lamourine.org
 #create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet
 
-
-
 #create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 #create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
