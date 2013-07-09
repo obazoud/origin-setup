@@ -49,7 +49,8 @@ module OpenShift
       if hostname
         # check if the name has an A record associated
         # determine the available zones
-        zones = invoke "route53:zone:contains", [hostname]
+        zones = invoke "route53:zone:contains", [hostname], :verbose => options['verbose']
+
         if zones.count == 0
           raise ArgumentError.new(
             "no available zones contain hostname #{hostname}"
@@ -62,7 +63,8 @@ module OpenShift
         fqdn += '.' unless hostname.end_with? '.'
         hostpart = fqdn.gsub('.' + zonename, '')
 
-        host_rr_list = invoke "route53:record:get", [zonename, hostpart]
+        host_rr_list = invoke "route53:record:get", [zonename, hostpart], :verbose => options['verbose']
+
         if host_rr_list.count < 1
           puts "- no IP address"
           hostip=nil
@@ -96,7 +98,7 @@ module OpenShift
               )
           else
             # create a new IP address
-            if not invoke "ec2:ip:info", [hostip]
+            if not invoke("ec2:ip:info", [hostip], :verbose => options[:verbose])
               raise ArgumentError.new "invalid elastic IP address: #{hostip}"
             end
             ipaddress = hostip
