@@ -146,7 +146,7 @@ module EC2
 
       if options[:wait] then
         puts "- waiting to reach status 'running'" if options[:verbose]
-        invoke :wait, [], :id => instance.id, :state => :running, :verbose => options[:verbose]
+        invoke "wait", [], :id => instance.id, :state => :running, :verbose => options[:verbose]
       end
 
     end
@@ -165,7 +165,7 @@ module EC2
 
       if options[:wait] then
         puts "waiting to reach status 'stopped'" if options[:verbose]
-        invoke :wait, [], :id => instance.id, :state => :stopped, :verbose => options[:verbose]
+        invoke "wait", [], :id => instance.id, :state => :stopped, :verbose => options[:verbose]
       end
     end
 
@@ -313,6 +313,7 @@ module EC2
     method_option :pollrate, :type => :numeric, :default => 5
     method_option :maxtries, :type => :numeric, :default => 12
     def wait
+      puts "task: ec2:instance:wait --id #{options[:id]} --state #{options[:state]}"
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       

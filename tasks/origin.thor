@@ -35,7 +35,7 @@ module OpenShift
       #  check that the IP address is a valid Elastic IP
       ipaddress = options[:ipaddress]
       if ipaddress
-        eip = invoke "ec2:ip:info", [ipaddress]
+        eip = invoke "ec2:ip:info", [ipaddress], options
         # check that it is an existing elastic IP
         if not eip
           raise ArgumentError.new "invalid elastic IP address: #{ipaddress}"
@@ -49,7 +49,7 @@ module OpenShift
       if hostname
         # check if the name has an A record associated
         # determine the available zones
-        zones = invoke "route53:zone:contains", [hostname]
+        zones = invoke "route53:zone:contains", [hostname], options
         if zones.count == 0
           raise ArgumentError.new(
             "no available zones contain hostname #{hostname}"
@@ -62,7 +62,7 @@ module OpenShift
         fqdn += '.' unless hostname.end_with? '.'
         hostpart = fqdn.gsub('.' + zonename, '')
 
-        host_rr_list = invoke "route53:record:get", [zonename, hostpart]
+        host_rr_list = invoke "route53:record:get", [zonename, hostpart], options
         if host_rr_list.count < 1
           puts "- no IP address"
           hostip=nil
@@ -70,7 +70,7 @@ module OpenShift
           # no DNS A record
           # create a new IP address if needed
           if not eip
-            eip = invoke("ec2:ip:create", []) if not eip
+            eip = invoke("ec2:ip:create", [], options) if not eip
             ipaddress = eip.ip_address
           end
 
@@ -96,7 +96,7 @@ module OpenShift
               )
           else
             # create a new IP address
-            if not invoke "ec2:ip:info", [hostip]
+            if not invoke "ec2:ip:info", [hostip], options
               raise ArgumentError.new "invalid elastic IP address: #{hostip}"
             end
             ipaddress = hostip
@@ -187,7 +187,7 @@ module OpenShift
       # ----------------------------------------
       # associate instance with eip if available
       # ----------------------------------------
-      invoke('ec2:ip:associate', [ipaddress, instance.id]) if ipaddress
+      invoke('ec2:ip:associate', [ipaddress, instance.id], options) if ipaddress
 
       # report how long before the name will resolve
       # new records aren't propagated until the SOA TTL expires.
@@ -226,13 +226,13 @@ module OpenShift
       puts "task: origin:prepare #{hostname}" unless options[:quiet]
 
       # check release and version
-      os, releasever = invoke("remote:distribution", [hostname])
+      os, releasever = invoke("remote:distribution", [hostname], options)
 
       # check archecture
-      arch = invoke("remote:arch", [hostname])
+      arch = invoke("remote:arch", [hostname], options)
       puts "- instance is #{os}-#{releasever} #{arch}" if options[:verbose]
 
-      invoke "remote:timezone", [hostname, options[:timezone]]
+      invoke "remote:timezone", [hostname, options[:timezone]], options
 
       ipaddr = Resolv.new.getaddress hostname
       invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
@@ -242,7 +242,7 @@ module OpenShift
       pkglist = options[:packages] + ["system-config-firewall-base", 'augeas']
       
 
-      invoke "remote:yum:install", [hostname, [pkglist]]
+      invoke "remote:yum:install", [hostname, [pkglist]], options
 
     end
 
@@ -276,11 +276,11 @@ module OpenShift
         )
 
       # add the user to the puppet group
-      invoke "puppet:master:join_group", [hostname]
+      invoke "puppet:master:join_group", [hostname], options
 
       # create the site root (where the site files will go) if needed
       # check if the directory exists
-      invoke "puppet:master:siteroot", [hostname, options[:siteroot]]
+      invoke "puppet:master:siteroot", [hostname, options[:siteroot]], options
 
       
       # Clone the manifests into place
@@ -296,16 +296,16 @@ module OpenShift
         :verbose => options[:verbose])
       
       # split logs out into their own file
-      invoke "puppet:master:enable_logging", [hostname]
+      invoke "puppet:master:enable_logging", [hostname], options
 
       # install standard modules
       invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']]
 
       # open ports for SSH and puppet
-      invoke "remote:firewall:stop", [hostname]
-      invoke "remote:firewall:service", [hostname, 'ssh']
-      invoke "remote:firewall:port", [hostname, 8140]
-      invoke "remote:firewall:start", [hostname]
+      invoke "remote:firewall:stop", [hostname], options
+      invoke "remote:firewall:service", [hostname, 'ssh'], options
+      invoke "remote:firewall:port", [hostname, 8140], options
+      invoke "remote:firewall:start", [hostname], options
 
       #invoke("puppet:cert:generate", [hostname, hostname])
 
@@ -339,10 +339,10 @@ module OpenShift
         :timezone => options[:timezone],
         :verbose => options[:verbose])
 
-      invoke "puppet:agent:set_server", [hostname, puppetmaster]
+      invoke "puppet:agent:set_server", [hostname, puppetmaster], options
 
       # split logs out into their own file
-      invoke "puppet:agent:enable_logging", [hostname]
+      invoke "puppet:agent:enable_logging", [hostname], options
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
@@ -369,7 +369,7 @@ module OpenShift
       # raise Exception.new "timed out waiting for cert request" if certlist.count == 0
 
       # then sign it?
-      invoke "puppet:cert:sign", [puppetmaster, hostname]
+      invoke "puppet:cert:sign", [puppetmaster, hostname], options
 
     end
 
