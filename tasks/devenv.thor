@@ -157,8 +157,8 @@ class Devenv < Thor
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
     # check the os and version
-    osname, osversion = invoke "remote:distribution", [hostname]
-    arch = invoke "remote:arch", [hostname]
+    osname, osversion = invoke "remote:distribution", [hostname], options
+    arch = invoke "remote:arch", [hostname], options
 
     # install augeas, used later
     Remote::Yum.install_rpms(hostname, username, key_file, ['augeas'], 
@@ -177,7 +177,7 @@ class Devenv < Thor
     }
 
     # yum update
-    invoke "remote:yum:update", [hostname]
+    invoke "remote:yum:update", [hostname], options
 
     # install puppet repos (rhel/centos)
     if osname == 'rhel' or osname == 'centos'
@@ -194,7 +194,8 @@ class Devenv < Thor
 
       # install the puppetlabs repo file - not in EPEL or RHEL
       invoke("remote:repo:create", 
-        [hostname, 'puppetlabs', 'data/puppetlabs.repo'])
+        [hostname, 'puppetlabs', 'data/puppetlabs.repo'], 
+        options)
     end
 
   end
