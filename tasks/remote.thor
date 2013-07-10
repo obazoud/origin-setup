@@ -1082,7 +1082,7 @@ class Remote < Thor
       ports.each { |portnum|
         puts "opening port #{portnum}" if options[:verbose]
         Remote::Firewall.port(hostname, username, key_file,  
-          portnum, protocol=options[:protocol], 
+          portnum, protocol=(options[:protocol] || 'tcp'), 
           close=false, options[:verbose])
       }
     end

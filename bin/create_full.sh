@@ -43,6 +43,7 @@ create_puppetmaster() {
     echo "# creating puppetmaster"
     thor origin:baseinstance puppet --hostname ${_hostname} \
         --securitygroup default puppetmaster ${VERBOSE} --baseos ${BASEOS}
+
     thor remote:available ${_hostname} ${VERBOSE}
     thor origin:puppetmaster ${_hostname} \
         --siterepo $_siterepo ${VERBOSE}
@@ -101,9 +102,9 @@ create_puppetclient() {
 PUPPETHOST=puppet.infra.lamourine.org
 create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet
 
-exit
 
-#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+
 #create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
 PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
