@@ -876,6 +876,20 @@ class Remote < Thor
           hostname, username, key_file, cmd, verbose)
       end
 
+      # pull updates to remote repo/branch
+      def self.fetch(hostname, username, key_file, 
+          gitroot, remote='origin', branch=nil, 
+          verbose=false)
+     
+        # Compose the remote git clone command
+        cmd = "cd #{gitroot} ; git fetch --no-progress "
+        cmd << " --verbose " if verbose
+        cmd << remote
+        cmd << " " + branch if branch
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+      end
+
     end # no_tasks
 
     desc "clone HOSTNAME GITURL", "clone a git URL on a remote host"
@@ -946,6 +960,25 @@ class Remote < Thor
         push_git_repo(hostname, username, ssh_key_file, repodir,
           options[:destdir], options[:verbose])
       end
+    end
+
+    desc "fetch HOSTNAME REPODIR", "fetch changes from a remote repo"
+    method_option(:remote, :default => "origin")
+    method_option(:branch)
+    def fetch(hostname, repodir)
+      puts "task: remote:git:fetch #{hostname} #{repodir} #{options[:remote]} #{options[:branch]}" unless options[:quiet]
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "cd #{repodir} ; git fetch #{options[:remote]}"
+      cmd += " " + options[:branch] if options[:branch]
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+      
+      puts "exit code: #{exit_code}" if options[:verbose]
+      puts "stdout: " + stdout.join("\n") if options[:verbose]
+      puts "stderr: " + stderr.join("\n") if options[:verbose]
+
     end
 
     no_tasks do
