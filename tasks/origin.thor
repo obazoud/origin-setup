@@ -238,10 +238,14 @@ module OpenShift
       invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
         :verbose => options[:verbose])
 
+      # temporarily disable updates
+      cmd = "sudo sed -i -e '/enabled=/s/=1/=0/' /etc/yum.repos.d/fedora-updates.repo"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose], )
+
       # packages for firewall management and system config management
       pkglist = options[:packages] + ["system-config-firewall-base", 'augeas']
       
-
       invoke "remote:yum:install", [hostname, [pkglist]], options
 
     end
@@ -270,6 +274,8 @@ module OpenShift
 
       #hostname = instance.dns_name
       invoke("origin:prepare", [hostname],
+        :username => username,
+        :ssh_key_file => key_file,
         :packages => ['puppet-server', 'git'],
         :timezone => options[:timezone],
         :verbose => options[:verbose],
@@ -335,7 +341,10 @@ module OpenShift
 
 
       # also install additional packages
-      invoke("origin:prepare", [hostname], :packages => ['puppet', 'facter'],
+      invoke("origin:prepare", [hostname],
+        :username => username,
+        :ssh_key_file => key_file,
+        :packages => ['puppet', 'facter'],
         :timezone => options[:timezone],
         :verbose => options[:verbose])
 
