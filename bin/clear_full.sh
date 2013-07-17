@@ -1,5 +1,7 @@
 #!/bin/bash
 
+
+
 # delete all instances
 echo "DELETING INSTANCES"
 thor ec2:instance list --verbose | grep -v terminated | cut -d' ' -f1 | \

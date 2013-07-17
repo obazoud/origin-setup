@@ -27,6 +27,7 @@ module OpenShift
     method_option :securitygroup, :type => :array, :default => ['default']
     method_option :hostname, :type => :string
     method_option :ipaddress, :type => :string
+    method_option :enable_updates, :type => :boolean, :default => true
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
@@ -225,6 +226,9 @@ module OpenShift
 
       puts "task: origin:prepare #{hostname}" unless options[:quiet]
 
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
       # check release and version
       os, releasever = invoke("remote:distribution", [hostname], options)
 
@@ -239,9 +243,11 @@ module OpenShift
         :verbose => options[:verbose])
 
       # temporarily disable updates
-      cmd = "sudo sed -i -e '/enabled=/s/=1/=0/' /etc/yum.repos.d/fedora-updates.repo"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose], )
+      #if not options[:enable_updates]
+      #  cmd = "sudo sed -i -e '/enabled=/s/=1/=0/' /etc/yum.repos.d/fedora-updates.repo"
+      #  exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      #    hostname, username, key_file, cmd, options[:verbose], )
+      #end
 
       # packages for firewall management and system config management
       pkglist = options[:packages] + ["system-config-firewall-base", 'augeas']
@@ -276,7 +282,7 @@ module OpenShift
       invoke("origin:prepare", [hostname],
         :username => username,
         :ssh_key_file => key_file,
-        :packages => ['puppet-server', 'git'],
+        :packages => ['ruby', 'puppet-server', 'git'],
         :timezone => options[:timezone],
         :verbose => options[:verbose],
         )
@@ -344,7 +350,7 @@ module OpenShift
       invoke("origin:prepare", [hostname],
         :username => username,
         :ssh_key_file => key_file,
-        :packages => ['puppet', 'facter'],
+        :packages => ['ruby', 'puppet', 'facter'],
         :timezone => options[:timezone],
         :verbose => options[:verbose])
 

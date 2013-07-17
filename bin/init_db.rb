@@ -2,17 +2,18 @@
 #
 # Detect and then initialize the OpenShift database
 #
+require 'parseconfig'
 require 'mongo'
 
-dbhost = "ec2-54-227-124-141.compute-1.amazonaws.com"
-dbport = "27017"
+#dbhost = "ec2-54-227-124-141.compute-1.amazonaws.com"
+#dbport = "27017"
 
-dbadminuser = "root"
-dbadminpass = "dbadminsecret"
+#dbadminuser = "root"
+#dbadminpass = "dbadminsecret"
 
-dbname = "openshift"
-dbuser = "broker"
-dbpass = "dbsecret"
+#dbname = "openshift"
+#dbuser = "broker"
+#dbpass = "dbsecret"
 
 def db_exists(dbhost, dbport, user, pass, dbname)
   admin_uri = "mongodb://#{user}:#{pass}@#{dbhost}:#{dbport}/admin"
@@ -39,22 +40,23 @@ end
 
 if self.to_s == 'main'
 
+
   #puts "Admin URL: #{admin_uri}"
 
-  if db_exists dbhost, dbport, dbadminuser, dbadminpass, dbname
-    puts "found"
-    exit
-  else
-    puts "not found"
-  end
+  #if db_exists dbhost, dbport, dbadminuser, dbadminpass, dbname
+  #  puts "found"
+  #  exit
+  #else
+  #  puts "not found"
+  #end
 
-  db_create dbhost, dbport, dbadminuser, dbadminpass, dbname, dbuser, dbpass
+  #db_create dbhost, dbport, dbadminuser, dbadminpass, dbname, dbuser, dbpass
   
-  if db_exists dbhost, dbport, dbadminuser, dbadminpass, dbname
-    puts "found"
-  else
-    puts "not found"
-  end
+  #if db_exists dbhost, dbport, dbadminuser, dbadminpass, dbname
+  #  puts "found"
+  #else
+  #  puts "not found"
+  #end
 
   #conn.drop_database(dbname)
 

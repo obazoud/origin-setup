@@ -213,7 +213,7 @@ module EC2
       end
 
       handle = AWS::EC2.new
-      instance = find_instance(login, options)
+      instance = find_instance(handle, options)
 
       if not instance
         puts "no matching instance"
