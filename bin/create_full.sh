@@ -117,35 +117,38 @@ create_data1() {
     DATAHOST=$(thor ec2:instance hostname --name data1)
 
     # copy the data1.infra.pp to <hostname>.pp
-    cp ${PUPPET_NODE_ROOT}/data1.infra.pp ${PUPPET_NODE_ROOT}/${DATAHOST}.pp
-    sed -i -e "/node/s/^.*$/node '${DATAHOST}' {/" ${PUPPET_NODE_ROOT}/${DATAHOST}.pp
-    (cd $PUPPET_NODE_ROOT ; git add ${DATAHOST}.pp ; git commit -m "adding datahost ${DATAHOST}")
-    (cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
-    thor remote:git:checkout ${PUPPETHOST} site ${PUPPET_BRANCH}
-    thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
+    #cp ${PUPPET_NODE_ROOT}/data1.infra.pp ${PUPPET_NODE_ROOT}/${DATAHOST}.pp
+    #sed -i -e "/node/s/^.*$/node '${DATAHOST}' {/" ${PUPPET_NODE_ROOT}/${DATAHOST}.pp
+    #(cd $PUPPET_NODE_ROOT ; git add ${DATAHOST}.pp ; git commit -m "adding datahost ${DATAHOST}")
+    #(cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
+    #thor remote:git:checkout ${PUPPETHOST} site ${PUPPET_BRANCH}
+    #thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
 }
 # update the contents of the new file
 
 create_message1() {
     create_puppetclient message1 messagebroker ${PUPPETHOST}
     MSGHOST=$(thor ec2:instance hostname --name message1)
-    cp ${PUPPET_NODE_ROOT}/message1.infra.pp ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
-    sed -i -e "/node/s/^.*$/node '${MSGHOST}' {/" ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
-    (cd $PUPPET_NODE_ROOT ; git add ${MSGHOST}.pp ; git commit -m "adding datahost ${MSGHOST}")
-    (cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
-    thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
+
+
+    #cp ${PUPPET_NODE_ROOT}/message1.infra.pp ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
+    #sed -i -e "/node/s/^.*$/node '${MSGHOST}' {/" ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
+    #(cd $PUPPET_NODE_ROOT ; git add ${MSGHOST}.pp ; git commit -m "adding datahost ${MSGHOST}")
+    #(cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
+    #thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
 }
 
 create_node1() {
 
     create_puppetclient node1 node ${PUPPETHOST}
-    NODEHOST=$(thor ec2:instance hostname --name node1)
-    cp ${PUPPET_NODE_ROOT}/node1.infra.pp ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
-    sed -i -e "/^node '/s/^.*$/node '${NODEHOST}' {/" ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
-    (cd $PUPPET_NODE_ROOT ; git add ${NODEHOST}.pp ; git commit -m "adding nodehost ${NODEHOST}")
+
+    #NODEHOST=$(thor ec2:instance hostname --name node1)
+    #cp ${PUPPET_NODE_ROOT}/node1.infra.pp ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
+    #sed -i -e "/^node '/s/^.*$/node '${NODEHOST}' {/" ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
+    #(cd $PUPPET_NODE_ROOT ; git add ${NODEHOST}.pp ; git commit -m "adding nodehost ${NODEHOST}")
     
-    (cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
-    thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
+    #(cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
+    #thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
 }
 
 

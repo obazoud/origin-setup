@@ -311,7 +311,14 @@ module OpenShift
       invoke "puppet:master:enable_logging", [hostname], options
 
       # install standard modules
-      invoke "puppet:module:install", [hostname, ['puppetlabs-ntp']], options
+      invoke(
+        "puppet:module:install", 
+        [hostname, [
+            'puppetlabs-ntp', 'puppetlabs-mongodb', 'puppetlabs-activemq',
+            'puppetlabs-mcollective',
+          ]
+        ], 
+        options)
 
       # open ports for SSH and puppet
       invoke "remote:firewall:stop", [hostname], options
