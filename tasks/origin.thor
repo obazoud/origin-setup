@@ -314,8 +314,10 @@ module OpenShift
       invoke(
         "puppet:module:install", 
         [hostname, [
-            'puppetlabs-ntp', 'puppetlabs-mongodb', 'puppetlabs-activemq',
-            'puppetlabs-mcollective',
+            'puppetlabs-ntp', 
+            #'puppetlabs-mongodb',
+            #'puppetlabs-activemq',
+            #'puppetlabs-mcollective',
           ]
         ], 
         options)
