@@ -8,7 +8,7 @@ thor ec2:instance list --verbose | grep -v terminated | cut -d' ' -f1 | \
   xargs -I{} thor ec2:instance delete --force --id {}
 
 echo "RENAMING INSTANCES"
-thor ec2:instance list --verbose | grep -v terminated | cut -d' ' -f1 | \
+thor ec2:instance list | grep -v terminate | cut -d' ' -f1 | \
   xargs -I{} thor ec2:instance rename --newname terminate --id {} 
 
 records() {
