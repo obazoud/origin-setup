@@ -36,23 +36,43 @@ syslog_puppet() {
 # Take a node template and apply a hostname.
 # 
 create_node_file() {
+  local _gitroot
+  local _branch
+
   local _template
   local _hostname
   local _filename
-  local _branch
 
-  _template = $1
-  _hostname = $2
-  _filename = $3
-  _branch = $4
 
-  sed -e "/node/s/'[^']*'/'$_hostname'/" $_template > $_filename
-  git add $filename
-  git commit -m "creating template for hostname $_hostname" $_filename
-  git push origin $_branch
+  _gitroot=$1
+  _branch=$2
+
+  _template=$3
+  _hostname=$4
+  _filename=$5
+
+  (cd $_gitroot ;
+    sed -e "/^node '/s/'[^']*'/'$_hostname'/" $_template > $_filename ;
+    git add $_filename ;
+    git commit -m "'creating template for hostname $_hostname'" $_filename ;
+    git push origin $(current_branch)
+  )
 
 }
 
+current_branch() {
+  local _gitroot
+  local _chdir
+
+  _gitroot=$1
+
+  if [ -n "$1" ] 
+  then
+      _chdir="cd $_gitroot"
+  fi
+
+  ($_chdir ; git branch | grep \* | cut -d' ' -f2)
+}
 
 create_puppetmaster() {
     local _hostname
@@ -61,6 +81,7 @@ create_puppetmaster() {
 
     _hostname=$1
     _siterepo=$2
+    _sitebranch=$3
 
     echo "# creating puppetmaster"
     thor origin:baseinstance puppet --hostname ${_hostname} \
@@ -128,54 +149,52 @@ create_puppetclient() {
 #ssh-keygen -R broker.infra.lamourine.org
 #ssh-keygen -R infra.infra.lamourine.org
 
-#create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
-
 
 create_data1() {
-    # Create a node entry for a data store with this hostname
-    create_puppetclient data1 datastore ${PUPPETHOST}
-
     local _template
     local _nodefile
 
-    _template=${PUPPET_NODE_ROOT}/datastore.pp
-    _nodefile="${PUPPET_NODE_ROOT}/data1.infra.lamourine.org.pp"
+    # Create a node entry for a data store with this hostname
+    create_puppetclient data1 datastore ${PUPPETHOST}
 
     DATAHOST=$(thor ec2:instance hostname --name data1)
-    
-    sed -e "/node/s/'[^']*'/'$DATAHOST'/" $_template > $_nodefile
-    (cd $PUPPET_NODE_ROOT ; git add $_nodefile ; git commit -m 'setting datastore hostname' $_nodefile ; git push origin ${PUPPET_BRANCH})
-    thor remote:git:checkout ${PUPPETHOST} site ${PUPPET_BRANCH}
-    thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
+
+    _template=datastore.pp
+    _nodefile=data1.infra.lamourine.org.pp
+
+    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $DATAHOST $_nodefile
 }
+
 # update the contents of the new file
 
 create_message1() {
+    local _template
+    local _nodefile
+
     create_puppetclient message1 messagebroker ${PUPPETHOST}
+
     MSGHOST=$(thor ec2:instance hostname --name message1)
 
-    _template=${PUPPET_NODE_ROOT}/messaging.pp
-    _nodefile="${PUPPET_NODE_ROOT}/message1.infra.lamourine.org.pp"
+    _template=messaging.pp
+    _nodefile=message1.infra.lamourine.org.pp
 
+    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $MSGHOST $_nodefile
 
-    #cp ${PUPPET_NODE_ROOT}/message1.infra.pp ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
-    #sed -i -e "/node/s/^.*$/node '${MSGHOST}' {/" ${PUPPET_NODE_ROOT}/${MSGHOST}.pp
-    #(cd $PUPPET_NODE_ROOT ; git add ${MSGHOST}.pp ; git commit -m "adding datahost ${MSGHOST}")
-    #(cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
-    #thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
 }
 
 create_node1() {
+    local _template
+    local _nodefile
 
     create_puppetclient node1 node ${PUPPETHOST}
 
     NODEHOST=$(thor ec2:instance hostname --name node1)
-    #cp ${PUPPET_NODE_ROOT}/node1.infra.pp ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
-    #sed -i -e "/^node '/s/^.*$/node '${NODEHOST}' {/" ${PUPPET_NODE_ROOT}/${NODEHOST}.pp
-    #(cd $PUPPET_NODE_ROOT ; git add ${NODEHOST}.pp ; git commit -m "adding nodehost ${NODEHOST}")
-    
-    #(cd $PUPPET_NODE_ROOT ; git push origin ${PUPPET_BRANCH})
-    #thor remote:git:pull ${PUPPETHOST} site --branch ${PUPPET_BRANCH}
+
+    _template=node.pp
+    _nodefile=node1.infra.lamourine.org.pp
+
+    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $NODEHOST $_nodefile
+
 }
 
 
@@ -186,12 +205,16 @@ create_node1() {
 
 PUPPETHOST=puppet.infra.lamourine.org
 PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
-PUPPET_BRANCH=$(cd ${PUPPET_NODE_ROOT} ; git branch | grep \* | cut -d' ' -f2)
+PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 #create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
+
+#create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
 #create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
 #create_data1
 create_message1
 create_node1
+
+thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
