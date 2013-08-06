@@ -282,7 +282,8 @@ module OpenShift
       invoke("origin:prepare", [hostname],
         :username => username,
         :ssh_key_file => key_file,
-        :packages => ['ruby', 'puppet-server', 'git'],
+        :packages => ['ruby', 'puppet-server', 'rubygem-activerecord', 
+          'rubygem-sqlite3', 'git'],
         :timezone => options[:timezone],
         :verbose => options[:verbose],
         )
