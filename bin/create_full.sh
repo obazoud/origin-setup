@@ -98,6 +98,10 @@ create_puppetmaster() {
     thor remote:firewall:port ${_hostname} 514 ${VERBOSE}
     thor remote:firewall:start ${_hostname} ${VERBOSE}
 
+    # Enable Puppet storeconfig
+    thor remote:augeas:set ${_hostname} \
+        "'/files/etc/puppet/puppet.conf/master/storeconfig'" true ${VERBOSE}
+
     # five \ because bourne takes one pair here, and one pair there augtool takes 1
     thor remote:augeas:set ${_hostname} \
         "'/files/etc/rsyslog.conf/\\\\\$ModLoad[last()+1]'" imtcp ${VERBOSE}
@@ -207,14 +211,14 @@ PUPPETHOST=puppet.infra.lamourine.org
 PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
 PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
-create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
+#create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
 
-#create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
+create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
-create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
-create_data1
-create_message1
-create_node1
+#create_data1
+#create_message1
+#create_node1
 
-thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
+#thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
