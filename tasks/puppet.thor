@@ -4,6 +4,7 @@
 #
 require 'rubygems'
 require 'thor'
+require 'net/http'
 
 class  Puppet < Thor
 
@@ -388,5 +389,59 @@ class  Puppet < Thor
       config[keysym] = value
     end
     config
+  end
+
+  
+  desc "repo HOSTNAME", "enable the puppetlabs repo to a host"
+  def repo(hostname)
+    puts "task: puppet:config #{hostname}" if not options[:quiet]
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+    # get distribution
+    distro, version = Remote.distribution(hostname, username, key_file,
+      options[:verbose])
+    arch = Remote.arch(hostname, username, key_file, options[:verbose])
+
+    release_rpm = Puppet.puppetlabs_release_rpm_url(distro, version, arch)
+
+
+    if release_rpm != nil
+      Remote::Yum.install_rpms(hostname, username, key_file,
+        [release_rpm], options[:verbose])
+    end
+  end
+
+  no_tasks do
+
+    def self.puppetlabs_release_rpm_url(distro, version, arch)
+
+      if distro == 'fedora'
+        dstring = distro
+        vstring = 'f' + version
+      elsif distro == 'rhel'
+        dstring = 'el'
+        vstring = version.split('.')[0] + "Server"
+      else
+        raise "invalid distribution: #{distro} - must be rhel or fedora"
+      end
+
+      repo_root_url = "http://yum.puppetlabs.com"
+
+      dir_url = repo_root_url + "/#{dstring}/#{vstring}/products/#{arch}/"
+
+      dir_listing_html = Net::HTTP.get_response(URI.parse(dir_url))
+
+      #puts dir_listing_html.body.match(/(.*href="([^"]+)")+/)
+
+      alist = dir_listing_html.body.split('<a ').map {|anchor|
+        href = anchor.match(/href="([^"]+)"/)
+        href ? href[1] : nil
+      }.select { |m| m != nil }.select {|rpm| rpm.match(/puppetlabs-release/)}
+
+      alist.length > 0 ? dir_url + "/" + alist[-1] : nil
+    end
+
   end
 end

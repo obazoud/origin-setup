@@ -263,6 +263,7 @@ module OpenShift
     method_option :timezone, :type => :string, :default => "UTC"
     method_option :siteroot, :type => :string, :default => "/var/lib/puppet/site"
     method_option :siterepo, :type => :string
+    method_option :puppetlabs, :type => :boolean, :default => false
     
     def puppetmaster(hostname)
 
@@ -282,8 +283,8 @@ module OpenShift
       invoke("origin:prepare", [hostname],
         :username => username,
         :ssh_key_file => key_file,
-        :packages => ['ruby', 'puppet-server', 'rubygem-activerecord', 
-          'rubygem-sqlite3', 'git'],
+        :packages => ['ruby', 'puppet-server', 'git', 'patch',
+          'rubygem-activerecord', 'rubygem-sqlite3'],
         :timezone => options[:timezone],
         :verbose => options[:verbose],
         )
@@ -342,6 +343,8 @@ module OpenShift
 
     desc "puppetclient HOSTNAME MASTER", "create a puppet client instance"
     method_option :timezone, :type => :string, :default => "UTC"
+    method_option :puppetlabs, :type => :boolean, :default => false
+
 
     def puppetclient(hostname, puppetmaster)
 
@@ -397,6 +400,7 @@ module OpenShift
       invoke "puppet:cert:sign", [puppetmaster, hostname], options
 
     end
+
 
     no_tasks do
 

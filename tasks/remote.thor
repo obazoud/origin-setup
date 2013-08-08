@@ -313,7 +313,6 @@ class Remote < Thor
   end
 
   class File < Thor
-
   #   #namespace "remote:file"
 
     no_tasks do
@@ -1443,7 +1442,34 @@ class Remote < Thor
     end
 
   end
-  
+
+  class Patch < Thor
+
+    class_option :verbose, :type => :boolean, :default => false
+    class_option(:username, :type => :string)
+    class_option(:ssh_key_file, :type => :string)
+
+    desc "apply hostname patchfile destfile", "Patch a remote file with a local patch file"
+    method_option(:sudo, :type => :boolean, :default => false)
+    def apply(hostname, patchfile, destfile)
+      puts "remote:patch:apply #{hostname} #{patchfile} #{destfile}"
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      remotepatchfile = RealFile.basename(patchfile)
+      # copy the patchfile to remote home
+      Remote::File.scp_put(hostname, username, key_file, patchfile, remotepatchfile, options[:verbose])
+      # apply the patch
+      cmd = options[:sudo] ? "sudo " : ""
+      cmd += "patch --backup --forward #{destfile} #{remotepatchfile}"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+
+    end
+
+  end
+
   desc "arch HOSTNAME", "get the base architcture of the host"
   def arch(hostname)
     
@@ -1454,10 +1480,19 @@ class Remote < Thor
 
     cmd = "arch"
     puts "executing #{cmd} on #{hostname}" if options[:verbose]
-    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      hostname, username, key_file, cmd, options[:verbose])
-    puts stdout[0]
-    stdout[0]
+    arch = Remote.arch(hostname, username, key_file, options[:verbose])
+    puts arch
+    arch
+  end
+
+  no_tasks do
+    def self.arch(hostname, username, key_file, verbose)
+      cmd = "arch"
+      puts "executing #{cmd} on #{hostname}" if options[:verbose]
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+      return stdout[0]
+    end
   end
 
   desc "set_selinux HOSTNAME", "control SELinux settings on a remote host"
