@@ -143,36 +143,46 @@ class  Puppet < Thor
       Remote::Augeas.set(hostname, username, key_file, path, value,
         options[:verbose])
 
-      # initialize configuration
-      # TODO: determine location of data dir
-      #Remote::File.scp_put(hostname, username, key_file, 
-      #  'data/puppet-master.conf.erb', 'puppet.conf', options[:verbose])
-
-      # set hostname in appropriate places in the config
-      #cmd = "sed -i -e 's/<%= hostname %>/#{hostname}/' puppet.conf"
-      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      #  hostname, username, key_file, cmd, options[:verbose])
-
-      # set location of the manifests
-      #cmd = "sed -i -e 's|<%= manifestdir %>|#{options[:manifestdir]}|' puppet.conf"
-      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      #  hostname, username, key_file, cmd, options[:verbose])
-
-      # set location of the modules
-      #cmd = "sed -i -e 's|<%= moduledir %>|#{options[:moduledir]}|' puppet.conf"
-      #exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      #  hostname, username, key_file, cmd, options[:verbose])
-
-      #Remote::File.copy(hostname, username, key_file, 
-      #  "puppet.conf", "/etc/puppet/puppet.conf", true, false, false,
-      #  options[:verbose])
-
-
-
       Remote::File.mkdir(hostname, username, key_file,
         options[:moduledir], true, true, options[:verbose])
     end
 
+    desc "storedconfigs HOSTNAME", "Enable stored configs for the puppermaster"
+    method_option :dbadaptor, :type => :string, :default => "sqlite3"
+    method_option(:dblocation, :type => :string, 
+      :default => "/var/lib/puppet/server_data/storeconfigs.sqlite")
+    def storedconfigs(hostname)
+
+      puts "task: puppet:master:configure #{hostname}"
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      puppet_conf = "/files/etc/puppet/puppet.conf/master/"
+
+      path = puppet_conf + "storedconfigs"
+      Remote::Augeas.set(hostname, username, key_file, path, "true", 
+        options[:verbose])
+
+      path = puppet_conf + "dbadaptor"
+      Remote::Augeas.set(hostname, username, key_file, 
+        path, options[:dbadaptor], options[:verbose])
+
+      path = puppet_conf + "dblocation"
+      Remote::Augeas.set(hostname, username, key_file, 
+        path, options[:dblocation], options[:verbose])
+
+      puppet_version = Remote::Rpm.version(hostname, username, key_file, 
+        'puppet', options[:verbose])
+      
+      if puppet_version.to_f < 3.2
+        Remote::Patch.apply(hostname, username, key_file,
+          'data/puppet-rails-resource.rb.diff',
+          '/usr/share/ruby/vendor_ruby/puppet/rails/resource.rb',
+          true, options[:verbose])
+      end
+    end
+    
     desc "siteroot HOSTNAME PATH", "create a directory to contain the puppet site configuration"
     def siteroot(hostname, sitepath)
       

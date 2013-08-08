@@ -264,6 +264,7 @@ module OpenShift
     method_option :siteroot, :type => :string, :default => "/var/lib/puppet/site"
     method_option :siterepo, :type => :string
     method_option :puppetlabs, :type => :boolean, :default => false
+    method_option :storedconfigs, :type => :boolean, :default => false
     
     def puppetmaster(hostname)
 
@@ -279,12 +280,16 @@ module OpenShift
 
       raise Exception.new("host #{hostname} not available") if not available
 
+      extra_packages = ['ruby', 'puppet-server', 'git']
+      if options[:storedconfigs]
+        extra_packages << ['patch', 'rubygem-activerecord', 'rubygem-sqlite3']
+      end
+
       #hostname = instance.dns_name
       invoke("origin:prepare", [hostname],
         :username => username,
         :ssh_key_file => key_file,
-        :packages => ['ruby', 'puppet-server', 'git', 'patch',
-          'rubygem-activerecord', 'rubygem-sqlite3'],
+        :packages => extra_packages,
         :timezone => options[:timezone],
         :verbose => options[:verbose],
         )
@@ -371,6 +376,8 @@ module OpenShift
 
       # split logs out into their own file
       invoke "puppet:agent:enable_logging", [hostname], options
+
+      invoke "puppet:master:storedconfigs", [hostname], options
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 

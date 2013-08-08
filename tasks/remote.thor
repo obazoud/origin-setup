@@ -617,16 +617,24 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
-      cmd = "rpm -q #{package} --qf %{VERSION}"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, keyfile, cmd, options[:verbose])
+      version = Remote::Rpm.version(hostname, username, keyfile, package,
+        options[:verbose])
+      puts version
+      version
+    end
+
+    no_tasks do
+
+      def self.version(hostname, username, keyfile, package, verbose)
+        cmd = "rpm -q #{package} --qf %{VERSION}"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, keyfile, cmd, verbose)
       
-      if exit_code == 0
-        puts stdout[0]
-        return stdout[0]
-      else
-        puts stdout[0]
-        return nil
+        if exit_code == 0
+          return stdout[0]
+        else
+          return nil
+        end
       end
     end
   end
@@ -1457,15 +1465,22 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      remotepatchfile = RealFile.basename(patchfile)
-      # copy the patchfile to remote home
-      Remote::File.scp_put(hostname, username, key_file, patchfile, remotepatchfile, options[:verbose])
-      # apply the patch
-      cmd = options[:sudo] ? "sudo " : ""
-      cmd += "patch --backup --forward #{destfile} #{remotepatchfile}"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+      Remote::Patch.apply(hostname, username, key_file, patchfile, destfile,
+        options[:sudo], options[:verbose])
+    end
 
+    no_tasks do
+      def self.apply(hostname, username, key_file, patchfile, destfile, sudo, verbose)
+        remotepatchfile = RealFile.basename(patchfile)
+        # copy the patchfile to remote home
+        Remote::File.scp_put(hostname, username, key_file, 
+          patchfile, remotepatchfile, options[:verbose])
+        # apply the patch
+        cmd = sudo ? "sudo " : ""
+        cmd += "patch --backup --forward #{destfile} #{remotepatchfile}"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+      end
     end
 
   end

@@ -91,7 +91,7 @@ create_puppetmaster() {
 
     thor remote:available ${_hostname} ${VERBOSE}
     thor origin:puppetmaster ${_hostname} \
-        --siterepo $_siterepo ${VERBOSE}
+        --siterepo $_siterepo ${VERBOSE} --storedconfigs
 
     # Enable inbound syslog
     thor remote:firewall:stop ${_hostname} ${VERBOSE}
