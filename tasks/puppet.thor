@@ -255,7 +255,7 @@ class  Puppet < Thor
   
   class Agent < Thor
 
-    #namespace "puppet:agent"
+    namespace "puppet:agent"
 
     class_option :verbose, :type => :boolean, :default => false
     class_option :debug, :type => :boolean, :default => false
