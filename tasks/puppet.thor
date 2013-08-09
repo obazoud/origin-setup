@@ -114,7 +114,7 @@ class  Puppet < Thor
 
     class_option :username
     class_option :ssh_key_file
-    class_option :verbose
+    class_option :verbose, :type => :boolean, :default => false
     
     desc "configure HOSTNAME", "set the puppet master configuration on a host"
     method_option(:moduledir, :type => :string, 

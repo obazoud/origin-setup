@@ -98,10 +98,6 @@ create_puppetmaster() {
     thor remote:firewall:port ${_hostname} 514 ${VERBOSE}
     thor remote:firewall:start ${_hostname} ${VERBOSE}
 
-    # Enable Puppet storeconfig
-    thor remote:augeas:set ${_hostname} \
-        "'/files/etc/puppet/puppet.conf/master/storeconfig'" true ${VERBOSE}
-
     # five \ because bourne takes one pair here, and one pair there augtool takes 1
     thor remote:augeas:set ${_hostname} \
         "'/files/etc/rsyslog.conf/\\\\\$ModLoad[last()+1]'" imtcp ${VERBOSE}
@@ -114,6 +110,8 @@ create_puppetmaster() {
     thor remote:service:restart ${_hostname} rsyslog ${VERBOSE}
 
     thor remote:git:checkout ${_hostname} site ${_sitebranch}
+
+    thore remote:
 
 }
 

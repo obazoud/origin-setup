@@ -301,6 +301,9 @@ module OpenShift
       # check if the directory exists
       invoke "puppet:master:siteroot", [hostname, options[:siteroot]], options
 
+      if options[:storedconfigs]
+        invoke "puppet:master:storedconfigs", [hostname], options 
+      end
       
       # Clone the manifests into place
       invoke("remote:git:clone", [hostname, options[:siterepo]],
