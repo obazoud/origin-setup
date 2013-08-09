@@ -111,7 +111,7 @@ create_puppetmaster() {
 
     thor remote:git:checkout ${_hostname} site ${_sitebranch}
 
-    thore remote:
+    thore remote:file:put ${_hostname} data/openshift-secrets.pp --destfile site/manifests/secrets/openshift-secrets.pp ${VERBOSE}
 
 }
 

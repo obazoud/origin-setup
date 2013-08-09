@@ -294,6 +294,8 @@ module OpenShift
         :verbose => options[:verbose],
         )
 
+      invoke "puppet:agent:set_server", [hostname, hostname], options
+
       # add the user to the puppet group
       invoke "puppet:master:join_group", [hostname], options
 
