@@ -250,7 +250,7 @@ module OpenShift
       #end
 
       # packages for firewall management and system config management
-      pkglist = options[:packages] + ["system-config-firewall-base", 'augeas']
+      pkglist = options[:packages] + ['firewalld', 'augeas']
       
       invoke "remote:yum:install", [hostname, [pkglist]], options
 
