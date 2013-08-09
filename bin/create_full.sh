@@ -209,9 +209,9 @@ PUPPETHOST=puppet.infra.lamourine.org
 PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
 PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
-create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
+#create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
 
-#create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
+create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
 #create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
