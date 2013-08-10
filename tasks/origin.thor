@@ -250,7 +250,7 @@ module OpenShift
       #end
 
       # packages for firewall management and system config management
-      pkglist = options[:packages] + ["system-config-firewall-base", 'augeas']
+      pkglist = options[:packages] + ["firewalld", 'augeas']
       
       invoke "remote:yum:install", [hostname, [pkglist]], options
 
@@ -377,12 +377,14 @@ module OpenShift
         :timezone => options[:timezone],
         :verbose => options[:verbose])
 
+      invoke "remote:firewall:stop", [hostname], options
+      invoke "remote:firewall:service", [hostname, 'ssh'], options
+      invoke "remote:firewall:start", [hostname], options
+
       invoke "puppet:agent:set_server", [hostname, puppetmaster], options
 
       # split logs out into their own file
       invoke "puppet:agent:enable_logging", [hostname], options
-
-      invoke "puppet:master:storedconfigs", [hostname], options
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
