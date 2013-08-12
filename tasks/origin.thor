@@ -334,21 +334,25 @@ module OpenShift
         ], 
         options)
 
-      # open ports for SSH and puppet
-      invoke "remote:firewall:stop", [hostname], options
-      invoke "remote:firewall:service", [hostname, 'ssh'], options
-      invoke "remote:firewall:port", [hostname, 8140], options
-      invoke "remote:firewall:start", [hostname], options
-
       #invoke("puppet:cert:generate", [hostname, hostname])
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
+      Remote::Service.execute(hostname, username, key_file, 'firewalld',
+        'enable', systemd, options[:verbose])
+      Remote::Service.execute(hostname, username, key_file, 'firewalld',
+        'start', systemd, options[:verbose])
+
+      # open ports for SSH and puppet
+      invoke "remote:firewall:service", [hostname, 'ssh'], options
+      invoke "remote:firewall:port", [hostname, 8140], options
+
       # start puppet master daemon
-      invoke("remote:service:enable", [hostname, "puppetmaster"],
-        :systemd => systemd, :verbose => options[:verbose])
-      invoke("remote:service:start", [hostname, "puppetmaster"], 
-        :systemd => systemd, :verbose => options[:verbose])
+      Remote::Service.execute(hostname, username, key_file, 'puppetmaster',
+        'enable', systemd, options[:verbose])
+      Remote::Service.execute(hostname, username, key_file, 'puppetmaster',
+        'start', systemd, options[:verbose])
+
     end
 
     desc "puppetclient HOSTNAME MASTER", "create a puppet client instance"

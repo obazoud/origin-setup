@@ -153,7 +153,7 @@ class  Puppet < Thor
       :default => "/var/lib/puppet/server_data/storeconfigs.sqlite")
     def storedconfigs(hostname)
 
-      puts "task: puppet:master:configure #{hostname}"
+      puts "task: puppet:master:storedconfigs #{hostname}"
 
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
