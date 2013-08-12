@@ -90,13 +90,14 @@ create_puppetmaster() {
     thor ec2:instance tag --name puppet --tag purpose --value puppetinstall
 
     thor remote:available ${_hostname} ${VERBOSE}
+
     thor origin:puppetmaster ${_hostname} \
         --siterepo $_siterepo ${VERBOSE} --storedconfigs
 
     # Enable inbound syslog
-    thor remote:firewall:stop ${_hostname} ${VERBOSE}
+    #thor remote:firewall:stop ${_hostname} ${VERBOSE}
     thor remote:firewall:port ${_hostname} 514 ${VERBOSE}
-    thor remote:firewall:start ${_hostname} ${VERBOSE}
+    #thor remote:firewall:start ${_hostname} ${VERBOSE}
 
     # five \ because bourne takes one pair here, and one pair there augtool takes 1
     thor remote:augeas:set ${_hostname} \
@@ -215,8 +216,8 @@ create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
 create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
-create_data1
-create_message1
-create_node1
+#create_data1
+#create_message1
+#create_node1
 
 #thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
