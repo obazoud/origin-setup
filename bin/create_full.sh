@@ -213,10 +213,10 @@ PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
 
-#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
-#create_data1
-#create_message1
-#create_node1
+create_data1
+create_message1
+create_node1
 
 #thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
