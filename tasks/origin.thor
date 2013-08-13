@@ -150,7 +150,7 @@ module OpenShift
       instance = invoke('ec2:instance:create', [], 
         :image => image_id, :name => name, 
         :key => config['AWSKeyPairName'],
-        :type => config['AWSEC2Type'], 
+        :type => (options[:type] || config['AWSEC2Type']), 
         :securitygroup => options[:securitygroup],
         :verbose => options[:verbose]
         )
