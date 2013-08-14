@@ -318,12 +318,18 @@ module EC2
       instance = find_instance(handle, options)
       
       target_status = options[:state].to_sym
+      start_time = Time.new
       (1 .. options[:maxtries]).each do |try|
-        return if instance.status === target_status
-        puts "try #{try}: #{instance.status}" if options[:verbose]
+        if instance.status === target_status
+          end_time = Time.new()
+          puts "- duration: #{(end_time - start_time).round(2)} seconds" if options[:verbose]
+        end
+        puts "- try #{try}: #{instance.status}" if options[:verbose]
         sleep options[:pollrate]
       end
 
+      end_time = Time.new()
+      puts "- duration: #{(end_time - start_time).round(2)} seconds" if options[:verbose]
       raise Exception.new("instance did not reach #{options[:state]}")
       
     end

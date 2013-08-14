@@ -31,6 +31,8 @@ module OpenShift
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
+      start_time = Time.now
+
       config = OpenShift::AWS.config
 
       #  check that the IP address is a valid Elastic IP
@@ -209,6 +211,12 @@ module OpenShift
         puts "- fqdn is undefined - no hostname specified"
       end
 
+      end_time = Time.new()
+      duration = end_time - start_time
+      if options[:verbose]
+        puts "+ baseinstance complete: duration #{duration.round(2)} seconds"
+      end
+
       instance
     end
 
@@ -223,6 +231,8 @@ module OpenShift
     method_option :timezone, :type => :string, :default => "Etc/UTC"
 
     def prepare(hostname)
+
+      start_time = Time.now
 
       puts "task: origin:prepare #{hostname}" unless options[:quiet]
 
@@ -253,6 +263,14 @@ module OpenShift
       pkglist = options[:packages] + ['firewalld', 'augeas']      
       invoke "remote:yum:install", [hostname, [pkglist]], options
 
+      # enable firewall?
+
+      end_time = Time.new()
+      duration = end_time - start_time
+      if options[:verbose]
+        puts "+ prepare complete: duration #{duration.round(2)} seconds"
+      end
+
     end
 
 
@@ -266,6 +284,8 @@ module OpenShift
     method_option :storedconfigs, :type => :boolean, :default => false
     
     def puppetmaster(hostname)
+
+      start_time = Time.now
 
       puts "origin:puppetmaster #{hostname}" unless options[:quiet]
 
@@ -321,6 +341,7 @@ module OpenShift
       # split logs out into their own file
       invoke "puppet:master:enable_logging", [hostname], options
 
+
       # install standard modules
       invoke(
         "puppet:module:install", 
@@ -342,15 +363,27 @@ module OpenShift
       Remote::Service.execute(hostname, username, key_file, 'firewalld',
         'start', systemd, options[:verbose])
 
+      sleep 2
+
+      Remote.available(hostname, username, key_file, true, 10, 15,
+        options[:verbose])
+
       # open ports for SSH and puppet
-      invoke "remote:firewall:service", [hostname, 'ssh'], options
-      invoke "remote:firewall:port", [hostname, 8140], options
+      #invoke "remote:firewall:service", [hostname, 'ssh'], options
+      Remote::Firewall.port(hostname, username, key_file, 8140, 'tcp',
+        false, true, options[:verbose])
 
       # start puppet master daemon
       Remote::Service.execute(hostname, username, key_file, 'puppetmaster',
         'enable', systemd, options[:verbose])
       Remote::Service.execute(hostname, username, key_file, 'puppetmaster',
         'start', systemd, options[:verbose])
+
+      end_time = Time.new()
+      duration = end_time - start_time
+      if options[:verbose]
+        puts "+ puppet master complete: duration #{duration.round(2)} seconds"
+      end
 
     end
 
@@ -360,6 +393,8 @@ module OpenShift
 
 
     def puppetclient(hostname, puppetmaster)
+
+      start_time = Time.now
 
       puts "origin:puppetclient #{hostname}, #{puppetmaster}" unless options[:quiet]
 
@@ -380,9 +415,17 @@ module OpenShift
         :timezone => options[:timezone],
         :verbose => options[:verbose])
 
-      invoke "remote:firewall:stop", [hostname], options
-      invoke "remote:firewall:service", [hostname, 'ssh'], options
-      invoke "remote:firewall:start", [hostname], options
+      systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
+
+      Remote::Service.execute(hostname, username, key_file, 'firewalld',
+        'enable', systemd, options[:verbose])
+      Remote::Service.execute(hostname, username, key_file, 'firewalld',
+        'start', systemd, options[:verbose])
+
+      sleep 2
+
+      Remote.available(hostname, username, key_file, true, 10, 15, 
+        options[:verbose])
 
       invoke "puppet:agent:set_server", [hostname, puppetmaster], options
 
@@ -400,6 +443,7 @@ module OpenShift
       invoke("remote:service:start", [hostname, puppetagent], 
         :systemd => systemd, :verbose => options[:verbose])
 
+
       # wait for the signing request to appear?
       maxtries = 5
       pollinterval = 5 # seconds
@@ -415,6 +459,12 @@ module OpenShift
 
       # then sign it?
       invoke "puppet:cert:sign", [puppetmaster, hostname], options
+
+      end_time = Time.new()
+      duration = end_time - start_time
+      if options[:verbose]
+        puts "+ puppet client complete: duration #{duration.round(2)} seconds"
+      end
 
     end
 

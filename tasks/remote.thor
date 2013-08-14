@@ -56,6 +56,8 @@ class Remote < Thor
         return false
       end
 
+      start_time = Time.new() 
+
       (1..maxtries).each do |trynum|
         puts "- remote command try #{trynum}" if verbose
 
@@ -97,6 +99,8 @@ class Remote < Thor
               channel.wait
             end # channel
           end # Net::SSH.start
+          end_time = Time.new()
+          puts "- duration: #{(end_time - start_time).round(2)} seconds" if verbose
           return [exit_code, exit_signal, stdout, stderr]
 
         rescue Net::SSH::AuthenticationFailed => e
@@ -118,6 +122,8 @@ class Remote < Thor
         end # try block
         #puts "- trying again"
       end
+      end_time = Time.new()
+      puts "- duration: #{(end_time - start_time).round(2)} seconds" if verbose
       return nil
     end # remote_command
 
@@ -165,30 +171,43 @@ class Remote < Thor
     puts "task: remote:available #{hostname}" unless options[:quiet]
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
-    puts "- using username #{username} and key file #{key_file}" if options[:verbose]
 
-    cmd = "echo success"
+    tries = options[:tries] || 15
     pollrate = options[:pollrate] || 10
 
-    (1..10).each do |trynum|
-      result = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-      if result then
-        exit_code, exit_signal, stdout, stderr = result
-        if options[:verbose] then
-          puts "- STDOUT\n" + stdout.join("\n") 
-          puts "- STDERR\n" + stderr.join("\n")
-          puts "- stdout length = #{stdout.count}"
-          puts "- exit code: #{exit_code}"
+    Remote.available(hostname, username, key_file, 
+      options[:wait], tries, pollrate, options[:verbose])
+  end
+
+  no_tasks do
+    def self.available(hostname, username, key_file, 
+        wait=false, tries=15, pollrate=10, verbose=false)
+
+      puts "- trying up to #{tries} times at #{pollrate} second intervals" if verbose
+      puts "- using username #{username} and key file #{key_file}" if verbose
+
+      cmd = "echo success"
+
+      (1..tries).each do |trynum|
+        result = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+        if result then
+          exit_code, exit_signal, stdout, stderr = result
+          if verbose then
+            puts "- STDOUT\n" + stdout.join("\n") 
+            puts "- STDERR\n" + stderr.join("\n")
+            puts "- stdout length = #{stdout.count}"
+            puts "- exit code: #{exit_code}"
+          end
+          return true
         end
-        return true
+        break if not wait
+        puts "- sleeping #{pollrate}" if verbose
+        sleep pollrate
       end
-      break if not options[:wait]
-      puts "- sleeping #{pollrate}" if options[:verbose]
-      sleep pollrate
+      puts "- #{hostname} not available" if verbose
+      return false
     end
-    puts "- #{hostname} not available" if options[:verbose]
-    return false
   end
 
   desc "distribution HOSTNAME", "probe the distribution information from a remote host"
@@ -502,7 +521,7 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
-      puts "task: remote:copy #{hostname} #{src} #{dst}" unless options[:quiet]
+      puts "task: remote:file:copy #{hostname} #{src} #{dst}" unless options[:quiet]
       exit_code, exit_signal, stdout, stderr = File.copy(
         hostname, username, keyfile, src, dst,
         options[:sudo], options[:recursive], options[:force], options[:verbose])
@@ -520,7 +539,7 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
-      puts "task: remote:delete #{hostname} #{filepath}" unless options[:quiet]
+      puts "task: remote:file:delete #{hostname} #{filepath}" unless options[:quiet]
       exit_code, exit_signal, stdout, stderr = File.delete(
         hostname, username, keyfile, filepath, 
         options[:sudo], options[:recursive], options[:force], options[:verbose])
@@ -532,7 +551,7 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
-      puts "task: remote:touch #{hostname} #{filepath}" unless options[:quiet]
+      puts "task: remote:file:touch #{hostname} #{filepath}" unless options[:quiet]
 
       Remote::File.touch(hostname, username, keyfile, filepath,
         options[:sudo], options[:verbose])
@@ -546,7 +565,7 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       keyfile = options[:ssh_key_file] || Remote.ssh_key_file
 
-      puts "task: remote:mkdir #{hostname} #{dirpath}" unless options[:quiet]
+      puts "task: remote:file:mkdir #{hostname} #{dirpath}" unless options[:quiet]
 
       cmd = ""
       cmd += "sudo " if options[:sudo]
@@ -1110,6 +1129,53 @@ class Remote < Thor
     class_option(:username, :type => :string)
     class_option(:ssh_key_file, :type => :string)
     class_option(:systemd, :type => :boolean)
+
+
+    desc "firewalld HOSTNAME", "determine if the remote host uses firewalld"
+    def firewalld(hostname)
+      puts "task: remote:firewall:firewalld #{hostname}"
+      
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "sudo systemctl status firewalld.service"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose]
+        )
+
+      case exit_code
+      when 1
+        puts "systemctl not present - using iptables"
+      when 3
+        puts "firewalld not running"
+        puts stdout
+      when 0
+        puts "firewalld present, enabled, running"
+      end
+      # conditions:
+      #  exit code = 1 # systemctl not present
+      #    stderr matches "sudo: systemctld: command not found"
+      #    return "false"
+      #
+      #  exit code = 3 # systemctl present, no such service
+      #    stdout matches "Loaded: error (Reason: No such file or directory)"
+      #    return "false"
+      # 
+      #  exit code = 3 # systemctl present, service installed but disabled
+      #    stdout matches "Loaded: loaded (.* disabled)$
+      # 
+      #  exit code = 3 # systemctl present, service installed enabled, stopped
+      #    stdout matches "Loaded: loaded (.* enabled)$"
+      #                   "Active: inactive (dead)$"
+      #
+      #  exit code = 0 # systemct present, service installed enabled, running
+      #    stdout matches "Loaded: loaded (.*; enabled)
+      #    stdout matches "Active: active (running)"
+
+      $firewalld = exit_code == 0
+      exit_code == 0
+      
+    end
     
     desc "port HOSTNAME PORTNUM [PORTNUM]...", "open a port on a remote host"
     method_option :protocol, :type => :string, :default => "tcp"
@@ -1119,11 +1185,13 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
+      invoke "remote:firewall:firewalld", [hostname]
+
       ports.each { |portnum|
         puts "opening port #{portnum}" if options[:verbose]
         Remote::Firewall.port(hostname, username, key_file,  
           portnum, protocol=(options[:protocol] || 'tcp'), 
-          close=false, options[:verbose])
+          close=false, $firewalld, options[:verbose])
       }
     end
 
@@ -1227,13 +1295,23 @@ class Remote < Thor
 
     no_tasks do
       def self.port(hostname, username, key_file, 
-          portnum, protocol='tcp', close=false,
+          portnum, protocol='tcp', close=false, firewalld=false,
           verbose=false)
 
-        #cmd = "sudo firewall-cmd --zone public --add-port 8140/tcp"
-        cmd = "sudo lokkit --nostart --port=#{portnum}:#{protocol}"
-        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-          hostname, username, key_file, cmd, verbose)
+        if firewalld == true
+          cmd = "sudo firewall-cmd --zone public --add-port #{portnum}/#{protocol}"
+          exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+            hostname, username, key_file, cmd, verbose)
+          
+          cmd += " --permanent"
+          exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+            hostname, username, key_file, cmd, verbose)
+
+        else
+          cmd = "sudo lokkit --nostart --port=#{portnum}:#{protocol}"
+          exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+            hostname, username, key_file, cmd, verbose)
+        end
       end
 
       def self.service(hostname, username, key_file, service,
