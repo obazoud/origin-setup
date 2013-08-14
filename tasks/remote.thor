@@ -1138,6 +1138,8 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
+      # check for systemctl
+
       cmd = "sudo systemctl status firewalld.service"
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose]
@@ -1148,7 +1150,12 @@ class Remote < Thor
         puts "systemctl not present - using iptables"
       when 3
         puts "firewalld not running"
-        puts stdout
+        # check if it's enabled
+        cmd = "sudo systemctl is-enabled firewalld.service"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose]
+          )
+        puts "firewalld is #{exit_code == 0 ? "" : 'not '}enabled"
       when 0
         puts "firewalld present, enabled, running"
       end
@@ -1219,22 +1226,15 @@ class Remote < Thor
       systemd = options[:systemd]
       systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
 
-      Remote::Service.execute(hostname, username, key_file,
-        'iptables', 'start', systemd, options[:verbose])
-    end
+      firewalld = ($firewalld != nil ? $firewalld : invoke("remote:firewall:firewalld", [hostname]))
 
-    desc "start HOSTNAME", "start the firewall service on the host"
-    def start(hostname)
-      puts "task: remote:firewall:start #{hostname}"
-      
-      username = options[:username] || Remote.ssh_username
-      key_file = options[:ssh_key_file] || Remote.ssh_key_file
-
-      systemd = options[:systemd]
-      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
-
-      Remote::Service.execute(hostname, username, key_file,
-        'iptables', 'start', systemd, options[:verbose])
+      if firewalld 
+        Remote::Service.execute(hostname, username, key_file,
+          'firewalld', 'start', systemd, options[:verbose])        
+      else
+        Remote::Service.execute(hostname, username, key_file,
+          'iptables', 'start', systemd, options[:verbose])
+      end
     end
 
     desc "stop HOSTNAME", "stop the firewall service on the host"
@@ -1247,8 +1247,15 @@ class Remote < Thor
       systemd = options[:systemd]
       systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
 
-      Remote::Service.execute(hostname, username, key_file,
-        'iptables', 'stop', systemd, options[:verbose])
+      firewalld = ($firewalld != nil ? $firewalld : invoke("remote:firewall:firewalld", [hostname]))
+
+      if firewalld 
+        Remote::Service.execute(hostname, username, key_file,
+          'firewalld', 'stop', systemd, options[:verbose])        
+      else
+        Remote::Service.execute(hostname, username, key_file,
+          'iptables', 'stop', systemd, options[:verbose])
+      end
     end
 
     desc "enable HOSTNAME", "enable the firewall service on the host"
@@ -1261,8 +1268,16 @@ class Remote < Thor
       systemd = options[:systemd]
       systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
 
-      Remote::Service.execute(hostname, username, key_file,
-        'iptables', 'enable', systemd, options[:verbose])
+      firewalld = ($firewalld != nil ? $firewalld : invoke("remote:firewall:firewalld", [hostname]))
+
+      if firewalld 
+        Remote::Service.execute(hostname, username, key_file,
+          'firewalld', 'enable', systemd, options[:verbose])        
+      else
+        Remote::Service.execute(hostname, username, key_file,
+          'iptables', 'enable', systemd, options[:verbose])
+      end
+
     end
 
     desc "disable HOSTNAME", "disable the firewall service on the host"
@@ -1275,8 +1290,16 @@ class Remote < Thor
       systemd = options[:systemd]
       systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
 
-      Remote::Service.execute(hostname, username, key_file,
-        'iptables', 'disable', systemd, options[:verbose])
+      firewalld = ($firewalld != nil ? $firewalld : invoke("remote:firewall:firewalld", [hostname]))
+
+      if firewalld 
+        Remote::Service.execute(hostname, username, key_file,
+          'firewalld', 'disable', systemd, options[:verbose])        
+      else
+        Remote::Service.execute(hostname, username, key_file,
+          'iptables', 'disable', systemd, options[:verbose])
+      end
+
     end
 
     desc "status HOSTNAME", "status of the firewall service on the host"
@@ -1289,8 +1312,16 @@ class Remote < Thor
       systemd = options[:systemd]
       systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) if systemd == nil
 
-      Remote::Service.execute(hostname, username, key_file,
-        'iptables', 'status', systemd, options[:verbose])
+      firewalld = ($firewalld != nil ? $firewalld : invoke("remote:firewall:firewalld", [hostname]))
+
+      if firewalld 
+        Remote::Service.execute(hostname, username, key_file,
+          'firewalld', 'status', systemd, options[:verbose])        
+      else
+        Remote::Service.execute(hostname, username, key_file,
+          'iptables', 'status', systemd, options[:verbose])
+      end
+
     end
 
     no_tasks do
