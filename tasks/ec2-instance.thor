@@ -180,6 +180,7 @@ module EC2
       if options[:verbose] then
         image = handle.images[instance.image_id]
         puts "EC2 Instance: #{instance.id} (#{instance.tags['Name']})"
+        puts "  Type: #{instance.instance_type}"
         puts "  DNS Name: #{instance.dns_name}"
         puts "  IP Address: #{instance.ip_address}"
         puts "  Status: #{instance.status}"

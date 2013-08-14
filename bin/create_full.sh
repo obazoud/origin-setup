@@ -121,21 +121,27 @@ create_puppetclient() {
     local _securitygroup
     local _puppethost
     local _hostname
+    local _ec2_type
     _instancename=$1
     _securitygroup=$2
     _puppethost=$3
     _hostname=$4
+    _ec2_type=$5
 
     local _hostarg
+    local _typearg
 
     if [ -n "$_hostname" ] ; then
         _hostarg="--hostname ${_hostname}"
     fi
 
+    if [ -n "$_ec2_type" ] ; then
+        _typearg="--type ${_ec2_type}"
+    fi
     echo
     echo "# creating $_hostname"
-    thor origin:baseinstance ${_instancename} ${_hostarg} --baseos ${BASEOS} \
-        --securitygroup default ${_securitygroup} ${VERBOSE} 
+    thor origin:baseinstance ${_instancename} ${_typearg} ${_hostarg} \
+        --baseos ${BASEOS} --securitygroup default ${_securitygroup} ${VERBOSE} 
     if [ -z "${_hostname}" ] ; then
         _hostname=$(thor ec2:instance hostname --name ${_instancename})
     fi
@@ -212,9 +218,10 @@ PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 #create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
 
-create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org
+create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org \
+m1.small
 
-create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
 #create_data1
 #create_message1
