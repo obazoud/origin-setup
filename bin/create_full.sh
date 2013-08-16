@@ -218,13 +218,15 @@ PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 #create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
 
-create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org \
-m1.small
+#create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
+#sleep 2
+#thor ec2:remote:service restart ident.infra.lamourine.org firewalld ${VERBOSE}
+#sleep 2
 
 #create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
-#create_data1
-#create_message1
-#create_node1
+create_data1
+create_message1
+create_node1
 
-#thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
+thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}

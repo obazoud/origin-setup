@@ -290,6 +290,21 @@ class  Puppet < Thor
         options[:verbose])
     end
 
+    desc "pluginsync HOSTNAME [-[-not]-enabled]", "set the master hostname on an agent"
+    method_option :enabled, :type => :boolean, :default => true
+    def pluginsync(hostname)
+
+      puts "task: puppet:agent:pluginsync #{hostname}" unless options[:quiet]
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      path = '/files/etc/puppet/puppet.conf/main/pluginsync'
+      Remote::Augeas.set(hostname, username, key_file, 
+        path, options[:enabled] ? "true" : "false", 
+        options[:verbose])
+    end
+
     desc "enable_logging HOSTNAME", "log puppet agent events to a specific file"
     def enable_logging(hostname)
       puts "task: puppet:agent:enable_logging #{hostname}"

@@ -428,6 +428,7 @@ module OpenShift
         options[:verbose])
 
       invoke "puppet:agent:set_server", [hostname, puppetmaster], options
+      #invoke "puppet:agent:pluginsync", [hostname]
 
       # split logs out into their own file
       invoke "puppet:agent:enable_logging", [hostname], options
