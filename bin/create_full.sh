@@ -220,13 +220,26 @@ PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 #create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
 #sleep 2
-#thor ec2:remote:service restart ident.infra.lamourine.org firewalld ${VERBOSE}
+#thor remote:service:restart ident.infra.lamourine.org firewalld ${VERBOSE}
 #sleep 2
+
+# Build the support services before creating the broker so that they can be
+# registered.
+
+#create_data1
+
+DATA1_HOSTNAME=$(thor ec2:hostname --name data1)
+
+#create_message1
+
+MESSAGE1_HOSTNAME=$(thor ec2:hostname --name message1)
+
+# update broker and node puppet scripts with support service information
+# set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
 
 #create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
-create_data1
-create_message1
-create_node1
+#create_node1 $MESSAGE1_HOSTNAME
+
 
 thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
