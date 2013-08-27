@@ -857,7 +857,7 @@ class Remote < Thor
 
     include Thor::Actions
 
-    #namespace "remote:git"
+    namespace "remote:git"
 
     class_option(:verbose, :type => :boolean, :default => false)
     class_option(:username, :type => :string)
@@ -1119,7 +1119,49 @@ class Remote < Thor
 
 
     end
+
+
+    class Submodule < Thor
+      
+      #namespace "remote:git:submodule"
+
+      class_option :verbose, :type => :boolean, :default => false
+      class_option(:username, :type => :string)
+      class_option(:ssh_key_file, :type => :string)
+ 
+      desc "init HOSTNAME REPODIR", "initialize git submodules"
+      def init(hostname, repodir='')
+        puts "task: remote:git:submodule init #{hostname} #{repodir}"
+      
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        
+        cmd = "(cd #{repodir} ; git submodule init)"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose]
+          )
+      end
+
+      desc "update HOSTNAME REPODIR", "update remote submodules"
+      method_option :branch, :type => :string, :default => 'master'
+      def update(hostname, repodir='')
+        puts "task: remote:git:submodule update #{hostname} #{repodir}"
+      
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+        
+        cmd = "(cd #{repodir} ; git submodule update)"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose]
+          )
+      end
+
+    end
+
   end
+
 
   class Firewall < Thor
     
