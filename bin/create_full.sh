@@ -111,6 +111,8 @@ create_puppetmaster() {
     thor remote:service:restart ${_hostname} rsyslog ${VERBOSE}
 
     thor remote:git:checkout ${_hostname} site ${_sitebranch}
+    thor remote:git:submodule:init ${_hostname} site
+    thor remote:git:submodule:update ${_hostname} site
 
     thor remote:file:put ${_hostname} data/openshift-secrets.pp --destpath site/manifests/secrets/openshift-secrets.pp ${VERBOSE}
 
@@ -153,6 +155,14 @@ create_puppetclient() {
     syslog_puppet ${_hostname} ${_puppethost} ${PUPPETAGENT}
 }
 
+
+set_service_hostnames() {
+    local _datastores="$1"
+    local _message_brokers="$2"
+
+    echo "Data Store Hostnames: $_datastores"
+    echo "Message broker hostnames: $_message_brokers"
+}
 
 #ssh-keygen -R puppet.infra.lamourine.org
 #ssh-keygen -R broker.infra.lamourine.org
@@ -207,6 +217,13 @@ create_node1() {
 }
 
 
+create_ipaserver() {
+  create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
+  sleep 2
+  thor remote:service:restart ident.infra.lamourine.org firewalld ${VERBOSE}
+  sleep 2
+}
+
 #====
 #Main
 #====
@@ -218,26 +235,23 @@ PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 #create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
 
-#create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
-#sleep 2
-#thor remote:service:restart ident.infra.lamourine.org firewalld ${VERBOSE}
-#sleep 2
+#create_ipaserver
 
 # Build the support services before creating the broker so that they can be
 # registered.
 
-#create_data1
+create_data1
 
-DATA1_HOSTNAME=$(thor ec2:hostname --name data1)
+DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
 
-#create_message1
+create_message1
 
-MESSAGE1_HOSTNAME=$(thor ec2:hostname --name message1)
+MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
 
 # update broker and node puppet scripts with support service information
-# set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
+set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
 
-#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 
 #create_node1 $MESSAGE1_HOSTNAME
 
