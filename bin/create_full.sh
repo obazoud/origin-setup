@@ -116,6 +116,7 @@ create_puppetmaster() {
 
     thor remote:file:put ${_hostname} data/openshift-secrets.pp --destpath site/manifests/secrets/openshift-secrets.pp ${VERBOSE}
 
+    
 }
 
 create_puppetclient() {
@@ -181,7 +182,7 @@ create_data1() {
     _template=datastore.pp
     _nodefile=data1.infra.lamourine.org.pp
 
-    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $DATAHOST $_nodefile
+    #create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $DATAHOST $_nodefile
 }
 
 # update the contents of the new file
@@ -197,7 +198,7 @@ create_message1() {
     _template=messaging.pp
     _nodefile=message1.infra.lamourine.org.pp
 
-    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $MSGHOST $_nodefile
+    #create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $MSGHOST $_nodefile
 
 }
 
@@ -212,7 +213,7 @@ create_node1() {
     _template=node.pp
     _nodefile=node1.infra.lamourine.org.pp
 
-    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $NODEHOST $_nodefile
+    #create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $NODEHOST $_nodefile
 
 }
 
@@ -235,25 +236,43 @@ PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 #create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
 
+SITE_FILE=site/manifests/site.pp
+NODE_DIR=site/manifests/nodes/
+
+CLOUD_DOMAIN=app.lamourine.org
+BROKER_HOST=broker.infra.lamourine.org
+IPA_HOST=ident.infra.lamourine.org
+
+thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
+thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace ${VERBOSE}
+
+# set openshift domain in site.pp?
+#thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
+#thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/aas
+
 #create_ipaserver
 
 # Build the support services before creating the broker so that they can be
 # registered.
 
-create_data1
+#create_data1
 
-DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
+#DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
+# create puppet node file for data1
 
-create_message1
+#create_message1
 
-MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
+#MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
+
+# create puppet node file for message1
 
 # update broker and node puppet scripts with support service information
-set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
+#set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
 
-create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+ssh fedora@${PUPPETHOST} sed -i -e "/broker_hosts =>/s/=> .*/=> ['\${BROKER_HOST}']/" ${SITE_FILE}
 
 #create_node1 $MESSAGE1_HOSTNAME
 
 
-thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
+#thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}

@@ -224,6 +224,29 @@ class Remote < Thor
     release_info
   end
 
+  desc "sed HOSTNAME PATTERN FILENAME", "make a pattern change to a file"
+  method_option :destfile, :type => :string
+  method_option :inplace, :type => :boolean, :default => false
+  def sed(hostname, pattern, filename)
+    puts "task: remote:sed #{hostname} #{pattern} #{filename}" unless options[:quiet]
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+    
+    # add protection to quotes in the pattern
+    pattern = pattern.gsub("'", "\\\\'")
+
+    cmd = "echo \"#{pattern}\" | sed -f -" + (options[:inplace] ? " -i " : " ") + filename
+    cmd += (" > " + options[:destfile]) if not options[:destfile] == nil
+
+    puts "command = " + cmd
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
+    puts stdout.join("\n")
+    puts stderr.join("\n")
+
+  end
+
   desc "pullurl HOSTNAME URL", "pull a file to a remote host using wget"
   method_option(:filepath, :type => :string)
   def pullurl(hostname, url)
@@ -1748,6 +1771,7 @@ class Remote < Thor
 
     #
   end
+
 
 end
 
