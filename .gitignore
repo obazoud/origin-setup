@@ -20,3 +20,6 @@ doc/
 # Emacs backup files
 *~
 \#*\#
+
+# AWS specific files
+.awscred
