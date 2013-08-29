@@ -13,7 +13,7 @@ module OpenShift
   # Amazon Web Services access
   module AWS
 
-    CONFIG_FILE = ENV['AWS_CONFIG_FILE'] || File.expand_path("~/.awscred")
+    CONFIG_FILE = ENV['AWS_CONFIG_FILE'] || File.expand_path(".awscred")
 
     @@configfile = CONFIG_FILE
     @@config = nil

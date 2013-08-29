@@ -16,7 +16,7 @@ require 'net/ssh'
 RealFile = File
 
 # Default location to find config and auth information
-AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
+AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || ".awscred"
 
 # Remote tasks (using SSH)
 

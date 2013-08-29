@@ -10,8 +10,6 @@ require 'parseconfig'
     
     class_option :verbose, :type => :boolean, :default => false
 
-    #AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || "~/.awscred"
-
     class Zone < Thor
      #namespace "route53:zone"
 
