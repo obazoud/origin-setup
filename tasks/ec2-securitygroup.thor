@@ -12,10 +12,12 @@ module EC2
 
     namespace "ec2:securitygroup"
 
+    class_option :awscred
     class_option :verbose, :type => :boolean, :default => false
 
     desc "list", "list the available snapshots"
     def list
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
       
       securitygroups = handle.security_groups
@@ -36,6 +38,7 @@ module EC2
     desc "create NAME", "create a new securitygroup"
     method_option :description, :type => :string # required?
     def create(name)
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
       sgroups = handle.security_groups
       sgroup = sgroups.create(name, :description => options[:description])
@@ -125,6 +128,7 @@ module EC2
       
       # retrieve a single securitygroup by name or id
       def self.get(id=nil, name=nil)
+        OpenShift::AWS.init options[:awscred]
         handle = AWS::EC2.new      
         securitygroups = handle.security_groups
         # ask?

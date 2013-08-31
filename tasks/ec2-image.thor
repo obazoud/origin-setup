@@ -10,6 +10,7 @@ module EC2
   class Image < Thor
     namespace "ec2:image"
 
+    class_option :awscred
     class_option :verbose, :type => :boolean, :default => false
 
     desc "list", "list the available images for new instances"
@@ -18,6 +19,7 @@ module EC2
     method_option(:owner, :default => :self)
     method_option(:arch, :type => :string, :default => "*")
     def list
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
       images = handle.images.filter('state', 'available')
       images = images.with_owner(options[:owner]) if options[:owner]
@@ -47,6 +49,7 @@ module EC2
         return
       end
 
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
       image = handle.images[options[:id]]
 
@@ -89,6 +92,7 @@ module EC2
         return nil
       end
 
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
       image = find_image(handle, options)
 
@@ -117,6 +121,7 @@ module EC2
     method_option :wait, :type => :boolean, :default => false
     def create(instance, name)
 
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
 
       # if the instance is a string, get the instance from AWS
@@ -156,6 +161,7 @@ module EC2
     method_option :id, :type => :string, :default => nil
     method_option :name, :type => :string
     def delete
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
       
       # find one image that matches either the image or name
@@ -181,6 +187,7 @@ module EC2
     desc "find TAGNAME", "find the id of images with a given tag"
     method_option(:tagvalue)
     def find(tagname)
+      OpenShift::AWS.init options[:awscred]
       handle = AWS::EC2.new
 
       if options[:tagvalue]

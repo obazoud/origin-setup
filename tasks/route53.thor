@@ -7,17 +7,22 @@ require 'aws'
 require 'parseconfig'
 
   class Route53 < Thor
-    
+
+    class_option :awscred
     class_option :verbose, :type => :boolean, :default => false
 
     class Zone < Thor
      #namespace "route53:zone"
 
+      class_option :awscred
+      class_option :verbose, :type => :boolean, :default => false
+
       desc "list", "list hosted zones"
       def list
 
         puts "task: route53:zone:list" unless options[:quiet]
-        handle = Route53.login
+        OpenShift::AWS.init options[:awscred]
+        handle = AWS::Route53::Client.new
 
         response = handle.list_hosted_zones
         zones = response[:hosted_zones]
@@ -31,7 +36,8 @@ require 'parseconfig'
       def id(zonename)
         puts "task: route53:zone:id #{zonename}" unless options[:quiet]
 
-        handle = Route53.login
+        OpenShift::AWS.init options[:awscred]
+        handle = AWS::Route53.Client.new
 
         id = Route53.zone_id(handle, zonename)
         puts "id = " + id
@@ -43,7 +49,8 @@ require 'parseconfig'
         puts "task: route53:zone:contains #{hostname}"
 
         hostname += "." if not hostname.end_with? '.'
-        handle = Route53.login
+        OpenShift::AWS.init options[:aswcred]
+        handle = AWS::Route53::Client.new
 
         response = handle.list_hosted_zones
         allzones = response[:hosted_zones]
@@ -74,6 +81,7 @@ require 'parseconfig'
       
       types = ['A', 'NS', 'SOA', 'TXT', 'CNAME']
 
+      class_option :awscred
       class_option :verbose, :type => :boolean, :default => false
       class_option :wait, :type => :boolean, :default => false
 
@@ -82,7 +90,8 @@ require 'parseconfig'
       def list(zonename, type=nil)
         puts "task: route53:record:list #{zonename}"
 
-        handle = Route53.login
+        OpenShift::AWS.init options[:awscred]
+        handle = AWS::Route53::Client.new
 
         zoneid = Route53.zone_id(handle, zonename)
         puts "looking for zone id #{zoneid}" unless options[:quiet]
@@ -113,7 +122,8 @@ require 'parseconfig'
       def get(zonename, recordname, type=nil)
         puts "task: route53:record:get #{zonename} #{recordname} #{type}"
 
-        handle = Route53.login
+        OpenShift::AWS.init options[:awscred]
+        handle = AWS::Route53::Client.new
 
         zoneid = Route53.zone_id(handle, zonename)
         opts = {:hosted_zone_id => "/hostedzone/#{zoneid}"}
@@ -139,7 +149,8 @@ require 'parseconfig'
 
         fqdn = "#{name}.#{zone}"
 
-        handle = Route53.login
+        OpenShift::AWS.init options[:awscred]
+        handle = AWS::Route53::Client.new
         zoneid = Route53.zone_id(handle, zone)
 
         update = {
@@ -178,7 +189,8 @@ require 'parseconfig'
 
         fqdn = "#{name}.#{zone}"
 
-        handle = Route53.login
+        OpenShift::AWS.init options[:awscred]
+        handle = AWS::Route53::Client.new
         zoneid = Route53.zone_id(handle, zone)
 
         update = {
@@ -213,7 +225,8 @@ require 'parseconfig'
       def exist(zonename, hostpart)
         puts "task: route53:record:exist #{zonename} #{hostpart}" unless options[:quiet]
 
-        handle = Route53.login
+        OpenShift::AWS.init options[:awscred]
+        handle = AWS::Route53::Client.new
 
         zoneid = Route53.zone_id(handle, zonename)
         opts = {:hosted_zone_id => "/hostedzone/#{zoneid}"}
@@ -270,7 +283,7 @@ require 'parseconfig'
           credentials_file=nil, region=nil)
         # explicit credentials take precedence over a file
         if not (access_key_id and secret_access_key) then
-          credentials_file ||= AWS_CREDENTIALS_FILE
+          credentials_file ||= AWS_CONFIG_FILE
           config = ParseConfig.new File.expand_path(credentials_file)
           access_key_id = config.params['AWSAccessKeyId']
           secret_key = config.params['AWSSecretKey']

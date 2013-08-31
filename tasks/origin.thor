@@ -347,6 +347,7 @@ module OpenShift
         "puppet:module:install", 
         [hostname, [
             'puppetlabs-ntp', 
+            'puppetlabs-java',
             #'puppetlabs-mongodb',
             #'puppetlabs-activemq',
             #'puppetlabs-mcollective',

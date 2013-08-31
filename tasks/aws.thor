@@ -21,11 +21,11 @@ module OpenShift
     # Load the AWS Credentials and configuration information
     # @param [String] configfile
     #   the location of a file to load instead of the default
-    def self.config(configfile=nil)      
+    def self.config(configfile=nil, reload=false)
 
-      return @@config if @@config
+      return @@config if @@config and not reload
 
-      @@configfile = File.expand_path(configfile) if configfile
+      @@configfile = (configfile ? File.expand_path(configfile) : CONFIG_FILE)
       raise Exception.new("File not found: #{@@configfile}") if not File.exists? @@configfile
       @@config = ParseConfig.new @@configfile
       @@config
@@ -44,35 +44,10 @@ module OpenShift
         )
     end
 
-    # EC2 login
-    module EC2
-
-      # Create an EC2 connection
-      def self.login(access_key_id=nil, secret_access_key=nil, config_file=nil, 
-          region=nil)
-
-        ::AWS::EC2.new(
-          :access_key_id => access_key_id,
-          :secret_access_key => secret_access_key)
-      end
-
-    end
-
-    module Route53
-
-      # Create a Route53 connection
-      def self.login(access_key_id=nil, secret_access_key=nil, config_file=nil, 
-          region=nil)
-
-        ::AWS::Route53.new(
-          :access_key_id => access_key_id,
-          :secret_access_key => secret_access_key)
-
-      end
-
+    def self.init(awscred='./awscred')
+      OpenShift::AWS::config awscred
+      OpenShift::AWS::awscred
     end
 
   end
 end
-
-OpenShift::AWS.awscred

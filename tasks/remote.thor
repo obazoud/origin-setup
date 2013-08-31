@@ -16,7 +16,7 @@ require 'net/ssh'
 RealFile = File
 
 # Default location to find config and auth information
-AWS_CREDENTIALS_FILE = ENV["AWS_CREDENTIALS_FILE"] || ".awscred"
+AWS_CONFIG_FILE = ENV["AWS_CONFIG_FILE"] || ".awscred"
 
 # Remote tasks (using SSH)
 
@@ -28,7 +28,7 @@ class Remote < Thor
   no_tasks do
 
     def self.ssh_key_file
-      credentials_file ||= AWS_CREDENTIALS_FILE
+      credentials_file ||= AWS_CONFIG_FILE
       config = ParseConfig.new RealFile.expand_path(credentials_file)
       key_pair_name = config.params['AWSKeyPairName']
       # TODO: check that the key_pair_name is set
@@ -37,7 +37,7 @@ class Remote < Thor
     end
 
     def self.ssh_username(baseos=nil)
-      credentials_file ||= AWS_CREDENTIALS_FILE
+      credentials_file ||= AWS_CONFIG_FILE
       config = ParseConfig.new(RealFile.expand_path(credentials_file))
       
       baseos ? config.params[baseos]['RemoteUser'] : config.params['RemoteUser'] 
