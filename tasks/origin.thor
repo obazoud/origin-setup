@@ -470,7 +470,6 @@ module OpenShift
 
     end
 
-
     no_tasks do
 
       # determine which distribution family we're running on
@@ -488,5 +487,19 @@ module OpenShift
         return osname, osversion
       end
     end
+
+    desc "baserepo HOSTNAME", "initialize the OpenShift Origin yum repo on the host"
+    def baserepo(hostname)
+      
+      # copy and customize the base yum repo file
+      
+    end
+
+    desc "depsrepo HOSTNAME", "initialize the OpenShift Origin dependancies yum repo on the host"
+    def depsrepo(hostname)
+
+    end
   end
+
+
 end

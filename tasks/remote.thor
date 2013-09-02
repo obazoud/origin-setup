@@ -1,4 +1,4 @@
-# /usr/bin/thor
+#!/usr/bin/thor
 # Remote tasks on hosts
 
 require 'rubygems'
@@ -789,6 +789,17 @@ class Remote < Thor
 
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
         hostname, username, key_file, cmd, options[:verbose])
+
+    end
+
+    desc "setvar HOSTNAME VARNAME VALUE", "set a yum variable value"
+    def setvar(hostname, varname, value)
+      puts "task: remote:yum:setvar #{hostname} #{varname} #{value}" unless options[:quiet]
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = ""
 
     end
 

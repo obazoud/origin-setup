@@ -255,24 +255,24 @@ thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/
 # Build the support services before creating the broker so that they can be
 # registered.
 
-#create_data1
+create_data1
 
-#DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
+DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
 # create puppet node file for data1
 
 #create_message1
 
-#MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
+MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
 
 # create puppet node file for message1
 
 # update broker and node puppet scripts with support service information
 #set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
 
-#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
-ssh fedora@${PUPPETHOST} sed -i -e "/broker_hosts =>/s/=> .*/=> ['\${BROKER_HOST}']/" ${SITE_FILE}
+create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+#ssh fedora@${PUPPETHOST} sed -i -e "/broker_hosts =>/s/=> .*/=> ['\${BROKER_HOST}']/" ${SITE_FILE}
 
-#create_node1 $MESSAGE1_HOSTNAME
+create_node1 broker.infra.lamourine.org $MESSAGE1_HOSTNAME
 
 
 #thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
