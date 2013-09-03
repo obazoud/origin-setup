@@ -3,6 +3,6 @@
 #
 [openshift-deps]
 name=OpenShift Dependencies
-baseurl=http://mirror.openshift.org/pub/openshift-origin/nightly/rhel-6/dependencies/$basearch/
+baseurl=http://mirror.openshift.com/pub/openshift-origin/nightly/$distro-$osversion/dependencies/$basearch/
 enabled=1
 gpgcheck=0

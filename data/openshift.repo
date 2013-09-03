@@ -3,6 +3,6 @@
 #
 [openshift]
 name=OpenShift
-baseurl=http://mirror.openshift.org/pub/openshift-origin/nightly/rhel-6/latest/$basearch/
+baseurl=http://mirror.openshift.com/pub/openshift-origin/nightly/rhel-6/latest/$basearch/
 enabled=1
 gpgcheck=0
