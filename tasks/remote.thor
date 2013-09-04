@@ -799,13 +799,17 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      cmd = "sudo python -c 'open(\"/etc/yum/vars/#{varname}\", \"w\").write(\"#{value}\\n\")'"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
-
+      Remote::Yum.setvar hostname, username, key_file, varname, value, options[:verbose]
     end
 
     no_tasks do
+
+      def self.setvar(hostname, username, key_file, varname, value, verbose=false)
+        cmd = "sudo python -c 'open(\"/etc/yum/vars/#{varname}\", \"w\").write(\"#{value}\\n\")'"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, verbose)
+
+      end
 
       def self.install_rpms(hostname, username, key_file, packages, verbose=false)
         packages = packages.join(' ') if packages.class == Array

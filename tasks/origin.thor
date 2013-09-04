@@ -489,15 +489,47 @@ module OpenShift
     end
 
     desc "baserepo HOSTNAME", "initialize the OpenShift Origin yum repo on the host"
+    method_option :username
+    method_option :ssh_key_file
     def baserepo(hostname)
-      
-      # copy and customize the base yum repo file
-      
+      puts "task: baserepo #{hostname}" if not options[:quiet]
+
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      # copy the deps configfile
+      Remote::File.scp_put(hostname, username, key_file,
+        'data/openshift.repo', 'openshift.repo')
+      cmd = "sudo mv openshift.repo /etc/yum.repos.d/openshift.repo"
+      Remote.remote_command(hostname, username, key_file, cmd,
+        options[:verbose])
+      distro, osversion = invoke 'remote:distribution', [hostname]
+      Remote::Yum.setvar(hostname, username, key_file,
+        'distro', distro, options[:verbose])
+      Remote::Yum.setvar(hostname, username, key_file,
+        'osversion', osversion.to_i, options[:verbose])      
     end
 
     desc "depsrepo HOSTNAME", "initialize the OpenShift Origin dependancies yum repo on the host"
+    method_option :username
+    method_option :ssh_key_file
     def depsrepo(hostname)
+      puts "task: depsrepo #{hostname}" if not options[:quiet]
 
+      username = options[:username] || Remote.ssh_username
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      # copy the deps configfile
+      Remote::File.scp_put(hostname, username, key_file,
+        'data/openshift-deps.repo', 'openshift-deps.repo')
+      cmd = "sudo mv openshift-deps.repo /etc/yum.repos.d/openshift-deps.repo"
+      Remote.remote_command(hostname, username, key_file, cmd, 
+        options[:verbose])
+      distro, osversion = invoke 'remote:distribution', [hostname]
+      Remote::Yum.setvar(hostname, username, key_file,
+        'distro', distro, options[:verbose])
+      Remote::Yum.setvar(hostname, username, key_file,
+        'osversion', osversion.to_i, options[:verbose])
     end
   end
 
