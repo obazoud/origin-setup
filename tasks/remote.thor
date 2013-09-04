@@ -799,7 +799,9 @@ class Remote < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      cmd = ""
+      cmd = "sudo python -c 'open(\"/etc/yum/vars/#{varname}\", \"w\").write(\"#{value}\\n\")'"
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
 
     end
 
@@ -1659,7 +1661,7 @@ class Remote < Thor
         remotepatchfile = RealFile.basename(patchfile)
         # copy the patchfile to remote home
         Remote::File.scp_put(hostname, username, key_file, 
-          patchfile, remotepatchfile, options[:verbose])
+          patchfile, remotepatchfile)
         # apply the patch
         cmd = sudo ? "sudo " : ""
         cmd += "patch --backup --forward #{destfile} #{remotepatchfile}"
