@@ -1,0 +1,8 @@
+#
+# OpenShift Origin nightly build package repository
+#
+[openshift-origin]
+name=OpenShift Origin
+baseurl=http://mirror.openshift.com/pub/openshift-origin/nightly/$distro-$osmajorver/latest/$basearch/
+enabled=1
+gpgcheck=0

@@ -133,6 +133,10 @@ type, SSH key pair name and remote user (root or ec2-user)
 
 > $HOME/.awscred
 
+Set the AWS_CONFIG_FILE environement variable:
+
+> export AWS_CONFIG_FILE=~/.awscred
+
 <pre>
 # AWS Access Informaton
 AWSAccessKeyId=&lt;;your AWS access key id&gt;

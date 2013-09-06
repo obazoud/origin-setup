@@ -373,7 +373,10 @@ class Remote < Thor
           end
         end
 
-        def self.scp_put(hostname, username, key_file, filepath, destpath, recursive=false)
+        def self.scp_put(hostname, username, key_file, filepath, destpath, recursive=false, verbose=false)
+
+          puts "cmd: remote scp_put #{filepath} #{destpath}" if verbose
+
           Net::SCP.start(hostname, username,
             :keys => [key_file], :keys_only => true) do |scp|
             scp.upload! filepath, destpath, :recursive => recursive

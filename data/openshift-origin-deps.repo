@@ -1,0 +1,8 @@
+#
+# OpenShift Origin Dependencies RPM repository
+#
+[openshift-origin-deps]
+name=OpenShift Origin Dependencies
+baseurl=http://mirror.openshift.com/pub/openshift-origin/nightly/$distro-$osmajorvers/dependencies/$basearch/
+enabled=1
+gpgcheck=0

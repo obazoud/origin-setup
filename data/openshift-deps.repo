@@ -1,8 +1,0 @@
-#
-#
-#
-[openshift-deps]
-name=OpenShift Dependencies
-baseurl=http://mirror.openshift.com/pub/openshift-origin/nightly/$distro-$osversion/dependencies/$basearch/
-enabled=1
-gpgcheck=0
