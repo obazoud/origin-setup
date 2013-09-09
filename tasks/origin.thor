@@ -183,7 +183,7 @@ module OpenShift
       #hostname ||= instance.dns_name
       puts "- waiting for #{instance.dns_name} to accept SSH connections" unless options[:quiet]
 
-      username = options[:username] || Remote.ssh_username
+      username = options[:username] || Remote.ssh_username(options[:baseos])
       # wait for SSH to respond
       available = invoke("remote:available", [instance.dns_name], :username => username,
         :wait => true, :verbose => options[:verbose])
