@@ -159,6 +159,11 @@ module OpenShift
 
       puts "- instance #{instance.id} starting" unless options[:quiet]
 
+      # set a few tags
+      # owner = $USER
+      # ssh_user = {root|ec2-user|fedora}
+      # 
+
       # monitor startup process: wait until running
       (1..20).each do |trynum|
         break if instance.status.to_s === 'running'

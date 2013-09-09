@@ -1,0 +1,36 @@
+# Red Hat Devenv
+---
+aws:
+
+  images:
+    fedora18:
+      id: ami-1c0d6b75
+      source_owner: 125523088429
+      remote_user: ec2-user
+
+    fedora19:
+      id: ami-b22e5cdb
+      source_owner: 125523088429
+      remote_user: fedora
+
+    fedora20:
+      id: ami-1583ce7c
+      source_owner: 125523088429
+      remote_user: fedora
+
+    rhel6.3:
+      id: ami-ee0eaf87
+      source_owner: 309956199498
+      remote_user: ec2-user
+
+    rhel6.4:
+      id: ami-a05415c9
+      source_owner: 309956199498
+      remote_user: ec2-user
+
+    centos6.4:
+      id: ami-bf5021d6
+      source_owner: 679593333241
+      remote_user: root
+
+

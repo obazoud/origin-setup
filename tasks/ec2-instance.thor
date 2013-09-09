@@ -243,6 +243,30 @@ module EC2
       end
     end
 
+    no_tasks do
+      def self.tag(id, key, value=nil, clear=nil)
+        # set a value if it is given
+
+        handle = AWS::EC2.new
+        instance = find_instance(handle, {:id => id})
+
+        if not instance
+          puts "no matching instance"
+          return
+        end
+
+        if value then
+          instance.add_tag(key, { :value => value })
+        elsif clear then
+          instance.add_tag(key, { :value => nil })
+        else
+          value = instance.tags[key]
+          return value
+        end
+      end
+    end
+
+
     desc "hostname", "print the hostname of an identified instance"
     method_option :id, :type => :string
     method_option :name, :type => :string, :default => "*"
