@@ -13,7 +13,7 @@ if [ -z "$NAME" ] ; then
 fi
 
 BASEOS=$2
-BASEOS=${BASEOS:="rhel6.4"} # | fedora19 | centos6.4
+BASEOS=${BASEOS:="fedora19"} # | rhel6.4 | centos6.4
 
 AWSTYPE=$3
 AWSTYPE=${AWSTYPE:="t1.micro"} # | m1.small|m1.medium|m1.large
@@ -52,6 +52,13 @@ case $BASEOS in
 esac
 
 thor origin:prepare $HOSTNAME --packages git ${PUPPET_RPM} --username ${REMOTE_USER} ${VERBOSE}
+
+PUPPET_GIT_URL=https://github.com/markllama/origin-puppet.git
+PUPPET_REPODIR=$(basename $PUPPET_GIT_URL .git)
+
+thor remote:git:clone ${HOSTNAME} ${PUPPET_GIT_URL} --username ${REMOTE_USER} ${VERBOSE}
+thor remote:git:submodule:init ${HOSTNAME} $PUPPET_REPODIR --username ${REMOTE_USER} ${VERBOSE}
+thor remote:git:submodule:update ${HOSTNAME} $PUPPET_REPODIR --username ${REMOTE_USER} ${VERBOSE}
 
 
 
