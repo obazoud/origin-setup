@@ -970,6 +970,8 @@ class Remote < Thor
       puts "task: remote:git:clone #{hostname} #{giturl}" unless options[:quiet]
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      puts "- username: #{username}, key file: #{key_file}" if options[:verbose]
     
       # Call the class method to execute
       Git.clone(hostname, username, key_file, giturl,
@@ -1180,7 +1182,7 @@ class Remote < Thor
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
         
-        cmd = "(cd #{repodir} ; git submodule init)"
+        cmd = "(cd #{repodir} ; git submodule init --no-progress )"
         exit_code, exit_signal, stdout, stderr = Remote.remote_command(
           hostname, username, key_file, cmd, options[:verbose]
           )
@@ -1195,7 +1197,7 @@ class Remote < Thor
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
         
-        cmd = "(cd #{repodir} ; git submodule update)"
+        cmd = "(cd #{repodir} ; git submodule update --no-progress )"
         exit_code, exit_signal, stdout, stderr = Remote.remote_command(
           hostname, username, key_file, cmd, options[:verbose]
           )
