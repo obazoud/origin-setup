@@ -536,6 +536,7 @@ module OpenShift
       Remote.remote_command(hostname, username, key_file, cmd,
         options[:verbose])
       distro, osversion = invoke 'remote:distribution', [hostname]
+      distro = 'rhel' if distro == 'centos'
       Remote::Yum.setvar(hostname, username, key_file,
         'distro', distro, options[:verbose])
       Remote::Yum.setvar(hostname, username, key_file,
