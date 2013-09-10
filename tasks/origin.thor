@@ -243,9 +243,11 @@ module OpenShift
 
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
+      puts "- username: #{username}, key_file: #{key_file}" if options[:verbose]
 
       # check release and version
       os, releasever = invoke("remote:distribution", [hostname], options)
+
 
       # check archecture
       arch = invoke("remote:arch", [hostname], options)
@@ -254,8 +256,7 @@ module OpenShift
       invoke "remote:timezone", [hostname, options[:timezone]], options
 
       ipaddr = Resolv.new.getaddress hostname
-      invoke("remote:set_hostname", [hostname], :ipaddr => ipaddr, 
-        :verbose => options[:verbose])
+      invoke("remote:set_hostname", [hostname], options)
 
       # temporarily disable updates
       #if not options[:enable_updates]
