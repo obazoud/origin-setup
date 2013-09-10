@@ -16,13 +16,13 @@ BASEOS=$2
 BASEOS=${BASEOS:="rhel6.4"} # | fedora19 | centos6.4
 
 AWSTYPE=$3
-AWSTYPE=${AWSTYPE="t1.micro"} | m1.small|m1.medium|m1.large
+AWSTYPE=${AWSTYPE="t1.micro"} # | m1.small|m1.medium|m1.large
 
 # origin:baseinstance
 thor origin:baseinstance $NAME --baseos ${BASEOS} --type ${AWSTYPE} ${VERBOSE}
 HOSTNAME=$(thor ec2:instance hostname --name $NAME)
 # origin:prepare
-thor origin:prepare $HOSTNAME 
+#thor origin:prepare $HOSTNAME 
 
 
 
