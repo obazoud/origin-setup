@@ -11,6 +11,8 @@ class  Puppet < Thor
   class_option :verbose, :type => :boolean, :default => false
   class_option :debug, :type => :boolean, :default => false
   class_option :quiet, :type => :boolean, :default => false
+  class_option :username
+  class_option :ssh_key_file
 
   class Cert < Thor
     #namespace "puppet:cert"
@@ -18,6 +20,8 @@ class  Puppet < Thor
     class_option :verbose, :type => :boolean, :default => false
     class_option :debug, :type => :boolean, :default => false
     class_option :quiet, :type => :boolean, :default => false
+    class_option :username
+    class_option :ssh_key_file
 
     desc "sign MASTER HOSTNAME", "sign an agent certificate"
     def sign(master, hostname)
@@ -344,6 +348,8 @@ class  Puppet < Thor
     class_option :verbose, :type => :boolean, :default => false
     class_option :debug, :type => :boolean, :default => false
     class_option :quiet, :type => :boolean, :default => false
+    class_option :username
+    class_option :ssh_key_file
 
     desc "install HOSTNAME MODULE [MODULE]...", "install a puppet module on a remote host"
     def install(hostname, *modules)
@@ -365,6 +371,7 @@ class  Puppet < Thor
   end
 
   desc "apply HOSTNAME MANIFEST", "apply a puppet manifest to a remote host"
+  method_option :modulepath
   def apply(hostname, manifest)
     
     puts "task: puppet:apply #{hostname} #{manifest}" if not options[:quiet]
@@ -373,6 +380,8 @@ class  Puppet < Thor
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
     cmd = "sudo puppet apply --verbose #{manifest}"
+
+    cmd += " --modulepath=" + options[:modulepath] if options[:modulepath]
     exit_code, exit_signal, stdout, stderr = Remote.remote_command(
       hostname, username, key_file, cmd, options[:verbose]
       )

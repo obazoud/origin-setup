@@ -1182,7 +1182,7 @@ class Remote < Thor
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
         
-        cmd = "(cd #{repodir} ; git submodule init --no-progress )"
+        cmd = "(cd #{repodir} ; git submodule init --quiet )"
         exit_code, exit_signal, stdout, stderr = Remote.remote_command(
           hostname, username, key_file, cmd, options[:verbose]
           )
@@ -1197,7 +1197,7 @@ class Remote < Thor
         key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
         
-        cmd = "(cd #{repodir} ; git submodule update --no-progress )"
+        cmd = "(cd #{repodir} ; git submodule update --quiet )"
         exit_code, exit_signal, stdout, stderr = Remote.remote_command(
           hostname, username, key_file, cmd, options[:verbose]
           )

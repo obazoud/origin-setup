@@ -36,11 +36,10 @@ HOSTNAME=$(thor ec2:instance hostname --name $NAME)
 PUPPET_RPM=puppet
 
 case $BASEOS in
-    "rhel6.4")
+    "rhel6.4" | 'centos6.4')
         # "manually" add deps repo to provide puppet2
         thor origin:depsrepo $HOSTNAME --username ${REMOTE_USER} ${VERBOSE}
         PUPPET_RPM="puppet2"
-        ;;
     
     "centos6.4")
         # enable epel for puppet
@@ -48,7 +47,7 @@ case $BASEOS in
         thor origin:depsrepo $HOSTNAME --username ${REMOTE_USER} ${VERBOSE}
         PUPPET_RPM="puppet2"
         ;;
-
+    
     *)
         
 esac
@@ -68,6 +67,13 @@ thor remote:git:clone ${HOSTNAME} ${PUPPET_GIT_URL} --username ${REMOTE_USER} ${
 thor remote:git:submodule:init ${HOSTNAME} $PUPPET_REPODIR --username ${REMOTE_USER} ${VERBOSE}
 thor remote:git:submodule:update ${HOSTNAME} $PUPPET_REPODIR --username ${REMOTE_USER} ${VERBOSE}
 
+thor remote:file:mkdir ${HOSTNAME} /etc/puppet/modules --parents --sudo --username ${REMOTE_USER} ${VERBOSE}
 
+thor puppet:module:install ${HOSTNAME} puppetlabs-stdlib --username ${REMOTE_USER} ${VERBOSE}
+
+# So mcollective doesn't yell when using the puppetlabs module
+MCOLLECTIVE_META_RB_URL=https://raw.github.com/puppetlabs/mcollective-plugins/master/registration/meta.rb
+MCOLLECTIVE_META_RB_PATH=/usr/libexec/mcollective/mcollective/registration/meta.rb
+thor remote:pullurl ${HOSTNAME} ${MCOLLECTIVE_META_RB_URL} --filepath ${MCOLLECTIVE_META_RB_PATH} --username ${REMOTE_USER} ${VERBOSE}
 
 
