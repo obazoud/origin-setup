@@ -44,7 +44,9 @@ case $BASEOS in
     
     "centos6.4")
         # enable epel for puppet
-        thor remote:yum:install $HOSTNAME http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm --username ${REMOTE_USER} ${VERBOSE}
+        #thor remote:yum:install $HOSTNAME http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm --username ${REMOTE_USER} ${VERBOSE}
+        thor origin:depsrepo $HOSTNAME --username ${REMOTE_USER} ${VERBOSE}
+        PUPPET_RPM="puppet2"
         ;;
 
     *)
@@ -52,6 +54,12 @@ case $BASEOS in
 esac
 
 thor origin:prepare $HOSTNAME --packages git ${PUPPET_RPM} --username ${REMOTE_USER} ${VERBOSE}
+
+if [ "$BASEOS" = 'rhel' -o "$BASEOS" = 'centos' ] ; then
+  thor remote:file:mkdir ${HOSTNAME} /etc/puppet/modules --sudo --parents --username ${REMOTE_USER} ${VERBOSE}
+fi
+
+thor puppet:module:install ${HOSTNAME} puppetlabs-stdlib --username ${REMOTE_USER} ${VERBOSE}
 
 PUPPET_GIT_URL=https://github.com/markllama/origin-puppet.git
 PUPPET_REPODIR=$(basename $PUPPET_GIT_URL .git)
