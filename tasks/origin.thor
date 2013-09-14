@@ -241,7 +241,7 @@ module OpenShift
 
       puts "task: origin:prepare #{hostname}" unless options[:quiet]
 
-      username = options[:username] || Remote.ssh_username
+      username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
       puts "- username: #{username}, key_file: #{key_file}" if options[:verbose]
 
@@ -295,7 +295,7 @@ module OpenShift
 
       puts "origin:puppetmaster #{hostname}" unless options[:quiet]
 
-      username = options[:username] || Remote.ssh_username
+      username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
       # check DNS resolution for hostname?
@@ -405,7 +405,7 @@ module OpenShift
 
       puts "origin:puppetclient #{hostname}, #{puppetmaster}" unless options[:quiet]
 
-      username = options[:username] || Remote.ssh_username
+      username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
       available = invoke("remote:available", [hostname], :username => username,
@@ -500,7 +500,7 @@ module OpenShift
     def baserepo(hostname)
       puts "task: baserepo #{hostname}" if not options[:quiet]
 
-      username = options[:username] || Remote.ssh_username
+      username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
       repo_file = 'openshift-origin.repo'
@@ -524,7 +524,7 @@ module OpenShift
     def depsrepo(hostname)
       puts "task: depsrepo #{hostname}" if not options[:quiet]
 
-      username = options[:username] || Remote.ssh_username
+      username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
       repo_file = 'openshift-origin-deps.repo'
@@ -543,7 +543,57 @@ module OpenShift
         'osmajorvers', osversion.to_i, options[:verbose])      
 
     end
-  end
 
+    desc "builddep HOSTNAME GITROOT", "install build requirements"
+    def builddep(hostname, gitroot)
+
+      username = options[:username] || Remote.ssh_username(options[:baseos])
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      cmd = "find #{gitroot} -name \*.spec | xargs sudo yum-builddep -y"
+      Remote.remote_command(hostname, username, key_file, cmd, 
+                            options[:verbose])
+    end
+  
+    desc "buildhost HOSTNAME GITURL", "turn a host into a build box"
+    method_option :gitroot
+    method_option :branch
+    method_option :pkgroot
+    def buildhost(hostname, giturl)
+
+      # check out the git repo
+
+      # run yum-builddeps
+      
+      # run tito init
+
+    end
+
+    desc "build HOSTNAME GITROOT", "build all packages on the build host"
+    method_option :pkgname, :default => '\*'
+    method_option :test, :type => :boolean, :default => false
+    method_option :rpmbuild_basedir
+    def build(hostname, gitroot)
+      username = options[:username] || Remote.ssh_username(options[:baseos])
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      #cmd = "find #{gitroot} -name \*.spec | xargs sudo yum-builddep -y"
+
+      test = $options[:test] ? '--test' : ""
+
+      cmd = <<EOF
+for SPECFILE in $(find #{gitroot} -name #{options[:pkgname]}.spec)
+do
+  PKGDIR=$(dirname $SPECFILE)
+  ( cd $PKGDIR ; tito build --rpm #{test} )
+done
+EOF
+
+      #Remote.remote_command(hostname, username, key_file, cmd, 
+      #                      options[:verbose])
+
+    end
+
+  end
 
 end
