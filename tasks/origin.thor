@@ -569,17 +569,15 @@ module OpenShift
 
     end
 
-    desc "build HOSTNAME GITROOT", "build all packages on the build host"
+    desc "buildrpms HOSTNAME GITROOT", "build all packages on the build host"
     method_option :pkgname, :default => '\*'
     method_option :test, :type => :boolean, :default => false
     method_option :rpmbuild_basedir
-    def build(hostname, gitroot)
+    def buildrpms(hostname, gitroot)
       username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      #cmd = "find #{gitroot} -name \*.spec | xargs sudo yum-builddep -y"
-
-      test = $options[:test] ? '--test' : ""
+      test = options[:test] ? '--test' : ""
 
       cmd = <<EOF
 for SPECFILE in $(find #{gitroot} -name #{options[:pkgname]}.spec)
@@ -589,10 +587,11 @@ do
 done
 EOF
 
-      #Remote.remote_command(hostname, username, key_file, cmd, 
-      #                      options[:verbose])
+      Remote.remote_command(hostname, username, key_file, cmd, 
+                            options[:verbose])
 
     end
+
 
   end
 

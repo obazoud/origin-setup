@@ -1052,6 +1052,29 @@ class Remote < Thor
 
     end
 
+    desc "tags HOSTNAME REPODIR", "list git package tags"
+    method_option :pkgname
+    def tags(hostname, repodir)
+      puts "task remote:git:tags #{hostname} #{repodir}"
+      username = options[:username] || Remote.ssh_username(options[:baseos])
+      key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+      pkgpattern = options[:pkgname] + '\*' if options[:pkgname]
+      cmd = "(cd #{repodir} ; git tag --list #{pkgpattern})"
+
+      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
+      puts stdout
+    end
+
+    no_tasks do
+      def pkgversion(pkgname)
+        vmatch = pkgname.match(/-((\d+)(\.(\d+))*)/) ; 
+        vmatch[1] if vmatch
+      end
+
+    end
+
     no_tasks do
 
       # create a temporary file to shim ssh for git
