@@ -1073,6 +1073,22 @@ class Remote < Thor
         vmatch[1] if vmatch
       end
 
+
+      def compare_versions(v1, v2)
+
+        p1 = v1.split('.').map { |a| a.to_i }
+        p2 = v2.split('.').map { |a| a.to_i }
+        
+        e = [p1.count, p2.count].min
+
+        1.upto(e-1).each { |i|
+          return 1 if p1[i] > p2[i]
+          return -1 if p1[i] < p2[i]
+        }
+
+        p1.count <=> p2.count
+      end
+
     end
 
     no_tasks do
