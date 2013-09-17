@@ -507,7 +507,7 @@ module OpenShift
 
       # copy the deps configfile
       Remote::File.scp_put(hostname, username, key_file,
-        'data/#{repo_file}', repo_file)
+        "data/#{repo_file}", repo_file)
       cmd = "sudo mv #{repo_file} /etc/yum.repos.d/#{repo_file}"
       Remote.remote_command(hostname, username, key_file, cmd,
         options[:verbose])
