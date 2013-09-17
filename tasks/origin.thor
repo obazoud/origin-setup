@@ -535,22 +535,25 @@ module OpenShift
       cmd = "sudo mv #{repo_file} /etc/yum.repos.d/#{repo_file}"
       Remote.remote_command(hostname, username, key_file, cmd,
         options[:verbose])
-      distro, osversion = invoke 'remote:distribution', [hostname]
-      distro = 'rhel' if distro == 'centos'
-      Remote::Yum.setvar(hostname, username, key_file,
-        'distro', distro, options[:verbose])
-      Remote::Yum.setvar(hostname, username, key_file,
-        'osmajorvers', osversion.to_i, options[:verbose])      
 
+      @distro, @osversion = Remote.distribution(hostname, username, key_file,
+                                                  options[:verbose])
+      @distro = 'rhel' if @distro == 'centos'
+      Remote::Yum.setvar(hostname, username, key_file,
+                         'distro', @distro, options[:verbose])
+      Remote::Yum.setvar(hostname, username, key_file,
+                         'osmajorvers', @osversion.to_i, options[:verbose])
     end
 
     desc "builddep HOSTNAME GITROOT", "install build requirements"
     def builddep(hostname, gitroot)
+      puts "task: builddep #{hostname} #{gitroot}" if not options[:quiet]
 
       username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      cmd = "find #{gitroot} -name \*.spec | xargs sudo yum-builddep -y"
+      #cmd = "find #{gitroot} -name \*.spec | xargs sudo yum-builddep -y"
+      cmd = "for SPEC in $(find #{gitroot} -name \*.spec) ; do sudo yum-builddep -y $SPEC ; done"
       Remote.remote_command(hostname, username, key_file, cmd, 
                             options[:verbose])
     end
@@ -559,13 +562,22 @@ module OpenShift
     method_option :gitroot
     method_option :branch
     method_option :pkgroot
+    method_option :build, :type => :boolean, :default => true
     def buildhost(hostname, giturl)
+      puts "task: buildhost #{hostname} #{giturl}" if not options[:quiet]
 
-      # check out the git repo
 
-      # run yum-builddeps
-      
-      # run tito init
+      gitroot = options[:gitroot] || File.basename(giturl, '.git')
+
+      invoke 'origin:prepare', [hostname], options.merge({:packages => ['git',  'yum-utils',  'tito']})
+
+      invoke 'remote:git:clone', [hostname, giturl], options
+
+      invoke 'origin:depsrepo', [hostname], options
+
+      invoke 'origin:builddep', [hostname, gitroot], options
+
+      invoke('origin:buildrpms', [hostname, gitroot]) if options[:build]
 
     end
 
@@ -574,6 +586,7 @@ module OpenShift
     method_option :test, :type => :boolean, :default => false
     method_option :rpmbuild_basedir
     def buildrpms(hostname, gitroot)
+      puts "task: buildrpms #{hostname} #{gitroot} '#{options[:pkgname]}" if not options[:quiet]
       username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 

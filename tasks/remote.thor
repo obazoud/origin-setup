@@ -220,6 +220,7 @@ class Remote < Thor
 
     release_info = Remote.distribution(hostname, username, key_file, options[:verbose])
 
+    (@distro, @osversion) = release_info
     puts release_info.join
     release_info
   end
@@ -904,8 +905,8 @@ class Remote < Thor
 
     class_option(:verbose, :type => :boolean, :default => false)
     class_option(:username, :type => :string)
+    class_option(:baseos)
     class_option(:ssh_key_file, :type => :string)
-
     no_tasks do
 
       # clone a GIT repository into a remote host location
@@ -968,7 +969,7 @@ class Remote < Thor
     def clone(hostname, giturl)
 
       puts "task: remote:git:clone #{hostname} #{giturl}" unless options[:quiet]
-      username = options[:username] || Remote.ssh_username
+      username = options[:username] || Remote.ssh_username(options[:baseos])
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
       puts "- username: #{username}, key file: #{key_file}" if options[:verbose]
