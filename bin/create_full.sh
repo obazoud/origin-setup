@@ -91,6 +91,8 @@ create_puppetmaster() {
 
     thor remote:available ${_hostname} ${VERBOSE}
 
+    thor remote:sed ${_hostname} '/set_hostname\|update_hostname\|update_etc_hosts/s/^/#/' /etc/cloud/cloud.cfg --sudo --inplace ${VERBOSE}
+
     thor origin:puppetmaster ${_hostname} \
         --siterepo $_siterepo ${VERBOSE} --storedconfigs
 
@@ -220,6 +222,9 @@ create_node1() {
 
 create_ipaserver() {
   create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
+
+  # disable hostname reset by cloud-init on reboot
+  thor remote:sed ident.infra.lamourine.org '/set_hostname\|update_hostname\|update_etc_hosts/s/^/#/' /etc/cloud/cloud.cfg --sudo --inplace
   sleep 2
   thor remote:service:restart ident.infra.lamourine.org firewalld ${VERBOSE}
   sleep 2
@@ -247,15 +252,16 @@ thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
 thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace ${VERBOSE}
 
 # set openshift domain in site.pp?
-#thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
-#thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/aas
+thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
+thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}/" ${NODE_DIR}/${IPA_HOST}.pp
 
-#create_ipaserver
+create_ipaserver
+exit
 
 # Build the support services before creating the broker so that they can be
 # registered.
 
-create_data1
+#create_data1
 
 DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
 # create puppet node file for data1
@@ -272,7 +278,7 @@ MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
 create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 #ssh fedora@${PUPPETHOST} sed -i -e "/broker_hosts =>/s/=> .*/=> ['\${BROKER_HOST}']/" ${SITE_FILE}
 
-create_node1 broker.infra.lamourine.org $MESSAGE1_HOSTNAME
+#create_node1 broker.infra.lamourine.org $MESSAGE1_HOSTNAME
 
 
 #thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}

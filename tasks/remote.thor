@@ -228,6 +228,7 @@ class Remote < Thor
   desc "sed HOSTNAME PATTERN FILENAME", "make a pattern change to a file"
   method_option :destfile, :type => :string
   method_option :inplace, :type => :boolean, :default => false
+  method_option :sudo, :type => :boolean, :default => false
   def sed(hostname, pattern, filename)
     puts "task: remote:sed #{hostname} #{pattern} #{filename}" unless options[:quiet]
 
@@ -235,12 +236,11 @@ class Remote < Thor
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
     
     # add protection to quotes in the pattern
-    pattern = pattern.gsub("'", "\\\\'")
+    #pattern = pattern.gsub("'", "\\\\'")
 
-    cmd = "echo \"#{pattern}\" | sed -f -" + (options[:inplace] ? " -i " : " ") + filename
+    cmd = "echo \"#{pattern}\" | " + (options[:sudo] ? "sudo " : "") + "sed -f -" + (options[:inplace] ? " -i " : " ") + filename
     cmd += (" > " + options[:destfile]) if not options[:destfile] == nil
-
-    puts "command = " + cmd
+    
     exit_code, exit_signal, stdout, stderr = Remote.remote_command(
       hostname, username, key_file, cmd, options[:verbose])
     puts stdout.join("\n")
