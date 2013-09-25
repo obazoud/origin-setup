@@ -211,11 +211,12 @@ class Remote < Thor
   end
 
   desc "distribution HOSTNAME", "probe the distribution information from a remote host"
+
   def distribution(hostname)
 
     puts "task: remote:distribution #{hostname}" unless options[:quiet]
 
-    username = options[:username] || Remote.ssh_username
+    username = options[:username] || Remote.ssh_username(options[:baseos])
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
     release_info = Remote.distribution(hostname, username, key_file, options[:verbose])

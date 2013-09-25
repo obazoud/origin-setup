@@ -221,6 +221,9 @@ create_node1() {
 
 
 create_ipaserver() {
+
+  ssh-keygen -R ident.infra.lamourine.org
+
   create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
 
   # disable hostname reset by cloud-init on reboot
@@ -248,15 +251,14 @@ CLOUD_DOMAIN=app.lamourine.org
 BROKER_HOST=broker.infra.lamourine.org
 IPA_HOST=ident.infra.lamourine.org
 
-thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
-thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace ${VERBOSE}
+#thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
+#thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace --sudo ${VERBOSE} 
 
 # set openshift domain in site.pp?
-thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
-thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}/" ${NODE_DIR}/${IPA_HOST}.pp
+#thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
+#thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
 
-create_ipaserver
-exit
+#create_ipaserver
 
 # Build the support services before creating the broker so that they can be
 # registered.
@@ -266,19 +268,19 @@ exit
 DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
 # create puppet node file for data1
 
-#create_message1
+create_message1
 
 MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
 
 # create puppet node file for message1
 
 # update broker and node puppet scripts with support service information
-#set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
+set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
 
 create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
 #ssh fedora@${PUPPETHOST} sed -i -e "/broker_hosts =>/s/=> .*/=> ['\${BROKER_HOST}']/" ${SITE_FILE}
 
-#create_node1 broker.infra.lamourine.org $MESSAGE1_HOSTNAME
+create_node1 broker.infra.lamourine.org $MESSAGE1_HOSTNAME
 
 
 #thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}

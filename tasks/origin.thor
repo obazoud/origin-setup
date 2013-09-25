@@ -511,7 +511,7 @@ module OpenShift
       cmd = "sudo mv #{repo_file} /etc/yum.repos.d/#{repo_file}"
       Remote.remote_command(hostname, username, key_file, cmd,
         options[:verbose])
-      distro, osversion = invoke 'remote:distribution', [hostname]
+      distro, osversion = invoke 'remote:distribution', [hostname], options
       Remote::Yum.setvar(hostname, username, key_file,
         'distro', distro, options[:verbose])
       Remote::Yum.setvar(hostname, username, key_file,
