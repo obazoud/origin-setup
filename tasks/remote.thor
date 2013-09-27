@@ -1790,6 +1790,7 @@ class Remote < Thor
     exit_code, exit_signal, stdout, stderr = Remote.remote_command(
       hostname, username, key_file, cmd, options[:verbose])
 
+    cmd = "sudo sed -i -e 's/^.*$/#{hostname}' /etc/hostname"
     if options[:ipaddr]
       # set the hostname/ip address in /etc/hosts if it's not there
       # This should probably be done with puppet and augeas, but this is simpler for now:

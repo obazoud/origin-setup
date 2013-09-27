@@ -91,6 +91,7 @@ create_puppetmaster() {
 
     thor remote:available ${_hostname} ${VERBOSE}
 
+    thor remote:sed ${_hostname} '/syslog_fix_perms:/apreserve_hostname: 1' /etc/cloud/cloud.cfg --sudo --inplace ${VERBOSE}
     thor remote:sed ${_hostname} '/set_hostname\|update_hostname\|update_etc_hosts/s/^/#/' /etc/cloud/cloud.cfg --sudo --inplace ${VERBOSE}
 
     thor origin:puppetmaster ${_hostname} \
@@ -227,6 +228,7 @@ create_ipaserver() {
   create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
 
   # disable hostname reset by cloud-init on reboot
+    thor remote:sed ${_hostname} '/syslog_fix_perms:/apreserve_hostname: 1' /etc/cloud/cloud.cfg --sudo --inplace ${VERBOSE}
   thor remote:sed ident.infra.lamourine.org '/set_hostname\|update_hostname\|update_etc_hosts/s/^/#/' /etc/cloud/cloud.cfg --sudo --inplace
   sleep 2
   thor remote:service:restart ident.infra.lamourine.org firewalld ${VERBOSE}
@@ -244,6 +246,7 @@ PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
 
 #create_puppetmaster ${PUPPETHOST} https://github.com/markllama/origin-puppet ${PUPPET_BRANCH}
 
+
 SITE_FILE=site/manifests/site.pp
 NODE_DIR=site/manifests/nodes/
 
@@ -251,14 +254,14 @@ CLOUD_DOMAIN=app.lamourine.org
 BROKER_HOST=broker.infra.lamourine.org
 IPA_HOST=ident.infra.lamourine.org
 
-#thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
-#thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace --sudo ${VERBOSE} 
+thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
+thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace --sudo ${VERBOSE} 
 
 # set openshift domain in site.pp?
-#thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
-#thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
+thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
+thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}'/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
 
-#create_ipaserver
+create_ipaserver
 
 # Build the support services before creating the broker so that they can be
 # registered.
