@@ -266,10 +266,18 @@ module OpenShift
       #end
 
       # packages for firewall management and system config management
-      pkglist = options[:packages] + ['firewalld', 'augeas']      
+      pkglist = options[:packages] + ['ntp', 'ntpdate', 'firewalld', 'augeas']      
       invoke "remote:yum:install", [hostname, [pkglist]], options
 
       # enable firewall?
+
+      systemd = Remote.pidone(hostname, username, key_file, options[:verbose]) == "systemd"
+
+      # enable NTP?
+      Remote::Service.execute(hostname, username, key_file, 'ntpdate', 'enable', systemd, options[:verbose])
+      Remote::Service.execute(hostname, username, key_file, 'ntpdate', 'start', systemd, options[:verbose])
+      Remote::Service.execute(hostname, username, key_file, 'ntpd', 'enable', systemd, options[:verbose])
+      Remote::Service.execute(hostname, username, key_file, 'ntpd', 'start', systemd, options[:verbose])
 
       end_time = Time.new()
       duration = end_time - start_time
