@@ -198,6 +198,8 @@ module EC2
         puts "  Private IP: #{instance.private_ip_address}"
         puts "  Private Hostname: #{instance.private_dns_name}"
         puts "  Security Groups: #{instance.groups.map {|s| s.name}.join(' ')}"
+        puts "  Block Device Mappings:"
+        instance.block_devices.each {|k| puts "    #{k}" }
       else
         puts "#{instance.id} #{instance.tags['Name']}, #{instance.status} " + 
           ([:running, :pending].member?(instance.status) ? instance.dns_name : "")
