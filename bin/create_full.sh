@@ -84,15 +84,12 @@ create_puppetmaster() {
     _sitebranch=$3
 
     echo "# creating puppetmaster"
-    thor origin:baseinstance puppet --hostname ${_hostname} \
+    thor origin:baseinstance puppet --hostname ${_hostname} --elasticip \
         --securitygroup default puppetmaster ${VERBOSE} --baseos ${BASEOS}
 
     thor ec2:instance tag --name puppet --tag purpose --value puppetinstall
 
     thor remote:available ${_hostname} ${VERBOSE}
-
-    thor remote:sed ${_hostname} '/syslog_fix_perms:/apreserve_hostname: 1' /etc/cloud/cloud.cfg --sudo --inplace ${VERBOSE}
-    thor remote:sed ${_hostname} '/set_hostname\|update_hostname\|update_etc_hosts/s/^/#/' /etc/cloud/cloud.cfg --sudo --inplace ${VERBOSE}
 
     thor origin:puppetmaster ${_hostname} \
         --siterepo $_siterepo ${VERBOSE} --storedconfigs
@@ -136,17 +133,23 @@ create_puppetclient() {
 
     local _hostarg
     local _typearg
+    local _elasticip
 
     if [ -n "$_hostname" ] ; then
+
+        if [[ $_hostname =~ (.*):elasticip$ ]] ; then
+            _hostname=${BASH_REMATCH[1]}
+            _elasticip='--elasticip'
+        fi
         _hostarg="--hostname ${_hostname}"
     fi
-
+    
     if [ -n "$_ec2_type" ] ; then
         _typearg="--type ${_ec2_type}"
     fi
     echo
     echo "# creating $_hostname"
-    thor origin:baseinstance ${_instancename} ${_typearg} ${_hostarg} \
+    thor origin:baseinstance ${_instancename} ${_typearg} ${_hostarg} ${_elasticip} \
         --baseos ${BASEOS} --securitygroup default ${_securitygroup} ${VERBOSE} 
     if [ -z "${_hostname}" ] ; then
         _hostname=$(thor ec2:instance hostname --name ${_instancename})
@@ -178,14 +181,15 @@ create_data1() {
     local _nodefile
 
     # Create a node entry for a data store with this hostname
-    create_puppetclient data1 datastore ${PUPPETHOST}
+    create_puppetclient data1 datastore ${PUPPETHOST} data1.infra.lamourine.org
 
     DATAHOST=$(thor ec2:instance hostname --name data1)
 
+    thor remote set_hostname 
     _template=datastore.pp
     _nodefile=data1.infra.lamourine.org.pp
 
-    #create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $DATAHOST $_nodefile
+    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $DATAHOST $_nodefile
 }
 
 # update the contents of the new file
@@ -194,7 +198,7 @@ create_message1() {
     local _template
     local _nodefile
 
-    create_puppetclient message1 messagebroker ${PUPPETHOST}
+    create_puppetclient message1 messagebroker ${PUPPETHOST} message1.infra.lamourine.org
 
     MSGHOST=$(thor ec2:instance hostname --name message1)
 
@@ -209,7 +213,7 @@ create_node1() {
     local _template
     local _nodefile
 
-    create_puppetclient node1 node ${PUPPETHOST}
+    create_puppetclient node1 node ${PUPPETHOST} node1.infra.lamourine.org
 
     NODEHOST=$(thor ec2:instance hostname --name node1)
 
@@ -225,11 +229,8 @@ create_ipaserver() {
 
   ssh-keygen -R ident.infra.lamourine.org
 
-  create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org m1.small
+  create_puppetclient ident freeipa ${PUPPETHOST} ident.infra.lamourine.org:elasticip m1.small
 
-  # disable hostname reset by cloud-init on reboot
-    thor remote:sed ${_hostname} '/syslog_fix_perms:/apreserve_hostname: 1' /etc/cloud/cloud.cfg --sudo --inplace ${VERBOSE}
-  thor remote:sed ident.infra.lamourine.org '/set_hostname\|update_hostname\|update_etc_hosts/s/^/#/' /etc/cloud/cloud.cfg --sudo --inplace
   sleep 2
   thor remote:service:restart ident.infra.lamourine.org firewalld ${VERBOSE}
   sleep 2
@@ -261,26 +262,26 @@ thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/
 thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
 thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}'/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
 
-#create_ipaserver
-
+create_ipaserver
+exit
 # Build the support services before creating the broker so that they can be
 # registered.
 
-create_data1
+#create_data1
 
-DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
+#DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
 # create puppet node file for data1
 
 #create_message1
 
-MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
+#MESSAGE1_HOSTNAME=$(thor ec2:instance hostname --name message1)
 
 # create puppet node file for message1
 
 # update broker and node puppet scripts with support service information
-set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
+#set_service_hostnames $DATA1_HOSTNAME $MESSAGE1_HOSTNAME
 
-#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org
+#create_puppetclient broker broker ${PUPPETHOST} broker.infra.lamourine.org:elasticip
 #ssh fedora@${PUPPETHOST} sed -i -e "/broker_hosts =>/s/=> .*/=> ['\${BROKER_HOST}']/" ${SITE_FILE}
 
 #create_node1 broker.infra.lamourine.org $MESSAGE1_HOSTNAME

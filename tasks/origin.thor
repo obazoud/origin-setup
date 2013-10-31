@@ -28,6 +28,7 @@ module OpenShift
     method_option :hostname, :type => :string
     method_option :ipaddress, :type => :string
     method_option :enable_updates, :type => :boolean, :default => true
+    method_option :elasticip, :type => :boolean, :default => false
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
@@ -49,7 +50,7 @@ module OpenShift
 
       #
       hostname = options[:hostname]
-      if hostname
+      if hostname and options[:elasticip]
         # check if the name has an A record associated
         # determine the available zones
         zones = invoke "route53:zone:contains", [hostname], options
@@ -110,7 +111,7 @@ module OpenShift
       else
         # hostname not given
         # find one from IP if given
-        puts "no hostname given"
+        puts "no hostname given or no elastic IP"
       end
 
       # -----------------------------------------------
@@ -195,25 +196,38 @@ module OpenShift
       # ----------------------------------------
       # associate instance with eip if available
       # ----------------------------------------
-      invoke('ec2:ip:associate', [ipaddress, instance.id], options) if ipaddress
+      if ipaddress
+        invoke('ec2:ip:associate', [ipaddress, instance.id], options)
 
-      # report how long before the name will resolve
-      # new records aren't propagated until the SOA TTL expires.
-      # AWS sets the SOA TTL at 900 seconds (15 min) so that's the longest
-      # you should have to wait for a new name.
-      if ((defined? fqdn) and (not fqdn == nil))
-        begin
-          puts "trying to resolve '#{fqdn}'"
-          newaddr = Resolv.getaddress fqdn
-          puts "- #{fqdn} resolves to #{newaddr}"
-        rescue
-          resolver = Resolv::DNS.open
-          zone_info = resolver.getresources(
-            zonename, Resolv::DNS::Resource::IN::SOA)
-          puts "- #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
+        # report how long before the name will resolve
+        # new records aren't propagated until the SOA TTL expires.
+        # AWS sets the SOA TTL at 900 seconds (15 min) so that's the longest
+        # you should have to wait for a new name.
+        if ((defined? fqdn) and (not fqdn == nil))
+          begin
+            puts "trying to resolve '#{fqdn}'"
+            newaddr = Resolv.getaddress fqdn
+            puts "- #{fqdn} resolves to #{newaddr}"
+          rescue
+            resolver = Resolv::DNS.open
+            zone_info = 
+              resolver.getresources(zonename, Resolv::DNS::Resource::IN::SOA)
+            puts "- #{fqdn} will resolve in #{zone_info[0].ttl} seconds" if options[:verbose]
+          end
+        else
+          puts "- fqdn is undefined - no hostname specified"
         end
-      else
-        puts "- fqdn is undefined - no hostname specified"
+      end
+
+      # set hostname and preserve if provided
+      if hostname
+        # set the remote hostname:
+        #  /etc/hostname
+        #  /etc/sysconfig/network
+        invoke('remote:set_hostname', [hostname, instance.dns_name], options)
+
+        # preserve: /etc/cloud/cloud.conf add
+        invoke('remote:preserve_hostname', [instance.dns_name], options)
       end
 
       end_time = Time.new()

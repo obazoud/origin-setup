@@ -1771,34 +1771,41 @@ class Remote < Thor
       hostname, username, key_file, cmd, options[:verbose])
   end
 
-  desc "set_hostname HOSTNAME", "set the remote hostname provided"
+  desc "set_hostname HOSTNAME [REALHOST]", "set the remote hostname provided"
   method_option :ipaddr, :type => :string
-  def set_hostname(hostname)
+  def set_hostname(hostname, realhost=nil)
 
-    puts "task: remote:hostname #{hostname}" unless options[:quiet]
+    # assume realhost == hostname if not provided explicitly
+    realhost ||= hostname
+
+    puts "task: remote:set_hostname #{hostname} #{realhost}" unless options[:quiet]
 
     username = options[:username] || Remote.ssh_username
     key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
     cmd = "sudo hostname #{hostname}"
-    puts "executing #{cmd} on #{hostname}" if options[:verbose]
+    puts "executing #{cmd} on #{realhost}" if options[:verbose]
     exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      hostname, username, key_file, cmd, options[:verbose])
+      realhost, username, key_file, cmd, options[:verbose])
 
     cmd = "sudo sed -i -e '/HOSTNAME=/s/=.*/=#{hostname}/' /etc/sysconfig/network"
-    puts "executing #{cmd} on #{hostname}" if options[:verbose]
+    puts "executing #{cmd} on #{realhost}" if options[:verbose]
     exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-      hostname, username, key_file, cmd, options[:verbose])
+      realhost, username, key_file, cmd, options[:verbose])
 
-    cmd = "sudo sed -i -e 's/^.*$/#{hostname}' /etc/hostname"
+    cmd = "sudo sed -i -e 's/^.*$/#{hostname}/' /etc/hostname"
+    puts "executing #{cmd} on #{realhost}" if options[:verbose]
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      realhost, username, key_file, cmd, options[:verbose])
+
     if options[:ipaddr]
       # set the hostname/ip address in /etc/hosts if it's not there
       # This should probably be done with puppet and augeas, but this is simpler for now:
       # believe it or not, delete after append works.
       cmd = "sudo sed -i -e '$a#{options[:ipaddr]} #{hostname}' -e '/#{hostname}/d' /etc/hosts"
-      puts "executing #{cmd} on #{hostname}" if options[:verbose]
+      puts "executing #{cmd} on #{realhost}" if options[:verbose]
       exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose])
+        realhost, username, key_file, cmd, options[:verbose])
 
       # What I really want to do is:
       #   if and entry for that hostname exists, set the IP to the one provided
@@ -1806,6 +1813,25 @@ class Remote < Thor
     end
 
 
+  end
+
+  desc("preserve_hostname HOSTNAME [NEWHOSTNAME]", 
+       "prevent cloudinit from resetting the hostname on reboot")
+  def preserve_hostname(hostname, newhostname=nil)
+    
+    puts "task: remote:preserve_hostname #{hostname} #{newhostname}" unless options[:quiet]
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+    if newhostname
+      invoke("remote:set_hostname", [newhostname, hostname])
+    end
+
+    cmd = "sudo sed -i -e '$apreserve_hostname: 1' /etc/cloud/cloud.cfg"
+    puts "executing #{cmd} on #{hostname}" if options[:verbose]
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+        hostname, username, key_file, cmd, options[:verbose])
   end
   
   desc "reset_net_config HOSTNAME", "reset the network configuration to simple DHCP"
