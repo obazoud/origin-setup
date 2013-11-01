@@ -248,7 +248,6 @@ module OpenShift
     method_option :packages, :type => :array, :default => []
     method_option :ntpservers, :type => :array, :default => []
     method_option :timezone, :type => :string, :default => "Etc/UTC"
-
     def prepare(hostname)
 
       start_time = Time.now
@@ -262,7 +261,6 @@ module OpenShift
       # check release and version
       os, releasever = invoke("remote:distribution", [hostname], options)
 
-
       # check archecture
       arch = invoke("remote:arch", [hostname], options)
       puts "- instance is #{os}-#{releasever} #{arch}" if options[:verbose]
@@ -270,7 +268,6 @@ module OpenShift
       invoke "remote:timezone", [hostname, options[:timezone]], options
 
       ipaddr = Resolv.new.getaddress hostname
-      invoke("remote:set_hostname", [hostname], options)
 
       # temporarily disable updates
       #if not options[:enable_updates]
@@ -419,8 +416,6 @@ module OpenShift
     desc "puppetclient HOSTNAME MASTER", "create a puppet client instance"
     method_option :timezone, :type => :string, :default => "UTC"
     method_option :puppetlabs, :type => :boolean, :default => false
-
-
     def puppetclient(hostname, puppetmaster)
 
       start_time = Time.now
@@ -434,7 +429,6 @@ module OpenShift
         :wait => true, :verbose => options[:verbose])
 
       raise Exception.new("host #{hostname} not available") if not available
-
 
       # also install additional packages
       invoke("origin:prepare", [hostname],
@@ -466,6 +460,10 @@ module OpenShift
 
       osname, osvers = Remote.distribution(hostname, username, key_file)
       puppetagent = (osname == 'fedora' and osvers.to_i > 18) ? 'puppetagent' : 'puppet'
+      
+
+      key_id = invoke "remote:get_hostname", [hostname]
+      
 
       # start puppet daemon
       invoke("remote:service:enable", [hostname, puppetagent],
@@ -473,12 +471,11 @@ module OpenShift
       invoke("remote:service:start", [hostname, puppetagent], 
         :systemd => systemd, :verbose => options[:verbose])
 
-
       # wait for the signing request to appear?
       maxtries = 5
       pollinterval = 5 # seconds
       (1..maxtries).each { |trynum|
-        certlist = Puppet::Cert.list(puppetmaster, username, key_file, hostname, false, 
+        certlist = Puppet::Cert.list(puppetmaster, username, key_file, key_id, false, 
           options[:verbose])
         puts "- try #{trynum}: certlist = #{certlist}" if options[:verbose]
         break if certlist.count > 0
@@ -488,7 +485,7 @@ module OpenShift
       # raise Exception.new "timed out waiting for cert request" if certlist.count == 0
 
       # then sign it?
-      invoke "puppet:cert:sign", [puppetmaster, hostname], options
+      invoke "puppet:cert:sign", [puppetmaster, key_id], options
 
       end_time = Time.new()
       duration = end_time - start_time

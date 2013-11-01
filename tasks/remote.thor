@@ -1771,6 +1771,23 @@ class Remote < Thor
       hostname, username, key_file, cmd, options[:verbose])
   end
 
+  desc "get_hostname HOSTNAME", "get the actual hostname set on the box"
+  def get_hostname(hostname)
+    puts "task: remote:get_hostname #{hostname}" unless options[:quiet]
+
+    username = options[:username] || Remote.ssh_username
+    key_file = options[:ssh_key_file] || Remote.ssh_key_file
+
+    cmd = "hostname"
+    puts "executing #{cmd} on #{hostname}" if options[:verbose]
+    exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+      hostname, username, key_file, cmd, options[:verbose])
+
+    real_hostname = stdout[0] if not stdout == nil and stdout.length > 0
+    puts real_hostname
+    real_hostname
+  end
+
   desc "set_hostname HOSTNAME [REALHOST]", "set the remote hostname provided"
   method_option :ipaddr, :type => :string
   def set_hostname(hostname, realhost=nil)

@@ -85,7 +85,7 @@ create_puppetmaster() {
 
     echo "# creating puppetmaster"
     thor origin:baseinstance puppet --hostname ${_hostname} --elasticip \
-        --securitygroup default puppetmaster ${VERBOSE} --baseos ${BASEOS}
+        --securitygroup default puppetmaster ${VERBOSE} --baseos ${BASEOS} --type m1.small
 
     thor ec2:instance tag --name puppet --tag purpose --value puppetinstall
 
@@ -151,15 +151,18 @@ create_puppetclient() {
     echo "# creating $_hostname"
     thor origin:baseinstance ${_instancename} ${_typearg} ${_hostarg} ${_elasticip} \
         --baseos ${BASEOS} --securitygroup default ${_securitygroup} ${VERBOSE} 
-    if [ -z "${_hostname}" ] ; then
-        _hostname=$(thor ec2:instance hostname --name ${_instancename})
+
+    if [ -z "${_hostname}" -o -z "${_elasticip}" ] ; then
+        _ec2_hostname=$(thor ec2:instance hostname --name ${_instancename} ${VERBOSE})
+    else
+        _ec2_hostname=$_hostname
     fi
+        
+    thor ec2:instance tag --name ${_instancename} --tag purpose --value puppetinstall ${VERBOSE}
 
-    thor ec2:instance tag --name ${_instancename} --tag purpose --value puppetinstall
-
-    echo thor remote:available ${_hostname} ${VERBOSE}
-    thor origin:puppetclient ${_hostname} ${_puppethost} ${VERBOSE}
-    syslog_puppet ${_hostname} ${_puppethost} ${PUPPETAGENT}
+    echo thor remote:available ${_ec2_hostname} ${VERBOSE}
+    thor origin:puppetclient ${_ec2_hostname} ${_puppethost} ${VERBOSE}
+    syslog_puppet ${_ec2_hostname} ${_puppethost} ${PUPPETAGENT}
 }
 
 
@@ -183,13 +186,10 @@ create_data1() {
     # Create a node entry for a data store with this hostname
     create_puppetclient data1 datastore ${PUPPETHOST} data1.infra.lamourine.org
 
-    DATAHOST=$(thor ec2:instance hostname --name data1)
-
-    thor remote set_hostname 
-    _template=datastore.pp
+    _template=data1.infra.example.org.pp
     _nodefile=data1.infra.lamourine.org.pp
 
-    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $DATAHOST $_nodefile
+    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template data1.infra.lamourine.org $_nodefile
 }
 
 # update the contents of the new file
@@ -200,12 +200,12 @@ create_message1() {
 
     create_puppetclient message1 messagebroker ${PUPPETHOST} message1.infra.lamourine.org
 
-    MSGHOST=$(thor ec2:instance hostname --name message1)
+    #MSGHOST=$(thor ec2:instance hostname --name message1)
 
-    _template=messaging.pp
+    _template=message1.infra.example.org.pp
     _nodefile=message1.infra.lamourine.org.pp
 
-    #create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $MSGHOST $_nodefile
+    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template message1.infra.lamourine.org $_nodefile
 
 }
 
@@ -215,12 +215,10 @@ create_node1() {
 
     create_puppetclient node1 node ${PUPPETHOST} node1.infra.lamourine.org
 
-    NODEHOST=$(thor ec2:instance hostname --name node1)
-
-    _template=node.pp
+    _template=node1.infra.example.org.pp
     _nodefile=node1.infra.lamourine.org.pp
 
-    #create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template $NODEHOST $_nodefile
+    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template node1.infra.lamourine.org $_nodefile
 
 }
 
@@ -255,19 +253,19 @@ CLOUD_DOMAIN=app.lamourine.org
 BROKER_HOST=broker.infra.lamourine.org
 IPA_HOST=ident.infra.lamourine.org
 
-thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
-thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace --sudo ${VERBOSE} 
+#thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
+#thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace --sudo ${VERBOSE} 
 
 # set openshift domain in site.pp?
-thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
-thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}'/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
+#thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
+#thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}'/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
 
-create_ipaserver
-exit
+#create_ipaserver
+
 # Build the support services before creating the broker so that they can be
 # registered.
 
-#create_data1
+create_data1
 
 #DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
 # create puppet node file for data1
