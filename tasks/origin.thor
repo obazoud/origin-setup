@@ -461,10 +461,8 @@ module OpenShift
       osname, osvers = Remote.distribution(hostname, username, key_file)
       puppetagent = (osname == 'fedora' and osvers.to_i > 18) ? 'puppetagent' : 'puppet'
       
-
       key_id = invoke "remote:get_hostname", [hostname]
       
-
       # start puppet daemon
       invoke("remote:service:enable", [hostname, puppetagent],
         :systemd => systemd, :verbose => options[:verbose])

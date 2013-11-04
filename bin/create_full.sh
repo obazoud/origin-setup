@@ -189,7 +189,7 @@ create_data1() {
     _template=data1.infra.example.org.pp
     _nodefile=data1.infra.lamourine.org.pp
 
-    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template data1.infra.lamourine.org $_nodefile
+#    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template data1.infra.lamourine.org $_nodefile
 }
 
 # update the contents of the new file
@@ -205,7 +205,7 @@ create_message1() {
     _template=message1.infra.example.org.pp
     _nodefile=message1.infra.lamourine.org.pp
 
-    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template message1.infra.lamourine.org $_nodefile
+#    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template message1.infra.lamourine.org $_nodefile
 
 }
 
@@ -218,7 +218,7 @@ create_node1() {
     _template=node1.infra.example.org.pp
     _nodefile=node1.infra.lamourine.org.pp
 
-    create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template node1.infra.lamourine.org $_nodefile
+ #   create_node_file $PUPPET_NODE_ROOT $(current_branch) $_template node1.infra.lamourine.org $_nodefile
 
 }
 
@@ -253,19 +253,19 @@ CLOUD_DOMAIN=app.lamourine.org
 BROKER_HOST=broker.infra.lamourine.org
 IPA_HOST=ident.infra.lamourine.org
 
-#thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
-#thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace --sudo ${VERBOSE} 
+thor remote:file:copy ${PUPPETHOST} site/manifests/site-example.pp ${SITE_FILE}
+thor remote:sed ${PUPPETHOST} "/cloud_domain =>/s/=> .*\$/=> '${CLOUD_DOMAIN}',/" ${SITE_FILE} --inplace --sudo ${VERBOSE} 
 
 # set openshift domain in site.pp?
-#thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
-#thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}'/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
+thor remote:file:copy ${PUPPETHOST} ${NODE_DIR}/ident.infra.example.org.pp ${NODE_DIR}/${IPA_HOST}.pp
+thor remote:sed ${PUPPETHOST} "/^node '.*' {/s/'.*'/'${IPA_HOST}'/" ${NODE_DIR}/${IPA_HOST}.pp --inplace
 
-#create_ipaserver
+create_ipaserver
 
 # Build the support services before creating the broker so that they can be
 # registered.
 
-create_data1
+#create_data1
 
 #DATA1_HOSTNAME=$(thor ec2:instance hostname --name data1)
 # create puppet node file for data1
