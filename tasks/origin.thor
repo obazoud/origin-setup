@@ -378,7 +378,7 @@ module OpenShift
             #'puppetlabs-mcollective',
           ]
         ], 
-        options.merge({:puppetuser => 'puppet'})
+        options.merge({:puppetuser => 'puppet'}))
 
       #invoke("puppet:cert:generate", [hostname, hostname])
 
