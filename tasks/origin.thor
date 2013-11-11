@@ -367,7 +367,7 @@ module OpenShift
       invoke "puppet:master:enable_logging", [hostname], options
 
 
-      # install standard modules
+      # install standard modules for puppet master process
       invoke(
         "puppet:module:install", 
         [hostname, [
@@ -378,7 +378,7 @@ module OpenShift
             #'puppetlabs-mcollective',
           ]
         ], 
-        options)
+        options.merge({:puppetuser => 'puppet'})
 
       #invoke("puppet:cert:generate", [hostname, hostname])
 

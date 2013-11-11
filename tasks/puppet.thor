@@ -352,6 +352,7 @@ class  Puppet < Thor
     class_option :ssh_key_file
 
     desc "install HOSTNAME MODULE [MODULE]...", "install a puppet module on a remote host"
+    method_option(:puppetuser, :type => :string)
     def install(hostname, *modules)
       
       puts "task: puppet:module:install #{hostname} #{modules.join(' ')}" if not options[:quiet]
@@ -359,15 +360,20 @@ class  Puppet < Thor
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file
 
-      #cmd = "sudo puppet module install --mode master #{modules.join(' ')}"
-      cmd = "sudo puppet module install #{modules.join(' ')}"
-      exit_code, exit_signal, stdout, stderr = Remote.remote_command(
-        hostname, username, key_file, cmd, options[:verbose]
+      if options[:puppetuser]
+        cmd_prefix = "cd ~#{options[:puppetuser]} ; sudo -u #{options[:puppetuser]} "
+      else
+        cmd_prefix = ""
+      end
+      
+      modules.each do |module_name|
+        #cmd = "sudo puppet module install --mode master #{modules.join(' ')}"
+        cmd = cmd_prefix + "puppet module install #{module_name}"
+        exit_code, exit_signal, stdout, stderr = Remote.remote_command(
+          hostname, username, key_file, cmd, options[:verbose]
         )
-
+      end
     end
-
-
   end
 
   desc "apply HOSTNAME MANIFEST", "apply a puppet manifest to a remote host"

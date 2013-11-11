@@ -238,6 +238,7 @@ create_ipaserver() {
 #Main
 #====
 
+main() {
 
 PUPPETHOST=puppet.infra.lamourine.org
 PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
@@ -286,3 +287,5 @@ create_ipaserver
 
 
 #thor remote:git:pull puppet.infra.lamourine.org site --branch ${PUPPET_BRANCH}
+
+}
