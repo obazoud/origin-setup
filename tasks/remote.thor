@@ -981,10 +981,10 @@ class Remote < Thor
         )
     end
 
-    desc "checkout HOSTNAME REPODIR BRANCH", "checkout a branch on the remote repo"
+    desc "checkout HOSTNAME REPODIR [BRANCH]", "checkout a branch on the remote repo"
     method_option(:remote, :default => "origin")
     method_option(:track, :type => :boolean, :default => false)
-    def checkout(hostname, repodir, branch)
+    def checkout(hostname, repodir, branch='master')
       puts "task: remote:git:checkout #{hostname} #{repodir} #{branch}" unless options[:quiet]
       username = options[:username] || Remote.ssh_username
       key_file = options[:ssh_key_file] || Remote.ssh_key_file

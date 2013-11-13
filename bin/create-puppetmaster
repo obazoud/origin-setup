@@ -1,83 +1,37 @@
 #!/usr/bin/bash
 
-PUPPETHOST=puppet.infra.lamourine.org
-PUPPET_REPO=https://github.com/markllama/origin-puppet
-PUPPET_NODE_ROOT=../origin-puppet/manifests/nodes
-PUPPET_BRANCH=$(current_branch ${PUPPET_NODE_ROOT})
-
-
-current_branch() {
-  local _gitroot
-  local _chdir
-
-  _gitroot=$1
-
-  if [ -n "$1" ] 
-  then
-      _chdir="cd $_gitroot"
-  fi
-
-  ($_chdir ; git branch | grep \* | cut -d' ' -f2)
-}
-
-
+# ----------------------------------------------------------------------------
+# Main process
+# ----------------------------------------------------------------------------
+# AWS credentials settings
 #
-# Create a puppet master ready for use to create an OpenShift service in AWS EC2
+#AWSCRED
+
+
+HOSTNAME=puppet.infra.lamourine.org
+BASE_OS=fedora19
+EC2_TYPE=m1.small
+
+# Must contain a manifests and modules sub directory.
+# manifests will contain site.pp  and nodes subdir.  Puppet node specs will
+# be placed in manifests/nodes/<hostname>.pp
 #
-create_puppetmaster() {
-    local _hostname
-    local _sitrepo
-    local _sitebranch
+SITE_REPO=https://github.com/markllama/origin-puppet.git
 
-    _hostname=$1
-    _siterepo=$2
-    _sitebranch=$3
+ssh-keygen -R ${HOSTNAME}
 
-    echo "# creating puppetmaster"
-    thor origin:baseinstance puppet --hostname ${_hostname} --elasticip \
-        --securitygroup default puppetmaster \
-        --baseos ${BASEOS} --type m1.small \
-        ${VERBOSE}
+# 1) create an EC2 instance to hold the puppet master service
+thor origin:baseinstance puppet --baseos ${BASE_OS} --type ${EC2_TYPE} \
+    --securitygroup default puppetmaster \
+    --hostname ${HOSTNAME} --elasticip \
+    ${VERBOSE}
 
-    # mark up the instance for search and identification
-    thor ec2:instance tag --name puppet --tag purpose --value puppetinstall
+thor ec2:instance tag --name puppet --tag purpose --value puppetinstall
+thor remote:available ${HOSTNAME} ${VERBOSE}
 
-    # Wait for the EC2 instance to be ready
-    # We told it the hostname so we can use that
-    thor remote:available ${_hostname} ${VERBOSE}
+# make ordinary universal OpenShift Origin tweaks before specializing the host
+thor origin:prepare ${HOSTNAME} ${VERBOSE}
 
-    # Convert the instance into a puppet master
-    thor origin:puppetmaster ${_hostname} --siterepo $_siterepo \
-        --storedconfigs \
-        ${VERBOSE}
-        
-
-    # Enable inbound syslog so we can collect service logs (for debug)
-    thor remote:firewall:port ${_hostname} 514 ${VERBOSE}
-
-    # add rsyslog entries for syslog components
-    # five \ because bourne takes one pair here, and one pair there and
-    # augtool takes 1
-    thor remote:augeas:set ${_hostname} \
-        "'/files/etc/rsyslog.conf/\\\\\$ModLoad[last()+1]'" imtcp ${VERBOSE}
-    thor remote:augeas:set ${_hostname} \
-        "'/files/etc/rsyslog.conf/\\\\\$InputTCPServerRun'" 514 ${VERBOSE}
-    thor remote:file:put ${_hostname} data/rsyslog-puppet.conf ${VERBOSE}
-    thor remote:file:copy ${_hostname} rsyslog-puppet.conf \
-        /etc/rsyslog.d/puppet.conf --sudo ${VERBOSE}
-    # Create the initial puppet log file. rsyslog needs it
-    thor remote:file:touch ${_hostname} /var/log/puppet.log --sudo ${VERBOSE}
-    thor remote:service:restart ${_hostname} rsyslog ${VERBOSE}
-
-    # prepare the remote puppet repo.  Include the remote repositories
-    thor remote:git:checkout ${_hostname} site ${_sitebranch}
-    thor remote:git:submodule:init ${_hostname} site
-    thor remote:git:submodule:update ${_hostname} site
-
-    # copy the secrets file into place: it doesn't go in your puppet repo
-    thor remote:file:put ${_hostname} data/openshift-secrets.pp \
-        --destpath site/manifests/secrets/openshift-secrets.pp \
-        ${VERBOSE}
-}
-
-create_puppetmaster ${PUPPETHOST} ${PUPPET_REPO} ${PUPPET_BRANCH}
+# 
+thor origin:puppetmaster ${HOSTNAME} --siterepo ${SITE_REPO} ${VERBOSE}
+    

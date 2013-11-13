@@ -306,7 +306,7 @@ module OpenShift
     method_option :siteroot, :type => :string, :default => "/var/lib/puppet/site"
     method_option :siterepo, :type => :string
     method_option :puppetlabs, :type => :boolean, :default => false
-    method_option :storedconfigs, :type => :boolean, :default => false
+    method_option :storedconfigs, :type => :boolean, :default => true
     
     def puppetmaster(hostname)
 
@@ -324,19 +324,10 @@ module OpenShift
 
       raise Exception.new("host #{hostname} not available") if not available
 
-      extra_packages = ['ruby', 'puppet-server', 'git']
-      if options[:storedconfigs]
-        extra_packages << ['patch', 'rubygem-activerecord', 'rubygem-sqlite3']
-      end
+      package_list = ['git', 'puppet-server', 'patch',
+                      'rubygem-activerecord', 'rubygem-sqlite']
 
-      #hostname = instance.dns_name
-      invoke("origin:prepare", [hostname],
-        :username => username,
-        :ssh_key_file => key_file,
-        :packages => extra_packages,
-        :timezone => options[:timezone],
-        :verbose => options[:verbose],
-        )
+      invoke('remote:yum:install', [hostname, package_list], options)
 
       invoke "puppet:agent:set_server", [hostname, hostname], options
 
@@ -356,6 +347,12 @@ module OpenShift
         :destdir => File.dirname(options[:siteroot]),
         :destname => File.basename(options[:siteroot]),
         :verbose => options[:verbose]) if options[:siterepo]
+      
+      # initialize git sub-modules to pull in forked module git repos
+      # (avoiding stale packages in puppetforge if needed)
+      invoke('remote:git:checkout',  [hostname, 'site'], options)
+      invoke('remote:git:submodule:init', [hostname, 'site'], options)
+      invoke('remote:git:submodule:update', [hostname, 'site'], options)
 
       # tell it where to find modules and the site (manifests)
       invoke("puppet:master:configure", [hostname],

@@ -91,8 +91,11 @@ create_puppetmaster() {
 
     thor remote:available ${_hostname} ${VERBOSE}
 
-    thor origin:puppetmaster ${_hostname} \
-        --siterepo $_siterepo ${VERBOSE} --storedconfigs
+    thor origin:puppetmaster ${_hostname} --siterepo $_siterepo ${VERBOSE}
+
+    thor remote:file:put ${_hostname} data/openshift-secrets.pp \
+        --destpath site/manifests/secrets/openshift-secrets.pp \
+        ${VERBOSE}
 
     # Enable inbound syslog
     #thor remote:firewall:stop ${_hostname} ${VERBOSE}
@@ -110,11 +113,6 @@ create_puppetmaster() {
     thor remote:file:touch ${_hostname} /var/log/puppet.log --sudo ${VERBOSE}
     thor remote:service:restart ${_hostname} rsyslog ${VERBOSE}
 
-    thor remote:git:checkout ${_hostname} site ${_sitebranch}
-    thor remote:git:submodule:init ${_hostname} site
-    thor remote:git:submodule:update ${_hostname} site
-
-    thor remote:file:put ${_hostname} data/openshift-secrets.pp --destpath site/manifests/secrets/openshift-secrets.pp ${VERBOSE}
 
     
 }
