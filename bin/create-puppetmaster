@@ -34,4 +34,20 @@ thor origin:prepare ${HOSTNAME} ${VERBOSE}
 
 # 
 thor origin:puppetmaster ${HOSTNAME} --siterepo ${SITE_REPO} ${VERBOSE}
-    
+
+# Add rsyslog config for puppet from clients
+# Enable inbound syslog
+#thor remote:firewall:stop ${HOSTNAME} ${VERBOSE}
+thor remote:firewall:port ${HOSTNAME} 514 ${VERBOSE}
+#thor remote:firewall:start ${HOSTNAME} ${VERBOSE}
+
+# five \ because bourne takes one pair here, and one pair there augtool takes 1
+thor remote:augeas:set ${HOSTNAME} \
+    "'/files/etc/rsyslog.conf/\\\\\$ModLoad[last()+1]'" imtcp ${VERBOSE}
+thor remote:augeas:set ${HOSTNAME} \
+    "'/files/etc/rsyslog.conf/\\\\\$InputTCPServerRun'" 514 ${VERBOSE}
+thor remote:file:put ${HOSTNAME} data/rsyslog-puppet.conf ${VERBOSE}
+thor remote:file:copy ${HOSTNAME} rsyslog-puppet.conf \
+    /etc/rsyslog.d/puppet.conf --sudo ${VERBOSE}
+thor remote:file:touch ${HOSTNAME} /var/log/puppet.log --sudo ${VERBOSE}
+thor remote:service:restart ${HOSTNAME} rsyslog ${VERBOSE}
