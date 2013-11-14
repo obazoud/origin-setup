@@ -367,13 +367,12 @@ module OpenShift
       # install standard modules for puppet master process
       invoke(
         "puppet:module:install", 
-        [hostname, [
+        [hostname,
             'puppetlabs-ntp', 
             'puppetlabs-java',
             #'puppetlabs-mongodb',
             #'puppetlabs-activemq',
             #'puppetlabs-mcollective',
-          ]
         ], 
         options.merge({:puppetuser => 'puppet'}))
 

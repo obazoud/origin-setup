@@ -20,6 +20,9 @@ SITE_REPO=https://github.com/markllama/origin-puppet.git
 
 ssh-keygen -R ${HOSTNAME}
 
+echo "* process begins at" $(date --rfc-3339=seconds)
+START_TIME=$(date +%s)
+
 # 1) create an EC2 instance to hold the puppet master service
 thor origin:baseinstance puppet --baseos ${BASE_OS} --type ${EC2_TYPE} \
     --securitygroup default puppetmaster \
@@ -51,3 +54,9 @@ thor remote:file:copy ${HOSTNAME} rsyslog-puppet.conf \
     /etc/rsyslog.d/puppet.conf --sudo ${VERBOSE}
 thor remote:file:touch ${HOSTNAME} /var/log/puppet.log --sudo ${VERBOSE}
 thor remote:service:restart ${HOSTNAME} rsyslog ${VERBOSE}
+
+echo "* process complete at" $(date --rfc-3339=seconds)
+END_TIME=$(date +%s)
+
+DURATION=$((${END_TIME} - ${START_TIME}))
+echo "* duration: ${DURATION} seconds"
