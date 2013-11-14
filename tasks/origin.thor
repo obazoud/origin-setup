@@ -426,13 +426,9 @@ module OpenShift
 
       raise Exception.new("host #{hostname} not available") if not available
 
-      # also install additional packages
-      invoke("origin:prepare", [hostname],
-        :username => username,
-        :ssh_key_file => key_file,
-        :packages => ['ruby', 'puppet', 'facter'],
-        :timezone => options[:timezone],
-        :verbose => options[:verbose])
+
+      puppet_packages = ['ruby', 'puppet', 'facter']
+      invoke("remote:yum:install", [hostname, puppet_packages], options)
 
       systemd = true if Remote.pidone(hostname, username, key_file) == "systemd"
 
