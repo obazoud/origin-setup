@@ -22,7 +22,7 @@ echo "* process begins at" $(date --rfc-3339=seconds)
 START_TIME=$(date +%s)
 
 # 1) create an EC2 instance to hold the puppet master service
-thor origin:baseinstance data1 --baseos ${BASE_OS} --type ${EC2_TYPE} \
+thor origin:baseinstance message1 --baseos ${BASE_OS} --type ${EC2_TYPE} \
     --securitygroup default \
     ${VERBOSE}
 
