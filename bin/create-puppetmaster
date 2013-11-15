@@ -38,6 +38,11 @@ thor origin:prepare ${HOSTNAME} ${VERBOSE}
 # 
 thor origin:puppetmaster ${HOSTNAME} --siterepo ${SITE_REPO} ${VERBOSE}
 
+# add site.pp tuned for local environment
+
+# add secrets tuned for local environment
+
+
 # Add rsyslog config for puppet from clients
 # Enable inbound syslog
 #thor remote:firewall:stop ${HOSTNAME} ${VERBOSE}

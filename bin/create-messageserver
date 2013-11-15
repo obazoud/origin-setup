@@ -1,0 +1,75 @@
+#!/usr/bin/bash
+#
+# Create an OpenShift datastore server in EC2
+#
+# ----------------------------------------------------------------------------
+# Main process
+# ----------------------------------------------------------------------------
+# AWS credentials settings
+#
+#AWSCRED
+
+BASE_OS=fedora19
+EC2_TYPE=m1.small
+HOSTNAME=message1.infra.lamourine.org
+IPASERVER=ident.infra.lamourine.org
+PUPPETMASTER=puppet.infra.lamourine.org
+PUPPETSERVICE=puppetagent
+
+ssh-keygen -R ${HOSTNAME}
+
+echo "* process begins at" $(date --rfc-3339=seconds)
+START_TIME=$(date +%s)
+
+# 1) create an EC2 instance to hold the puppet master service
+thor origin:baseinstance data1 --baseos ${BASE_OS} --type ${EC2_TYPE} \
+    --securitygroup default \
+    ${VERBOSE}
+
+thor ec2:instance tag --name message1 --tag purpose --value 
+EC2_HOSTNAME=$(thor ec2:instance hostname --name message1)
+
+# make ordinary universal OpenShift Origin tweaks before specializing the host
+thor origin:prepare ${EC2_HOSTNAME} ${VERBOSE}
+
+# set the remote hostname and IP address and make EC2 keep it
+thor remote:preserve_hostname ${EC2_HOSTNAME} ${HOSTNAME} ${VERBOSE}
+
+# create and push puppet node config to puppetmaster
+
+# restart puppetmaster service if needed.
+
+# make it a puppet client
+thor origin:puppetclient ${EC2_HOSTNAME} ${PUPPETMASTER} ${VERBOSE}
+# sign the client cert
+
+# enable smallfiles
+# start mongod
+# create admin account
+#   set admin password
+# create openshift db
+#   create broker account
+#   set broker password
+# stop mongod
+# set bind_ip 0.0.0.0 (or ec2_internal_address)
+# set auth true
+# open port 27017/tcp temp and permanent
+# start mongod
+# enable mongod
+
+
+# enable rsyslog to server (puppetmaster)
+thor remote:file:put ${EC2_HOSTNAME} data/rsyslog-puppet.conf-remote ${VERBOSE}
+    # copy the remote file to /etc/rsyslog.d/puppet.conf
+    thor remote:file:copy ${EC2_HOSTNAME} \
+        rsyslog-puppet.conf-remote /etc/rsyslog.d/puppet.conf \
+        --sudo \
+        ${VERBOSE}
+
+    thor remote:service:restart ${EC2_HOSTNAME} rsyslog ${VERBOSE}
+    thor remote:service:restart ${EC2_HOSTNAME} ${PUPPETSERVICE} ${VERBOSE}
+
+
+echo "* process ends at" $(date --rfc-3339=seconds)
+END_TIME=$(date +%s)
+echo "* duration:" $((${END_TIME} - ${START_TIME})) "seconds"

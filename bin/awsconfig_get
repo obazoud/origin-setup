@@ -1,0 +1,10 @@
+#!/usr/bin/ruby
+
+require 'yaml'
+
+config_file = './.awscred.yaml'
+
+config = YAML.load_file(config_file)
+
+puts "arg1 = #{ARGV[0]}"
+puts config
