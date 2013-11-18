@@ -43,20 +43,9 @@ thor remote:preserve_hostname ${EC2_HOSTNAME} ${HOSTNAME} ${VERBOSE}
 thor origin:puppetclient ${EC2_HOSTNAME} ${PUPPETMASTER} ${VERBOSE}
 # sign the client cert
 
-# enable smallfiles
-# start mongod
-# create admin account
-#   set admin password
-# create openshift db
-#   create broker account
-#   set broker password
-# stop mongod
-# set bind_ip 0.0.0.0 (or ec2_internal_address)
-# set auth true
-# open port 27017/tcp temp and permanent
-# start mongod
-# enable mongod
-
+# create the puppet node spec:
+# * Install packages
+# * Configure message server
 
 # enable rsyslog to server (puppetmaster)
 thor remote:file:put ${EC2_HOSTNAME} data/rsyslog-puppet.conf-remote ${VERBOSE}

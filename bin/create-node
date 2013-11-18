@@ -1,0 +1,43 @@
+#!/usr/bin/bash
+
+# ----------------------------------------------------------------------------
+# Main process
+# ----------------------------------------------------------------------------
+# AWS credentials settings
+#
+#AWSCRED
+
+HOSTNAME=node1.infra.lamourine.org
+BASE_OS=fedora19
+EC2_TYPE=m1.small
+PUPPETMASTER=puppet.infra.lamourine.org
+
+ssh-keygen -R ${HOSTNAME}
+
+echo "* process begins at" $(date --rfc-3339=seconds)
+START_TIME=$(date +%s)
+
+# 1) create an EC2 instance to hold the puppet master service
+thor origin:baseinstance node1 --baseos ${BASE_OS} --type ${EC2_TYPE} \
+    --securitygroup default node \
+    --hostname ${HOSTNAME} \
+    ${VERBOSE}
+
+thor ec2:instance tag --name node1 --tag purpose --value identity
+EC2_HOSTNAME=$(thor ec2:instance hostname --name node1)
+thor remote:available ${EC2_HOSTNAME} ${VERBOSE}
+
+# make ordinary universal OpenShift Origin tweaks before specializing the host
+thor origin:prepare ${EC2_HOSTNAME} ${VERBOSE}
+
+# make it a puppet client
+thor origin:puppetclient ${EC2_HOSTNAME} ${PUPPETMASTER} ${VERBOSE}
+# sign the client cert
+
+thor remote:service:restart ${EC2_HOSTNAME} firewalld ${VERBOSE}
+
+# enable rsyslog to server (puppetmaster)
+
+echo "* process ends at" $(date --rfc-3339=seconds)
+END_TIME=$(date +%s)
+echo "* duration:" $((${END_TIME} - ${START_TIME})) "seconds"
