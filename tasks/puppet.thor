@@ -348,7 +348,7 @@ class  Puppet < Thor
     class_option :verbose, :type => :boolean, :default => false
     class_option :debug, :type => :boolean, :default => false
     class_option :quiet, :type => :boolean, :default => false
-    class_option :username
+    class_option :username, :type=> :string, :default => 'root'
     class_option :ssh_key_file
 
     desc "install HOSTNAME MODULE [MODULE]...", "install a puppet module on a remote host"
