@@ -12,10 +12,13 @@ BASE_OS=fedora19
 EC2_TYPE=m1.small
 PUPPETMASTER=puppet.infra.lamourine.org
 
-ssh-keygen -R ${HOSTNAME}
 
 echo "* process begins at" $(date --rfc-3339=seconds)
 START_TIME=$(date +%s)
+
+ssh-keygen -R ${HOSTNAME}
+
+thor puppet:cert:clean ${PUPPETMASTER} ${HOSTNAME} ${VERBOSE}
 
 # 1) create an EC2 instance to hold the puppet master service
 thor origin:baseinstance ident --baseos ${BASE_OS} --type ${EC2_TYPE} \

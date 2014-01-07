@@ -246,6 +246,16 @@ module OpenShift
         else
           puts "- fqdn is undefined - no hostname specified"
         end
+
+        # make sure it's available under its new name before proceeding
+        username = options[:username] || Remote.ssh_username
+        key_file = options[:ssh_key_file] || Remote.ssh_key_file
+        Remote.available(instance.dns_name, username, key_file, 
+                         true, 15, 10, options[:verbose])
+
+        raise Exception.new("host #{instance.dns_name} not available") if not available
+        puts "- host #{instance.dns_name} is available" unless options[:quiet]
+
       end
 
       # set hostname and preserve if provided
