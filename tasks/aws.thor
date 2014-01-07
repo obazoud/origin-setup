@@ -1,53 +1,50 @@
 #
-# Load configuration information for AWS communications
+#  initialize the aws-sdk communications
 #
 
-require 'rubygems'
-require 'aws'
-require 'parseconfig'
+# Anchor this to the root. - There must be a better way to make this available
+# to all tasks.
+module ::AWS
 
+  # Methods to initialize AWS CLI operations: 
+  module CLI
 
-# OpenShift Origin related methods
-module OpenShift
-  
-  # Amazon Web Services access
-  module AWS
+    # The default location of the AWS credentials file
+    @@default_awscred_filename = ENV['HOME'] + "/.awscred"
 
-    CONFIG_FILE = ENV['AWS_CONFIG_FILE'] || File.expand_path(".awscred")
-
-    @@configfile = CONFIG_FILE
-    @@config = nil
-
-    # Load the AWS Credentials and configuration information
-    # @param [String] configfile
-    #   the location of a file to load instead of the default
-    def self.config(configfile=nil, reload=false)
-
-      return @@config if @@config and not reload
-
-      @@configfile = (configfile ? File.expand_path(configfile) : CONFIG_FILE)
-      raise Exception.new("File not found: #{@@configfile}") if not File.exists? @@configfile
-      @@config = ParseConfig.new @@configfile
-      @@config
-    end
-
-    def self.awscred(access_key_id=nil, secret_access_key=nil, region=nil)
-      # don't read the config if all params are provided
-      if not (access_key_id && secret_access_key && region)
-          config = OpenShift::AWS.config
-      end
+    # Initialize the AWS configuration if environment variables are not set.
+    # Priority:
+    #  specified awscred config
+    #  AWS_* environment variables
+    #  $HOME/.awscred config
+    #  ./.awscred config
+    def self.init(awscred_filename=nil)
+      if awscred_filename and File.exists? awscred_filename
+        awscred = ParseConfig.new(awscred_filename)
+        ::AWS.config(:access_key_id => awscred['AWSAccessKeyId'],
+                     :secret_access_key => awscred['AWSSecretAccessKey']
+                     )
+      elsif ENV['AWS_ACCESS_KEY_ID'] and ENV['AWS_SECRET_ACCESS_KEY']
+        # Running config will initialize with the environment variables
+        ::AWS.config
         
-      ::AWS.config(
-        :access_key_id => access_key_id || config.params['AWSAccessKeyId'],
-        :secret_access_key => secret_access_key || config.params['AWSSecretKey'],
-        :region => region || config.params['AWSRegion']
-        )
+      else
+        local_filename = File.expand_path('.awscred')
+        global_filename = ENV['HOME'] + '/.awscred'
+        if File.exist?(local_filename)
+          real_filename = local_filename
+        elsif File.exist?(global_filename)
+          real_filename = global_filename
+        end
+        if defined? real_filename
+          awscred = ParseConfig.new(real_filename)
+          ::AWS.config(:access_key_id => awscred['AWSAccessKeyId'],
+                       :secret_access_key => awscred['AWSSecretAccessKey']
+                       )
+        else
+          raise Exception.new("unable to find AWS credentials")
+        end
+      end
     end
-
-    def self.init(awscred='./awscred')
-      OpenShift::AWS::config awscred
-      OpenShift::AWS::awscred
-    end
-
   end
 end

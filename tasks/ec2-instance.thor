@@ -11,13 +11,13 @@ module EC2
 
     namespace "ec2:instance"
 
-    class_option :awscred, :type => :string
+    class_option :awscred
     class_option :verbose, :type => :boolean, :default => false
     desc "list", "list the set of running instances"
     method_option(:name, :desc => "filter for instance names")
     def list
 
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
 
 #      handle.instances.filter('tag-key', "Name").filter('tag-value', options[:name]).each do |i|
@@ -43,11 +43,12 @@ module EC2
       :desc => "the name for the new instance")
     method_option(:image, :type => :string, :required => true,
       :desc => "an EC2 image id")
-    method_option(:key, :type => :string,
+    method_option(:key, :type => :string, :required => true,
       :desc => "an access key pair name")
     # m.1small or t1.micro
     method_option(:type, :type => :string, :default => "t1.micro",
       :desc => "an EC2 image type")
+    method_option(:disksize, :type => :numeric, :default => 2)
     method_option(:securitygroup, :type => :array, :default => ["default"],
       :desk => "the security group to apply to this instance")
     method_option(:wait, :type => :boolean, :default => false)
@@ -55,7 +56,7 @@ module EC2
       puts "task: ec2:instance:create " +
         "#{options[:image]} #{options[:name]}" unless options[:quiet]
 
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
 
       # use configured value if not provided
@@ -68,7 +69,12 @@ module EC2
         :instance_type => options[:type],
         :key_name => options[:key],
         :security_groups => (options[:securitygroup]||['default']),
-        :block_device_mappings => {'/dev/sdb' => 'ephemeral0'}
+        :block_device_mappings => [{
+            :device_name => '/dev/sda1',
+            :ebs => {
+              :volume_size => options[:disksize].to_i
+            },
+          }]
         )
             
       (1..3).each do |i|
@@ -101,7 +107,7 @@ module EC2
     def delete
       puts "task: ec2:instance:delete " +
         "#{options[:id]} #{options[:name]}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred] 
+      AWS::CLI.init options[:awscred] 
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       
@@ -132,7 +138,7 @@ module EC2
     def rename
       puts "task: ec2:instance:rename #{options[:id]} " +
         "#{options[:name]} => #{options[:newname]}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       puts "renaming instance #{instance.id} (#{instance.tags['Name']}) to #{options[:newname]}"
@@ -146,7 +152,7 @@ module EC2
     def start
       puts "task: ec2:instance:start #{options[:id]} " +
         "#{options[:name]}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       instance.start
@@ -165,7 +171,7 @@ module EC2
     def stop
       puts "task: ec2:instance:stop #{options[:id]} " +
         "#{options[:name]}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       puts "- stopping instance #{instance.id}" if options[:verbose]
@@ -182,7 +188,7 @@ module EC2
     method_option :name, :type => :string, :default => "*"
     def info
       # Open a connection to the AWS service
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
@@ -224,7 +230,7 @@ module EC2
         return
       end
 
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
 
@@ -274,7 +280,7 @@ module EC2
     method_option :name, :type => :string, :default => "*"
     def hostname
       # Open a connection to the AWS service
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
@@ -286,7 +292,7 @@ module EC2
     method_option :name, :type => :string, :default => "*"
     def status
       # Open a connection to the AWS service
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       if options[:verbose] then
@@ -302,7 +308,7 @@ module EC2
     def ipaddress(ipaddr=nil)
       puts "task ec2:instance:ipaddress #{ipaddr}"
 
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
@@ -321,7 +327,7 @@ module EC2
     def private_ipaddress
       puts "task: ec2:instance:internal_ipaddress"
       # Open a connection to the AWS service
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
@@ -336,7 +342,7 @@ module EC2
     def private_hostname
       puts "task: ec2:instance:internal_ipaddress"
       # Open a connection to the AWS service
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       raise ArgumentError.new("no instance matches") if not instance
@@ -355,7 +361,7 @@ module EC2
     method_option :maxtries, :type => :numeric, :default => 12
     def wait
       puts "task: ec2:instance:wait --id #{options[:id]} --state #{options[:state]}"
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       instance = find_instance(handle, options)
       

@@ -20,21 +20,49 @@ module OpenShift
     class_option :quiet, :type => :boolean, :default => false
     class_option :baseos, :type => :string, :default => "fedora19"
 
+    # The default location of the AWS credentials file
+    default_awscred_filename = ENV['HOME'] + "/.awscred"
+
     desc "baseinstance NAME", "create a base instance for customization"
     method_option :image, :type => :string
     method_option :type, :type => :string
     method_option :keypair, :type => :string
+    method_option :disksize, :type => :numeric, :default => 10
     method_option :securitygroup, :type => :array, :default => ['default']
     method_option :hostname, :type => :string
     method_option :ipaddress, :type => :string
     method_option :enable_updates, :type => :boolean, :default => true
     method_option :elasticip, :type => :boolean, :default => false
+    method_option :awscred, :type => :string, :default => default_awscred_filename
     def baseinstance(name)
       puts "task: origin:baseinstance #{name}" unless options[:quiet]
 
       start_time = Time.now
 
-      config = OpenShift::AWS.config
+      puts "awscred file = #{options[:awscred]}"
+
+      # Initialize the AWS configuration if environment variables are not set.
+      # Priority:
+      #  specified awscred config
+      #  AWS_* environment variables
+      #  $HOME/.awscred config
+      #  ./.awscred config
+      if options[:awscred] and File.exists? options[:awscred]
+        config = ParseConfig.new(options[:awscred])
+      else
+        local_filename = File.expand_path('.awscred')
+        global_filename = ENV['HOME'] + '/.awscred'
+        if File.exist?(local_filename)
+          real_filename = local_filename
+        elsif File.exist?(global_filename)
+          real_filename = global_filename
+        end
+        if defined? real_filename
+          config = ParseConfig.new(real_filename)
+        else
+          raise Exception.new("unable to find AWS configuration")
+        end
+      end
 
       #  check that the IP address is a valid Elastic IP
       ipaddress = options[:ipaddress]
@@ -155,6 +183,7 @@ module OpenShift
         :key => config['AWSKeyPairName'],
         :type => (options[:type] || config['AWSEC2Type']), 
         :securitygroup => options[:securitygroup],
+        :disksize => options[:disksize],
         :verbose => options[:verbose]
         )
 

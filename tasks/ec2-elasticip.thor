@@ -17,7 +17,7 @@ module EC2
     desc "list", "list the defined elastic IPs"
     def list
       puts "task: ec2:ip:list" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       ips = handle.elastic_ips
 
@@ -29,7 +29,7 @@ module EC2
     desc "create", "create a new elastic IP"
     def create
       puts "task: ec2:ip:create" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       ips = handle.elastic_ips
       ip = ips.create
@@ -41,7 +41,7 @@ module EC2
     desc "delete IPADDR", "delete an elastic IP"
     def delete(ipaddr)
       puts "task: ec2:ip:delete #{ipaddr}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       ips = handle.elastic_ips
       ips.select { |ip|
@@ -54,7 +54,7 @@ module EC2
     desc "associate IPADDR INSTANCE", "associate and Elastic IP with an instance"
     def associate(ipaddr, instanceid)
       puts "task: ec2:ip:associate #{ipaddr} #{instanceid}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
 
       # validate the IP addr and instance id?
@@ -70,7 +70,7 @@ module EC2
     desc "disassociate IPADDR INSTANCE", "associate and Elastic IP with an instance"
     def disassociate(ipaddr)
       puts "task: ec2:ip:disassociate #{ipaddr}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
 
       # validate the IP addr and instance id?
@@ -86,7 +86,7 @@ module EC2
     desc "info IPADDR", "get information for an IP address"
     def info(ipaddr)
       puts "task: ec2:ip:info #{ipaddr}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
 
       # validate the IP addr and instance id?

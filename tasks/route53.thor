@@ -21,7 +21,7 @@ require 'parseconfig'
       def list
 
         puts "task: route53:zone:list" unless options[:quiet]
-        OpenShift::AWS.init options[:awscred]
+        AWS::CLI.init options[:awscred]
         handle = AWS::Route53::Client.new
 
         response = handle.list_hosted_zones
@@ -36,7 +36,7 @@ require 'parseconfig'
       def id(zonename)
         puts "task: route53:zone:id #{zonename}" unless options[:quiet]
 
-        OpenShift::AWS.init options[:awscred]
+        AWS::CLI.init options[:awscred]
         handle = AWS::Route53.Client.new
 
         id = Route53.zone_id(handle, zonename)
@@ -49,7 +49,7 @@ require 'parseconfig'
         puts "task: route53:zone:contains #{hostname}"
 
         hostname += "." if not hostname.end_with? '.'
-        OpenShift::AWS.init options[:aswcred]
+        AWS::CLI.init options[:aswcred]
         handle = AWS::Route53::Client.new
 
         response = handle.list_hosted_zones
@@ -90,7 +90,7 @@ require 'parseconfig'
       def list(zonename, type=nil)
         puts "task: route53:record:list #{zonename}"
 
-        OpenShift::AWS.init options[:awscred]
+        AWS::CLI.init options[:awscred]
         handle = AWS::Route53::Client.new
 
         zoneid = Route53.zone_id(handle, zonename)
@@ -122,7 +122,7 @@ require 'parseconfig'
       def get(zonename, recordname, type=nil)
         puts "task: route53:record:get #{zonename} #{recordname} #{type}"
 
-        OpenShift::AWS.init options[:awscred]
+        AWS::CLI.init options[:awscred]
         handle = AWS::Route53::Client.new
 
         zoneid = Route53.zone_id(handle, zonename)
@@ -149,7 +149,7 @@ require 'parseconfig'
 
         fqdn = "#{name}.#{zone}"
 
-        OpenShift::AWS.init options[:awscred]
+        AWS::CLI.init options[:awscred]
         handle = AWS::Route53::Client.new
         zoneid = Route53.zone_id(handle, zone)
 
@@ -189,7 +189,7 @@ require 'parseconfig'
 
         fqdn = "#{name}.#{zone}"
 
-        OpenShift::AWS.init options[:awscred]
+        AWS::CLI.init options[:awscred]
         handle = AWS::Route53::Client.new
         zoneid = Route53.zone_id(handle, zone)
 
@@ -225,7 +225,7 @@ require 'parseconfig'
       def exist(zonename, hostpart)
         puts "task: route53:record:exist #{zonename} #{hostpart}" unless options[:quiet]
 
-        OpenShift::AWS.init options[:awscred]
+        AWS::CLI.init options[:awscred]
         handle = AWS::Route53::Client.new
 
         zoneid = Route53.zone_id(handle, zonename)

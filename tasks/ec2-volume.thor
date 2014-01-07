@@ -18,7 +18,7 @@ module EC2
     desc "list", "list the available snapshots"
     def list
 
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new      
       volumes = handle.volumes
       volumes.each { |volume|
@@ -30,7 +30,7 @@ module EC2
     desc "delete VOLUME", "delete the volume"
     def delete(volume_id)
       puts "task ec2:volume:delete #{volume_id}" unless options[:quiet]
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       volumes = handle.volumes
       volumes.select { |volume|

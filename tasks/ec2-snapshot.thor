@@ -17,7 +17,7 @@ module EC2
 
     desc "list", "list the available snapshots"
     def list
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       
       snapshots = handle.snapshots
@@ -29,7 +29,7 @@ module EC2
 
     desc "delete SNAPSHOT", "delete the snapshot"
     def delete(snapshot_id)
-      OpenShift::AWS.init options[:awscred]
+      AWS::CLI.init options[:awscred]
       handle = AWS::EC2.new
       
       snapshots = handle.snapshots
