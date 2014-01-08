@@ -305,6 +305,7 @@ module EC2
     desc "ipaddress [IPADDR]", "set or get the external (elastic) IP address of an identified instance"
     method_option :id, :type => :string
     method_option :name, :type => :string, :default => "*"
+    method_option :internal, :type => :boolean, :default => false
     def ipaddress(ipaddr=nil)
       puts "task ec2:instance:ipaddress #{ipaddr}"
 
@@ -316,9 +317,14 @@ module EC2
       if ipaddr
         instance.associate_elastic_ip ipaddr
       else
-        puts instance.ip_address
+        if options[:internal]
+          ipaddr = instance.private_ip_address
+        else
+          ipaddr = instance.ip_address
+        end
+        puts ipaddr
       end
-      instance.ip_address
+      ipaddr
     end
 
     desc "private_ipaddress", "print the internal ip address of an identified instance"

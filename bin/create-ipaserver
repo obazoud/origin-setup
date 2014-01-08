@@ -26,6 +26,11 @@ thor origin:baseinstance ident --baseos ${BASE_OS} --type ${EC2_TYPE} \
     --hostname ${HOSTNAME} --elasticip \
     ${VERBOSE}
 
+# Get the EC2 internal IP address
+PRIVATE_IP=$(thor ec2:instance ipaddress --name ident --internal | tail -1)
+
+thor remote:set_hostname ${HOSTNAME} --ipaddr ${PRIVATE_IP}
+
 thor ec2:instance tag --name ident --tag purpose --value identity
 thor remote:available ${HOSTNAME} ${VERBOSE}
 
