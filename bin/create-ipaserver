@@ -41,6 +41,9 @@ thor origin:prepare ${HOSTNAME} ${VERBOSE}
 thor origin:puppetclient ${HOSTNAME} ${PUPPETMASTER} ${VERBOSE}
 # sign the client cert
 
+# For IPA server the system must be up to date to work
+thor remote:yum:update ident.infra.lamourine.org ${VERBOSE}
+
 thor remote:service:restart ident.infra.lamourine.org firewalld ${VERBOSE}
 
 # enable rsyslog to server (puppetmaster)
